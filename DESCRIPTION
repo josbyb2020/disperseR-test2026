@@ -1,0 +1,58 @@
+Package: disperseR
+Type: Package
+Title: Run HYSPLIT Many Times in Parallel, Aggregate to ZIP Code Level
+Version: 0.2.0
+Authors@R: c(
+    person("Lucas", "Henneman", email = "lhenneman@gmail.com", role = c("aut", "cre")),
+    person("Christine", "Choirat", role = "aut"),
+    person("Maja", "Garbulinska", role = "aut")
+    )
+Maintainer: Lucas Henneman <lhenneman@gmail.com>
+Description: disperseR is a restructured version of the hyspdisp package. 
+    It is an R package that runs HYSPLIT many times and calculates the HYSPLIT 
+    Average Dispersion (or HyADS) exposure metric. The results can then be 
+    aggregated to ZIP code level to create national estimates of exposure from 
+    various sources. For example, plumes from several power plants can be tracked 
+    for many days and cumulative impacts estimated. The package uses code borrowed 
+    from the SplitR package in a slightly modified version.
+    Version 0.2.0 has been updated to remove dependencies on retired packages 
+    (rgeos, rgdal, maptools) and uses modern spatial libraries (sf, terra).
+URL: https://github.com/lhenneman/disperseR
+BugReports: https://github.com/lhenneman/disperseR/issues
+License: GPL-3
+LazyData: true
+Encoding: UTF-8
+Depends:
+    R (>= 4.1.0),
+    data.table,
+    magrittr
+Imports:
+    sf (>= 1.0-0),
+    terra (>= 1.7-0),
+    ncdf4,
+    maps,
+    ggplot2,
+    dplyr,
+    tidyr,
+    lubridate,
+    stringr,
+    parallel,
+    scales,
+    gridExtra,
+    viridis,
+    fst,
+    stats,
+    utils,
+    grDevices,
+    methods
+Suggests:
+    ggmap,
+    ggrepel,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    rnaturalearth,
+    downloader
+VignetteBuilder: knitr
+RoxygenNote: 7.2.3
+Config/testthat/edition: 3
