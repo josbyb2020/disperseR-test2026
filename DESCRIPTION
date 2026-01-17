@@ -7,6 +7,9 @@ Authors@R: c(
     person("Christine", "Choirat", role = "aut"),
     person("Maja", "Garbulinska", role = "aut")
     )
+Author: Lucas Henneman [aut, cre],
+    Christine Choirat [aut],
+    Maja Garbulinska [aut]
 Maintainer: Lucas Henneman <lhenneman@gmail.com>
 Description: disperseR is a restructured version of the hyspdisp package. 
     It is an R package that runs HYSPLIT many times and calculates the HYSPLIT 
@@ -44,7 +47,8 @@ Imports:
     stats,
     utils,
     grDevices,
-    methods
+    methods,
+    grid
 Suggests:
     ggmap,
     ggrepel,

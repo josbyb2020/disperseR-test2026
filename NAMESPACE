@@ -152,12 +152,22 @@ importFrom(ggplot2, ggplot)
 importFrom(ggplot2, aes)
 importFrom(ggplot2, geom_sf)
 importFrom(ggplot2, geom_point)
+importFrom(ggplot2, geom_polygon)
 importFrom(ggplot2, geom_line)
 importFrom(ggplot2, geom_tile)
+importFrom(ggplot2, scale_shape_discrete)
 importFrom(ggplot2, scale_fill_viridis_c)
+importFrom(ggplot2, theme)
+importFrom(ggplot2, theme_bw)
 importFrom(ggplot2, theme_minimal)
+importFrom(ggplot2, element_text)
+importFrom(ggplot2, element_blank)
+importFrom(ggplot2, element_rect)
 importFrom(ggplot2, labs)
 importFrom(ggplot2, coord_sf)
+importFrom(ggplot2, guide_colorbar)
+importFrom(ggplot2, map_data)
+importFrom(ggplot2, xlab)
 importFrom(ggplot2, ggsave)
 
 # ncdf4 imports
@@ -180,6 +190,8 @@ importFrom(parallel, parLapply)
 
 # scales imports
 importFrom(scales, comma)
+importFrom(scales, date_format)
+importFrom(scales, squish)
 
 # gridExtra imports
 importFrom(gridExtra, grid.arrange)
@@ -203,6 +215,9 @@ importFrom(utils, packageVersion)
 # grDevices imports
 importFrom(grDevices, pdf)
 importFrom(grDevices, dev.off)
+
+# grid imports
+importFrom(grid, unit)
 
 # methods imports
 importFrom(methods, as)

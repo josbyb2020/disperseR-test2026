@@ -150,7 +150,9 @@ startyear <- start.year
     }
 
     # Read using terra (replaces raster::brick)
-    Sys.setenv(TZ = 'UTC')
+    old_tz <- Sys.getenv("TZ")
+    Sys.setenv(TZ = "UTC")
+    on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
     message("  Processing PBL data with terra...")
     hpbl_rasterin <- terra::rast(file, subds = "hpbl")
     
@@ -197,8 +199,12 @@ startyear <- start.year
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
     data.table::setnames(zcta, 'ZCTA5CE10', 'ZCTA')
-    zcta <- merge(zcta, disperseR::crosswalk, by = "ZCTA", 
-                  all = FALSE, allow.cartesian = TRUE)
+    zcta <- merge(
+      zcta,
+      as.data.frame(disperseR::crosswalk),
+      by = "ZCTA",
+      all = FALSE
+    )
     message("  Preprocessing complete")
     assign("zcta_dataset", zcta, envir = .GlobalEnv)
     message("  Assigned to 'zcta_dataset' variable")
@@ -209,6 +215,13 @@ startyear <- start.year
   # ==========================================================================
   # INDIVIDUAL DATA TYPES
   # ==========================================================================
+
+  if (data == "crosswalk") {
+    message("Loading crosswalk data from disperseR...")
+    crosswalk <- disperseR::crosswalk
+    message("  Crosswalk data loaded")
+    return(crosswalk)
+  }
 
   # --- ZCTA shapefile setup ---
   if (data == "zctashapefile" || data == "zcta_dataset" || data == "zctashapefileSF") {
@@ -275,8 +288,12 @@ startyear <- start.year
     }
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
     data.table::setnames(zcta, 'ZCTA5CE10', 'ZCTA')
-    zcta <- merge(zcta, disperseR::crosswalk, by = "ZCTA", 
-                  all = FALSE, allow.cartesian = TRUE)
+    zcta <- merge(
+      zcta,
+      as.data.frame(disperseR::crosswalk),
+      by = "ZCTA",
+      all = FALSE
+    )
     message("Preprocessing complete")
     return(zcta)
   }
@@ -297,7 +314,9 @@ startyear <- start.year
 
   # --- Process and return PBL height raster ---
   if (data == "pblheight") {
-    Sys.setenv(TZ = 'UTC')
+    old_tz <- Sys.getenv("TZ")
+    Sys.setenv(TZ = "UTC")
+    on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
     message("Processing PBL height data...")
     # Use terra instead of raster::brick
     hpbl_rasterin <- terra::rast(file, subds = "hpbl")

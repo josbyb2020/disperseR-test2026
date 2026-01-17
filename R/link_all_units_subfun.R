@@ -206,7 +206,9 @@ trim_zero <- function(Min) {
 #' @importFrom terra cellFromXY
 #' @importFrom lubridate month year
 trim_pbl <- function(Min, rasterin) {
-  Sys.setenv(TZ = 'UTC')
+  old_tz <- Sys.getenv("TZ")
+  Sys.setenv(TZ = "UTC")
+  on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
   M <- data.table::copy(Min)
   M[, ref := seq_len(nrow(M))]
   

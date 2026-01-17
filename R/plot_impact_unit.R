@@ -41,14 +41,14 @@ plot_impact_unit <- function(data.linked = NULL,
   #################################################################################
 
   if (is.null(plot.title)){
-    plot.title <- paste("Zip Code Locations" ,paste(zipcodes, collapse = ', '))
+    plot.title <- paste("Zip Code Locations", paste(zip.codes, collapse = ", "))
   }
 
   if (is.null(data.linked)) {
-    error("Please provide data set to the datalink argument")
+    stop("Please provide data set to the datalink argument")
   }
   if (is.null(zip.codes)) {
-    error("Please provide zipcodes")
+    stop("Please provide zipcodes")
   }
 
   dataplot <- data.linked[ZIP %in% zip.codes]

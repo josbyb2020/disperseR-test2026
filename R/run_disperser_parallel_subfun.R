@@ -501,7 +501,9 @@ subset_nc_date <- function(hpbl_file = NULL,
     stop("Please define EITHER hpbl_file OR hpbl_brick, not both or neither")
   }
 
-  Sys.setenv(TZ = 'UTC')
+  old_tz <- Sys.getenv("TZ")
+  Sys.setenv(TZ = "UTC")
+  on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
 
   # Read raster using terra (replaces raster::brick)
   if (!is.null(hpbl_file)) {
@@ -548,4 +550,3 @@ subset_nc_date <- function(hpbl_file = NULL,
 
   return(rastersub)
 }
-

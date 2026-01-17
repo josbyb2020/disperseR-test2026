@@ -2,7 +2,7 @@
 
 plot_units_ranked <- function(data.ranked, data.units, year, graph.dir) {
 
-  data.units <- data.units[year==2005]
+  data.units <- data.units[data.units$year == year, ]
   data.units[, uID := as( uID, 'character')]
   data.ranked[, uID := as( uID, 'character')]
   unitRanks <- merge(data.ranked, data.units, by = 'uID')
