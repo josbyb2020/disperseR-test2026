@@ -93,10 +93,17 @@ plot_impact_weighted <- function(data.linked,
     } else if( link.to == 'grids'){
       # Use terra instead of raster for grid conversion
       crs_albers <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-      dataset_r <- terra::rast(data.linked[, .(x, y, get(metric))], type = "xyz", crs = crs_albers)
+      # Prepare xyz data with metric column
+      xyz_data <- data.linked[, c("x", "y", metric), with = FALSE]
+      setnames(xyz_data, metric, "z")
+      dataset_r <- terra::rast(xyz_data, type = "xyz", crs = crs_albers)
       dataset_poly <- terra::as.polygons(dataset_r, dissolve = FALSE, na.rm = TRUE)
       dataset_sf <- sf::st_as_sf(dataset_poly)
       sf::st_crs(dataset_sf) <- crs_albers
+      # Rename z column back to metric
+      if ("z" %in% names(dataset_sf)) {
+        setnames(dataset_sf, "z", metric)
+      }
       if (nrow(data.linked) > 0) {
         dataset_sf$ID <- data.linked$ID[1]
         if ("comb" %in% names(data.linked)) {
@@ -252,10 +259,17 @@ plot_impact_weighted <- function(data.linked,
     } else if( link.to == 'grids'){
       # Use terra instead of raster for grid conversion
       crs_albers <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-      dataset_r <- terra::rast(data.linked[, .(x, y, get(metric))], type = "xyz", crs = crs_albers)
+      # Prepare xyz data with metric column
+      xyz_data <- data.linked[, c("x", "y", metric), with = FALSE]
+      setnames(xyz_data, metric, "z")
+      dataset_r <- terra::rast(xyz_data, type = "xyz", crs = crs_albers)
       dataset_poly <- terra::as.polygons(dataset_r, dissolve = FALSE, na.rm = TRUE)
       dataset_sf <- sf::st_as_sf(dataset_poly)
       sf::st_crs(dataset_sf) <- crs_albers
+      # Rename z column back to metric
+      if ("z" %in% names(dataset_sf)) {
+        setnames(dataset_sf, "z", metric)
+      }
       if (nrow(data.linked) > 0) {
         dataset_sf$ID <- data.linked$ID[1]
         if ("comb" %in% names(data.linked)) {

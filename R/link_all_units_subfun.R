@@ -237,8 +237,10 @@ trim_pbl <- function(Min, rasterin) {
     
     pbl_layer <- subset_nc_date(hpbl_brick = rasterin, vardate = day)
     
+    # Extract values - terra::values returns matrix, extract first column
+    pbl_vals <- as.vector(terra::values(pbl_layer))
     M_dt[Pmonth %in% mon & Pyear %in% yer,
-         pbl := terra::values(pbl_layer)[M_dt[Pmonth %in% mon & Pyear %in% yer, rastercell]]]
+         pbl := pbl_vals[M_dt[Pmonth %in% mon & Pyear %in% yer, rastercell]]]
   }
   
   M_dt <- M_dt[height < pbl]
