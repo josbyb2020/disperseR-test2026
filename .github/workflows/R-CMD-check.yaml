@@ -34,10 +34,10 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, any::testthat
-          dependencies: "hard"
+          dependencies: NA
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           args: 'c("--no-manual", "--ignore-vignettes")'
           build_args: 'c("--no-build-vignettes")'
-          error-on: error
+          error-on: '"error"'
