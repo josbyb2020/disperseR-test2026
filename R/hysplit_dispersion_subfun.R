@@ -4,7 +4,7 @@
 #' @export read_listing_file
 read_listing_file <- function(file_path) {
   as.vector(
-    read.table(
+    utils::read.table(
       file = file_path,
       sep = "\n"
     )[, 1]
@@ -72,7 +72,7 @@ dispersion_read <- function(archive_folder) {
       dispersion <- as.data.frame(mat.or.vec(nr = 0, nc = 5))
       colnames(dispersion) <- c("particle_no", "lon", "lat", "height", "hour")
     }
-    disp <- read.csv(dispersion_file_list[i], header = FALSE)
+    disp <- utils::read.csv(dispersion_file_list[i], header = FALSE)
     colnames(disp) <-
       c("particle_no", "lon", "lat", "height")
     disp$hour <- i

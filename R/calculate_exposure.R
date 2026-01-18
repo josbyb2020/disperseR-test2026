@@ -265,7 +265,7 @@ calculate_exposure <- function(year.E,
     return(exposures)
   } else {
     if (return.monthly.data) {
-      out <- rbindlist(lapply(na.omit(monthly.filelist),
+      out <- rbindlist(lapply(stats::na.omit(monthly.filelist),
                               read.fst))
 
       if( link.to == 'zips')

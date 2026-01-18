@@ -88,7 +88,7 @@ plot_impact_single  <- function(data.linked,
   facility_loc <- data.table(x = long, y = lat)
 
   if (is.null(legend.lims)) {
-    legend.lims <- c(0, quantile(dataset_sf$metric, .95, na.rm = TRUE))
+    legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95, na.rm = TRUE))
   }
 
   ### graph parameters

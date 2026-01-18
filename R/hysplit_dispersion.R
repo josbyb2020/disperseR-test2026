@@ -349,7 +349,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
 
     # Write the met file availability to file
-    write.table(
+    utils::write.table(
       met_file_df,
       file = paste0(met_dir, "/", "met_file_list"),
       sep = ",",
@@ -390,7 +390,7 @@ hysplit_dispersion <- function(lat = 49.263,
       met_file_df[k, 2] <- as.character( file.exists(paste0(met_dir, "\\", met[k])))}
 
     # Write the met file availability to file
-    write.table(met_file_df,
+    utils::write.table(met_file_df,
       file = paste0(met_dir, "\\",
         "met_file_list"),
       sep = ",",
@@ -757,7 +757,7 @@ hysplit_dispersion <- function(lat = 49.263,
     for (i in 1:length(temp_file_list)) {
       temp_lines <- readLines(temp_file_list[i])
       temp_lines <- temp_lines[-(length(temp_lines))]
-      write.table(temp_lines,
+      utils::write.table(temp_lines,
         file = gsub("txt", "csv",
           temp_file_list[i]),
         col.names = FALSE,
@@ -828,7 +828,7 @@ hysplit_dispersion <- function(lat = 49.263,
           #   folder_name))
 
     if (any(c("mac", "unix") %in% disperseR::get_os())) {
-      write.table(
+      utils::write.table(
         disp_df,
         file = file.path(run_dir, #"/", #hysp_dir, "/",
           # folder_name,
@@ -838,7 +838,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
 
     if (disperseR::get_os() == "win") {
-      write.table(
+      utils::write.table(
         disp_df,
         file = file.path( run_dir, #hysp_dir, "/",
           # folder_name,

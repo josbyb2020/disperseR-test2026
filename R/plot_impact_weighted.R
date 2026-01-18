@@ -140,7 +140,7 @@ plot_impact_weighted <- function(data.linked,
     facility_loc = data.table(x = long, y = lat)
 
     if (is.null(legend.lims)) {
-      legend.lims <- c(0, quantile(dataset_sf$metric, .95))
+      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95))
     }
 
     ### graph parameters
@@ -305,7 +305,7 @@ plot_impact_weighted <- function(data.linked,
     facility_loc = data.table(x = long, y = lat)
 
     if (is.null(legend.lims)) {
-      legend.lims <- c(0, quantile(dataset_sf$metric, .95))
+      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95))
     }
 
     ### graph parameters

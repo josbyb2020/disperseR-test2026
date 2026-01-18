@@ -5,6 +5,7 @@
 #' exposure metric, aggregating results to ZIP code level.
 #'
 #' @importFrom magrittr %>%
+#' @import maps
 #' @name disperseR-package
 #' @aliases disperseR
 "_PACKAGE"
