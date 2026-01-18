@@ -28,6 +28,12 @@ start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeri
 
 \item{proc_dir}{Directory for temporary files (from create_dirs())}
 
+\item{hysp_dir}{Directory containing HYSPLIT output files (defaults to
+create_dirs()).}
+
+\item{meteo_dir}{Directory containing meteorological input files (defaults to
+create_dirs()).}
+
 \item{overwrite}{Overwrite existing output files? Default FALSE}
 
 \item{npart}{Number of air parcels tracked by HYSPLIT. Default 100}

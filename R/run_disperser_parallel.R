@@ -10,6 +10,10 @@
 #' @param pbl.height Monthly mean planetary boundary layer heights
 #' @param species Species type: 'so2' (default) or 'so4p' (particulate sulfate)
 #' @param proc_dir Directory for temporary files (from create_dirs())
+#' @param hysp_dir Directory containing HYSPLIT output files (defaults to
+#'   create_dirs()).
+#' @param meteo_dir Directory containing meteorological input files (defaults to
+#'   create_dirs()).
 #' @param overwrite Overwrite existing output files? Default FALSE
 #' @param npart Number of air parcels tracked by HYSPLIT. Default 100
 #' @param mc.cores Number of cores for parallel computation. Default detectCores().
@@ -312,4 +316,3 @@ run_fac <- function(x,
 
   return(out)
 }
-

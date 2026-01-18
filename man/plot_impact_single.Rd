@@ -28,9 +28,10 @@ plot_impact_single(
 
 \item{link.to}{spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::link_all_units()}
 
-\item{zcta.dataset}{ZIP code/ZCTA sptial dataset as imported by disperseR::get_data() or subset thereof. Required only if link.to = 'zips'.}
+\item{zcta.dataset}{ZIP code/ZCTA spatial dataset as imported by
+disperseR::get_data() or a subset. Required only if link.to = 'zips'.}
 
-\item{counties.}{US counties dataset as imported using USAboundaries::us_counties( ) or subset thereof. Required only if link.to = 'counties'.}
+\item{counties.}{County sf object used when link.to = 'counties'.}
 
 \item{map.month}{specific month to map in form YYYYMM if time.agg = 'month'. Can be created using disperseR::get_yearmon()}
 
@@ -45,6 +46,9 @@ plot_impact_single(
 \item{legend.name}{legend name string. Defaults to NULL, which creates a legend title of 'Aggregate HyADS Exposure'.}
 
 \item{graph.dir}{location to save output.}
+
+\item{zoom}{Logical. If TRUE, zoom to the data extent; if FALSE, show the
+full US extent.}
 
 \item{...}{modeling parameters passed to ggplot2::theme()}
 }

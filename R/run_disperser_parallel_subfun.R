@@ -1,4 +1,8 @@
-#' @export get_output_df
+#' Extract output from a model object
+#'
+#' @param model A `traj_model` or `disp_model` list.
+#' @return A data.frame containing model output, or `NA` if absent.
+#' @export
 
 #########################################################
 ################# get_output_df
@@ -22,7 +26,11 @@ get_output_df <- function(model) {
 #########################################################
 ################# dispersion_read
 
-#' @export dispersion_read
+#' Read dispersion CSV outputs from a run directory
+#'
+#' @param archive_folder Directory containing `GIS_part_###_ps.csv` files.
+#' @return A data.frame of particle positions with an `hour` column.
+#' @export
 dispersion_read <- function(archive_folder) {
   dispersion_file_list <-
     list.files(path = archive_folder,
@@ -53,7 +61,23 @@ dispersion_read <- function(archive_folder) {
 #########################################################
 ################# add_params
 
-#' @export add_params
+#' Add or update model parameters
+#'
+#' @param model A model object created by `create_disp_model()`.
+#' @param lat,lon,height Coordinates and release height.
+#' @param duration,run_period Run durations.
+#' @param start_day,start_hour Start date and hour.
+#' @param daily_hours Vector of daily start hours.
+#' @param direction Direction of run ("forward" or "backward").
+#' @param met_type Meteorology type (e.g., "reanalysis").
+#' @param vert_motion Vertical motion setting.
+#' @param model_height Maximum model height.
+#' @param traj_name Optional trajectory name.
+#' @param exec_dir Directory containing HYSPLIT executables.
+#' @param met_dir Directory containing meteorological files.
+#' @param binary_path Path to a specific HYSPLIT binary.
+#' @return Updated model object.
+#' @export
 add_params <- function(model,
   lat = NULL,
   lon = NULL,
@@ -140,7 +164,11 @@ add_params <- function(model,
 
 #########################################################
 ################# create_disp_model
-#' @export create_disp_model
+#' Create a dispersion model object
+#'
+#' @param name Optional model name.
+#' @return A list with class `disp_model`.
+#' @export
 # Create the 'disp_model' list object
 create_disp_model <- function(name = NULL) {
   # Create the 'disp_model' list object
@@ -174,7 +202,25 @@ create_disp_model <- function(name = NULL) {
 
 #########################################################
 ################# add_species
-#' @export add_species
+#' Add a species definition to a model
+#'
+#' @param model A model object created by `create_disp_model()`.
+#' @param name Species name (defaults to "species_1", "species_2", ...).
+#' @param pdiam Particle diameter.
+#' @param density Particle density.
+#' @param shape_factor Shape factor.
+#' @param ddep_vel Dry deposition velocity.
+#' @param ddep_mw Dry deposition molecular weight.
+#' @param ddep_a_ratio Dry deposition A ratio.
+#' @param ddep_d_ratio Dry deposition D ratio.
+#' @param ddep_hl_coeff Dry deposition Henry's law coefficient.
+#' @param wdep_hl_coeff Wet deposition Henry's law coefficient.
+#' @param wdep_in_cloud Wet deposition in-cloud coefficient.
+#' @param wdep_below_cloud Wet deposition below-cloud coefficient.
+#' @param rad_decay Radioactive decay.
+#' @param resuspension Resuspension factor.
+#' @return Updated model object.
+#' @export
 add_species <- function(model,
   name = NULL,
   pdiam = NULL,
@@ -286,7 +332,16 @@ add_species <- function(model,
 
 #########################################################
 ################# add_emissions
-#' @export add_emissions
+#' Add emissions settings to a model
+#'
+#' @param model A model object created by `create_disp_model()`.
+#' @param rate Emissions rate.
+#' @param duration Emissions duration.
+#' @param start_day Start day for emissions.
+#' @param start_hour Start hour for emissions.
+#' @param name Emissions name (defaults to "emissions_1", "emissions_2", ...).
+#' @return Updated model object.
+#' @export
 add_emissions <- function(model,
   rate = NULL,
   duration = NULL,
@@ -373,7 +428,20 @@ create_grid <- function(lat, lon, range, division) {
 
 #########################################################
 ################# add_grid
-#' @export add_grid
+#' Add a grid specification to a model
+#'
+#' @param model A `disp_model` or `traj_model` object.
+#' @param lat,lon Center coordinates for the grid.
+#' @param range Range around center (lat, lon).
+#' @param division Grid spacing (lat, lon).
+#' @param start_day,start_hour,end_day,end_hour Grid timing fields.
+#' @param duration Duration for grid output.
+#' @param heights Output heights.
+#' @param samp_type Sampling type.
+#' @param samp_interval Sampling interval in hours.
+#' @param name Grid name (defaults to "grid_1", "grid_2", ...).
+#' @return Updated model object.
+#' @export
 add_grid <- function(model,
   lat = NULL,
   lon = NULL,

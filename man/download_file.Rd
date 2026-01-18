@@ -2,58 +2,21 @@
 % Please edit documentation in R/get_data.R
 \name{download_file}
 \alias{download_file}
-\title{Download and prepare data for disperseR analysis}
+\title{Download a file with validation}
 \usage{
 download_file(url, file, dir)
 }
 \arguments{
-\item{data}{Character. Type of data to retrieve. Options: "all", "crosswalk",
-"zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset"}
+\item{url}{URL to download.}
 
-\item{start.year}{Character. Starting year for metfiles download (format: "YYYY").}
+\item{file}{Destination file path.}
 
-\item{end.year}{Character. Ending year for metfiles download (format: "YYYY").}
-
-\item{start.month}{Character. Starting month for metfiles download (format: "MM").}
-
-\item{end.month}{Character. Ending month for metfiles download (format: "MM").}
+\item{dir}{Directory for unzip output (if applicable).}
 }
 \value{
-Depends on data type:
-  \itemize{
-    \item crosswalk: Returns crosswalk data.table
-    \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
-    \item pblheight: Returns SpatRaster with planetary boundary layer heights
-    \item metfiles: Downloads files, returns NULL invisibly
-    \item all: Downloads all data, assigns to global environment
-  }
+Invisibly returns TRUE on success.
 }
 \description{
-Downloads and prepares data required for disperseR analysis.
-This includes crosswalk data, ZCTA shapefiles, planetary boundary layer 
-height data, and meteorological files.
-}
-\details{
-This function uses modern spatial packages (sf, terra) instead of the 
-retired rgdal/rgeos packages. Return types are sf objects for vector 
-data and terra SpatRaster for raster data.
-}
-\examples{
-\dontrun{
-# Create directories first
-create_dirs(location = tempdir())
-
-# Get all data for a specific time period
-get_data(
-  data = "all",
-  start.year = "2005",
-  start.month = "01",
-  end.year = "2005",
-  end.month = "03"
-)
-
-# Get only crosswalk data
-crosswalk <- get_data(data = "crosswalk")
-}
-
+Downloads a file and checks that it exists and is non-empty.
+Zip files are unzipped to `dir`.
 }

@@ -1,7 +1,8 @@
-#' Read a `listing` file
-#' @param file_path The path to the \code{listing} file.
-#' @noRd
-#' @export read_listing_file
+#' Read a HYSPLIT listing file
+#'
+#' @param file_path Path to the `listing` file.
+#' @return Character vector of listing lines.
+#' @export
 read_listing_file <- function(file_path) {
   as.vector(
     utils::read.table(
@@ -11,10 +12,11 @@ read_listing_file <- function(file_path) {
   )
 }
 
-#' Create default `SETUP.CFG` and `ASCDATA.CFG` files
-#' @param dir The directory to which the files should be written.
-#' @noRd
-#' @export hysplit_config_init
+#' Write default HYSPLIT configuration files
+#'
+#' @param dir Directory to write `SETUP.CFG` and `ASCDATA.CFG`.
+#' @return NULL. Files are written to disk.
+#' @export
 hysplit_config_init <- function(dir) {
   # Default `SETUP.CFG` configuration file
   cat(
@@ -45,7 +47,10 @@ hysplit_config_init <- function(dir) {
   )
 }
 
-#' @export get_os
+#' Detect the operating system
+#'
+#' @return One of "win", "mac", or "unix".
+#' @export
 get_os <- function() {
   if (.Platform$OS.type == "windows") {
     return("win")
@@ -58,7 +63,8 @@ get_os <- function() {
   }
 }
 
-#' @export dispersion_read
+#' @keywords internal
+#' @noRd
 dispersion_read <- function(archive_folder) {
   dispersion_file_list <-
     list.files(
@@ -81,4 +87,3 @@ dispersion_read <- function(archive_folder) {
   # Return the data frame
   return(dispersion)
 }
-

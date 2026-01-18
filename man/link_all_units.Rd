@@ -47,6 +47,12 @@ Latitude (numeric), Longitude (numeric), year (integer)}
 
 \item{counties.}{County sf object (required if link.to='counties')}
 
+\item{hysp_dir}{Directory containing HYSPLIT output files (defaults to
+create_dirs()).}
+
+\item{ziplink_dir}{Output directory for linked files (defaults to
+create_dirs()).}
+
 \item{duration.run.hours}{Duration in hours (default 240 = 10 days)}
 
 \item{res.link}{Grid resolution in meters (default 12000)}

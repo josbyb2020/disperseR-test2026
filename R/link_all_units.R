@@ -18,6 +18,10 @@
 #' @param pbl.height Monthly boundary layer heights (required if pbl_trim=TRUE)
 #' @param crosswalk. Crosswalk data (required if link.to='zips')
 #' @param counties. County sf object (required if link.to='counties')
+#' @param hysp_dir Directory containing HYSPLIT output files (defaults to
+#'   create_dirs()).
+#' @param ziplink_dir Output directory for linked files (defaults to
+#'   create_dirs()).
 #' @param duration.run.hours Duration in hours (default 240 = 10 days)
 #' @param res.link Grid resolution in meters (default 12000)
 #' @param overwrite Overwrite existing files? Default FALSE

@@ -10,9 +10,10 @@
 #'
 #' @param link.to spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::link_all_units()
 #'
-#' @param zcta.dataset ZIP code/ZCTA sptial dataset as imported by disperseR::get_data() or subset thereof. Required only if link.to = 'zips'.
+#' @param zcta.dataset ZIP code/ZCTA spatial dataset as imported by
+#'   disperseR::get_data() or a subset. Required only if link.to = 'zips'.
 #'
-#' @param counties. US counties dataset as imported using USAboundaries::us_counties( ) or subset thereof. Required only if link.to = 'counties'.
+#' @param counties. County sf object used when link.to = 'counties'.
 #'
 #' @param metric plotting metric in `data.linked` input. Defaults to 'hyads', the default output of disperseR::calculate_exposure().
 #'
@@ -25,6 +26,9 @@
 #' @param map.month specific month to map in form YYYYMM if time.agg = 'month'. Can be created using disperseR::get_yearmon()
 #'
 #' @param map.unitID specific unit to map as string. Must match 'ID' column in data.units.
+#'
+#' @param zoom Logical. If TRUE, zoom to the data extent; if FALSE, show the
+#'   full US extent.
 #'
 #' @param graph.dir location to save output.
 #'
@@ -193,5 +197,4 @@ plot_impact_single  <- function(data.linked,
   return(gg)
 
 }
-
 

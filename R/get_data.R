@@ -1,54 +1,14 @@
-#' Download and prepare data for disperseR analysis
+#' Download a file with validation
 #'
-#' @description Downloads and prepares data required for disperseR analysis.
-#' This includes crosswalk data, ZCTA shapefiles, planetary boundary layer 
-#' height data, and meteorological files.
+#' @description Downloads a file and checks that it exists and is non-empty.
+#' Zip files are unzipped to `dir`.
 #'
-#' @param data Character. Type of data to retrieve. Options: "all", "crosswalk",
-#'   "zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset"
-#' @param start.year Character. Starting year for metfiles download (format: "YYYY").
-#' @param end.year Character. Ending year for metfiles download (format: "YYYY").
-#' @param start.month Character. Starting month for metfiles download (format: "MM").
-#' @param end.month Character. Ending month for metfiles download (format: "MM").
+#' @param url URL to download.
+#' @param file Destination file path.
+#' @param dir Directory for unzip output (if applicable).
+#' @return Invisibly returns TRUE on success.
+#' @export
 #'
-#' @return Depends on data type:
-#'   \itemize{
-#'     \item crosswalk: Returns crosswalk data.table
-#'     \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
-#'     \item pblheight: Returns SpatRaster with planetary boundary layer heights
-#'     \item metfiles: Downloads files, returns NULL invisibly
-#'     \item all: Downloads all data, assigns to global environment
-#'   }
-#'
-#' @details
-#' This function uses modern spatial packages (sf, terra) instead of the 
-#' retired rgdal/rgeos packages. Return types are sf objects for vector 
-#' data and terra SpatRaster for raster data.
-#'
-#' @examples
-#' \dontrun{
-#' # Create directories first
-#' create_dirs(location = tempdir())
-#'
-#' # Get all data for a specific time period
-#' get_data(
-#'   data = "all",
-#'   start.year = "2005",
-#'   start.month = "01",
-#'   end.year = "2005",
-#'   end.month = "03"
-#' )
-#'
-#' # Get only crosswalk data
-#' crosswalk <- get_data(data = "crosswalk")
-#' }
-#'
-#' @export get_data
-#' @export download_file
-#' @importFrom sf st_read st_transform st_crs
-#' @importFrom terra rast crs
-
-
 # Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {
   # Capture warnings but continue execution
@@ -102,7 +62,54 @@ download_file <- function(url, file, dir) {
   return(invisible(TRUE))
 }
 
-
+#' Download and prepare data for disperseR analysis
+#'
+#' @description Downloads and prepares data required for disperseR analysis.
+#' This includes crosswalk data, ZCTA shapefiles, planetary boundary layer
+#' height data, and meteorological files.
+#'
+#' @param data Character. Type of data to retrieve. Options: "all", "crosswalk",
+#'   "zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset".
+#' @param start.year Character. Starting year for metfiles download (format: "YYYY").
+#' @param end.year Character. Ending year for metfiles download (format: "YYYY").
+#' @param start.month Character. Starting month for metfiles download (format: "MM").
+#' @param end.month Character. Ending month for metfiles download (format: "MM").
+#'
+#' @return Depends on data type:
+#'   \itemize{
+#'     \item crosswalk: Returns crosswalk data.table
+#'     \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
+#'     \item pblheight: Returns SpatRaster with planetary boundary layer heights
+#'     \item metfiles: Downloads files, returns NULL invisibly
+#'     \item all: Downloads all data, assigns to global environment
+#'   }
+#'
+#' @details
+#' This function uses modern spatial packages (sf, terra) instead of the
+#' retired rgdal/rgeos packages. Return types are sf objects for vector
+#' data and terra SpatRaster for raster data.
+#'
+#' @examples
+#' \dontrun{
+#' # Create directories first
+#' create_dirs(location = tempdir())
+#'
+#' # Get all data for a specific time period
+#' get_data(
+#'   data = "all",
+#'   start.year = "2005",
+#'   start.month = "01",
+#'   end.year = "2005",
+#'   end.month = "03"
+#' )
+#'
+#' # Get only crosswalk data
+#' crosswalk <- get_data(data = "crosswalk")
+#' }
+#'
+#' @export get_data
+#' @importFrom sf st_read st_transform st_crs
+#' @importFrom terra rast crs
 get_data <- function(data,
                      start.year = NULL,
                      start.month = NULL,

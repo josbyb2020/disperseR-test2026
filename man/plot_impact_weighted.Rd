@@ -28,9 +28,10 @@ plot_impact_weighted(
 
 \item{link.to}{spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::calculate_exposure()}
 
-\item{zcta.dataset}{ZIP code/ZCTA sptial dataset as imported by disperseR::get_data() or subset thereof. Required only if link.to = 'zips'.}
+\item{zcta.dataset}{ZIP code/ZCTA spatial dataset as imported by
+disperseR::get_data() or a subset. Required only if link.to = 'zips'.}
 
-\item{counties.}{US counties dataset as imported using USAboundaries::us_counties( ) or subset thereof. Required only if link.to = 'counties'.}
+\item{counties.}{County sf object used when link.to = 'counties'.}
 
 \item{metric}{plotting metric in `data.linked` input. Defaults to 'hyads', the default output of disperseR::calculate_exposure().}
 
@@ -45,6 +46,9 @@ plot_impact_weighted(
 \item{map.month}{specific month to map in form YYYYMM if time.agg = 'month'. Can be created using disperseR::get_yearmon()}
 
 \item{graph.dir}{location to save output.}
+
+\item{zoom}{Logical. If TRUE, zoom to the data extent; if FALSE, show the
+full US extent.}
 
 \item{...}{modeling parameters passed to ggplot2::theme()}
 }
