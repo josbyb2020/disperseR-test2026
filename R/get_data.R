@@ -75,13 +75,14 @@ download_file <- function(url, file, dir) {
 #' @param start.month Character. Starting month for metfiles download (format: "MM").
 #' @param end.month Character. Ending month for metfiles download (format: "MM").
 #'
-#' @return Depends on data type:
+#' @return Depends on data type (results are also cached for use by other
+#'   disperseR functions):
 #'   \itemize{
 #'     \item crosswalk: Returns crosswalk data.table
 #'     \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
 #'     \item pblheight: Returns SpatRaster with planetary boundary layer heights
 #'     \item metfiles: Downloads files, returns NULL invisibly
-#'     \item all: Downloads all data, assigns to global environment
+#'     \item all: Downloads all data, caches results, and returns a named list
 #'   }
 #'
 #' @details
@@ -125,12 +126,12 @@ get_data <- function(data,
   # Standard projection for disperseR (North American Albers Equal Area Conic)
   p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
 
-  # Validate global directory variables for data types that require them
+  # Validate cached directory variables for data types that require them
   dirs_needed <- c("all", "zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset")
   if (data %in% dirs_needed) {
-    zcta_dir <- get0("zcta_dir", envir = .GlobalEnv, ifnotfound = NULL)
-    hpbl_dir <- get0("hpbl_dir", envir = .GlobalEnv, ifnotfound = NULL)
-    meteo_dir <- get0("meteo_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    zcta_dir <- .disperseR_cache_get("zcta_dir")
+    hpbl_dir <- .disperseR_cache_get("hpbl_dir")
+    meteo_dir <- .disperseR_cache_get("meteo_dir")
     
     if (data %in% c("all", "zctashapefile", "zctashapefileSF", "zcta_dataset")) {
       if (is.null(zcta_dir) || !nzchar(zcta_dir)) {
@@ -157,20 +158,20 @@ get_data <- function(data,
     # --- Crosswalk ---
     message("Loading crosswalk data from disperseR...")
     crosswalk <- disperseR::crosswalk
-    assign("crosswalk", crosswalk, envir = .GlobalEnv)
-    message("  Assigned to 'crosswalk' variable")
+    .disperseR_cache_set("crosswalk", crosswalk)
+    message("  Cached as 'crosswalk'")
 
     # --- PP.units.monthly1995_2017 ---
     message("Loading PP.units.monthly1995_2017 data from disperseR...")
     PP.units.monthly1995_2017 <- disperseR::PP.units.monthly1995_2017
-    assign("PP.units.monthly1995_2017", PP.units.monthly1995_2017, envir = .GlobalEnv)
-    message("  Assigned to 'PP.units.monthly1995_2017' variable")
+    .disperseR_cache_set("PP.units.monthly1995_2017", PP.units.monthly1995_2017)
+    message("  Cached as 'PP.units.monthly1995_2017'")
 
     # --- Zip code coordinates ---
     message("Loading zipcodecoordinate data from disperseR...")
     zipcodecoordinate <- disperseR::zipcodecoordinate
-    assign("zipcodecoordinate", zipcodecoordinate, envir = .GlobalEnv)
-    message("  Assigned to 'zipcodecoordinate' variable")
+    .disperseR_cache_set("zipcodecoordinate", zipcodecoordinate)
+    message("  Cached as 'zipcodecoordinate'")
 
     # --- ZCTA shapefile ---
     message("Downloading ZCTA shapefile...")
@@ -208,8 +209,8 @@ get_data <- function(data,
     zcta <- sf::st_read(zcta_shp, quiet = TRUE)
     zcta_trans <- sf::st_transform(zcta, crs = p4s)
     message("  Preprocessing complete")
-    assign("zcta", zcta_trans, envir = .GlobalEnv)
-    message("  Assigned to 'zcta' variable")
+    .disperseR_cache_set("zcta", zcta_trans)
+    message("  Cached as 'zcta'")
 
     # --- Planetary boundary layer height ---
     message("Downloading planetary boundary layer data...")
@@ -240,8 +241,8 @@ get_data <- function(data,
     # Set CRS to fix dataset error
     terra::crs(hpbl_rasterin) <- "+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50"
     message("  Preprocessing complete")
-    assign("pblheight", hpbl_rasterin, envir = .GlobalEnv)
-    message("  Assigned to 'pblheight' variable")
+    .disperseR_cache_set("pblheight", hpbl_rasterin)
+    message("  Cached as 'pblheight'")
 
     # --- Meteorological files ---
     message("Downloading meteorological files...")
@@ -296,10 +297,17 @@ get_data <- function(data,
       all = FALSE
     )
     message("  Preprocessing complete")
-    assign("zcta_dataset", zcta, envir = .GlobalEnv)
-    message("  Assigned to 'zcta_dataset' variable")
+    .disperseR_cache_set("zcta_dataset", zcta)
+    message("  Cached as 'zcta_dataset'")
 
-    return(invisible(NULL))
+    return(invisible(list(
+      crosswalk = crosswalk,
+      PP.units.monthly1995_2017 = PP.units.monthly1995_2017,
+      zipcodecoordinate = zipcodecoordinate,
+      zcta = zcta_trans,
+      pblheight = hpbl_rasterin,
+      zcta_dataset = zcta
+    )))
   }
 
   # ==========================================================================
@@ -310,6 +318,7 @@ get_data <- function(data,
     message("Loading crosswalk data from disperseR...")
     crosswalk <- disperseR::crosswalk
     message("  Crosswalk data loaded")
+    .disperseR_cache_set("crosswalk", crosswalk)
     return(crosswalk)
   }
 
@@ -408,6 +417,7 @@ get_data <- function(data,
       all = FALSE
     )
     message("Preprocessing complete")
+    .disperseR_cache_set("zcta_dataset", zcta)
     return(zcta)
   }
 
@@ -431,6 +441,7 @@ get_data <- function(data,
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
     zcta_trans <- sf::st_transform(zcta, crs = p4s)
     message("Preprocessing complete")
+    .disperseR_cache_set("zcta", zcta_trans)
     return(zcta_trans)
   }
 
@@ -449,6 +460,7 @@ get_data <- function(data,
     hpbl_rasterin <- terra::rast(file, subds = "hpbl")
     terra::crs(hpbl_rasterin) <- "+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50"
     message("Preprocessing complete")
+    .disperseR_cache_set("pblheight", hpbl_rasterin)
     return(hpbl_rasterin)
   }
 }

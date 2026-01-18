@@ -42,12 +42,12 @@ run_disperser_parallel <- function(input.refs = NULL,
     stop("proc_dir must be specified")
   }
 
-  # Resolve directory paths (create_dirs() stores these in the caller's .GlobalEnv)
+  # Resolve directory paths from package cache (set by create_dirs()).
   if (is.null(hysp_dir)) {
-    hysp_dir <- get0("hysp_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    hysp_dir <- .disperseR_cache_get("hysp_dir")
   }
   if (is.null(meteo_dir)) {
-    meteo_dir <- get0("meteo_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    meteo_dir <- .disperseR_cache_get("meteo_dir")
   }
   if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
     stop(

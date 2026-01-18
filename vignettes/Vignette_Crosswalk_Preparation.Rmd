@@ -8,7 +8,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = FALSE,
+  purl = FALSE
+)
 ```
 
 In this vignette, we show how we prepared the crosswalk dataset that is attached to the `hyspdisp` package. In case you want to use a different crosswalk you can follow some of these preprocessing steps. 
@@ -33,7 +37,7 @@ Then, open it.
 ```{r,  eval = FALSE}
 filename<- file.path(main_dir, "crosswalk.xlsx")
 if(!file.exists(filename)){
-  download.file("http://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx", filename)
+  download.file("https://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx", filename)
 }
 crosswalk <- readxl::read_excel(filename, skip = 0)
 ```
@@ -46,7 +50,7 @@ crosswalk <- crosswalk %>%
     CITY = PO_NAME)
 ```
 
-We use the 2017 census data packaged by [American Fact Finder](https://factfinder.census.gov/bkmk/table/1.0/en/ACS/17_5YR/B01003/0100000US.86000).
+We use 2017 census data from [data.census.gov](https://data.census.gov) (ACS 2017 5-year table B01003).
 
 We put the downloaded csv file in our main directory that has been specified in the `createdirs()` function and read it. We are also cleaning a the column names a little bit. 
 
@@ -83,5 +87,3 @@ crosswalk <- data.table::data.table(crosswalk)
 ```
 
 Now the crosswalk is ready to use. 
-
-

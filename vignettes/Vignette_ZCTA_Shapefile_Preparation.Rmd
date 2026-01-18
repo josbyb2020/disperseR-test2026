@@ -8,7 +8,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = FALSE,
+  purl = FALSE
+)
 ```
 
 In this vignette, we show how we prepared the ZCTA shape data that can be downloaded using the `get_data()` function specifying the `data = "zctashapefile"`. In case you want to use different files you can follow some of these preprocessing steps. 
@@ -27,7 +31,7 @@ In case you have not yet created your project folder use the following command.
 disperseR::create_dirs()
 ```
 
-We use use ZCTA shapefiles from the US census website [US census website](http://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_zcta510_500k.zip). It is important to note that this website sometimes fails and the download should be postponed. 
+We use use ZCTA shapefiles from the US census website [US census website](https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_zcta510_500k.zip). It is important to note that this website sometimes fails and the download should be postponed. 
 
 ```{r, eval = FALSE}
 file <- file.path(zcta_dir, 'cb_2017_us_zcta510_500k.zip')

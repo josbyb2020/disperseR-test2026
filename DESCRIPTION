@@ -11,15 +11,11 @@ Author: Lucas Henneman [aut, cre],
     Christine Choirat [aut],
     Maja Garbulinska [aut]
 Maintainer: Lucas Henneman <lhenneman@gmail.com>
-Description: disperseR is a restructured version of the hyspdisp package. 
-    It is an R package that runs HYSPLIT many times and calculates the HYSPLIT 
-    Average Dispersion (or HyADS) exposure metric. The results can then be 
-    aggregated to ZIP code level to create national estimates of exposure from 
-    various sources. For example, plumes from several power plants can be tracked 
-    for many days and cumulative impacts estimated. The package uses code borrowed 
-    from the SplitR package in a slightly modified version.
-    Version 0.2.0 has been updated to remove dependencies on retired packages 
-    (rgeos, rgdal, maptools) and uses modern spatial libraries (sf, terra).
+Description: Runs HYSPLIT many times and calculates the HYSPLIT Average
+    Dispersion (HyADS) exposure metric. Results can be aggregated to ZIP code
+    level to create national estimates of exposure from various sources. The
+    package uses code adapted from the SplitR package and uses modern spatial
+    libraries (sf, terra).
 URL: https://github.com/lhenneman/disperseR
 BugReports: https://github.com/lhenneman/disperseR/issues
 License: GPL-3
@@ -51,10 +47,7 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     rnaturalearth,
-    downloader,
-    SplitR
-Remotes:
-    rich-iannone/SplitR
+    downloader
 VignetteBuilder: knitr
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3

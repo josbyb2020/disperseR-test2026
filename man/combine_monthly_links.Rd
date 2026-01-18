@@ -23,10 +23,10 @@ or 'grids' that should match original input to `disperseR::link_all_units()`}
 `paste0('hyads_unwgted_', link.to, '.RData')`}
 
 \item{ziplink_dir}{Directory containing linked files from link_all_units().
-If NULL, uses the global variable set by create_dirs().}
+If NULL, uses the directory cached by create_dirs().}
 
 \item{rdata_dir}{Directory to save output RData file.
-If NULL, uses the global variable set by create_dirs().}
+If NULL, uses the directory cached by create_dirs().}
 }
 \value{
 Saves an .RData file to rdata_dir with filename `filename`.

@@ -24,7 +24,9 @@ hysplit_dispersion(
   return_disp_df = TRUE,
   write_disp_CSV = TRUE,
   disp_name = NULL,
-  run_dir
+  run_dir,
+  binary_path = NULL,
+  parhplot_path = NULL
 )
 }
 \arguments{
@@ -68,6 +70,12 @@ hysplit_dispersion(
 
 \item{run_dir}{Character. Working directory for HYSPLIT output. Required.
 Supports ~ expansion. Created if it doesn't exist.}
+
+\item{binary_path}{Character. Path to the HYSPLIT hycs_std binary. If NULL,
+uses the binary bundled with SplitR when available.}
+
+\item{parhplot_path}{Character. Path to the HYSPLIT parhplot binary. If NULL,
+uses the binary bundled with SplitR when available.}
 }
 \value{
 If return_disp_df is TRUE, returns a data frame with dispersion results.
@@ -79,8 +87,9 @@ modified version of SplitR's dispersion function, adapted for disperseR
 workflows.
 }
 \details{
-Requires the SplitR package for HYSPLIT binaries. Install with:
-`remotes::install_github("rich-iannone/SplitR")`
+HYSPLIT binaries are required for dispersion runs. If the SplitR package is
+installed, disperseR will use its bundled binaries; otherwise provide
+`binary_path` and `parhplot_path`.
 
 Meteorology files are downloaded automatically if not present in met_dir.
 Reanalysis files are ~120 MB each.

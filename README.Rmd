@@ -28,18 +28,16 @@ current R.
 
 ## Installation
 
-Not on CRAN. Install from GitHub:
+Not on CRAN yet. Install from GitHub (CRAN instructions will be added once released):
 
 ```{r, eval = FALSE}
 install.packages("remotes")
 remotes::install_github("josbyb2020/disperseR-test2026")
 ```
 
-If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1 meteorology:
-
-```{r, eval = FALSE}
-remotes::install_github("rich-iannone/SplitR")
-```
+If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1 meteorology,
+install SplitR if it is available on CRAN. If not, provide your own HYSPLIT
+binaries via `binary_path` and `parhplot_path`.
 
 Windows users who build vignettes will need Rtools.
 
@@ -48,7 +46,7 @@ Windows users who build vignettes will need Rtools.
 ```{r, eval = FALSE}
 library(disperseR)
 
-create_dirs(location = "~/disperseR_project")
+dirs <- create_dirs(location = "~/disperseR_project")
 
 get_data(
   data = "all",
@@ -86,8 +84,9 @@ Use `get_data()` to download most inputs automatically.
 
 - `create_dirs()` defaults to Desktop when available and falls back to the home
   directory. Pass an explicit path on Windows or network drives.
-- HYSPLIT binaries are provided by SplitR for macOS, Linux, and Windows; you can
-  point to a custom binary via `binary_path` or `exec_dir`.
+- HYSPLIT binaries are required for dispersion runs. If SplitR is installed,
+  disperseR will use its bundled binaries; otherwise provide `binary_path` and
+  `parhplot_path` to `hysplit_dispersion()`.
 - Windows uses socket clusters (`parLapply`). Set `mc.cores` to control parallelism.
 
 ## Documentation

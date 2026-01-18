@@ -12,7 +12,8 @@ Desktop when available, otherwise the home directory. Creates the path
 if it does not exist.}
 }
 \value{
-Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+A named list of directory paths. The paths are also stored in an
+internal package cache for use by other functions.
 }
 \description{
 `create_dirs()` takes 0 or the following argument `location`

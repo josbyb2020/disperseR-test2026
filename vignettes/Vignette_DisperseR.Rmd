@@ -11,7 +11,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = FALSE,
+  purl = FALSE
 )
 ```
 
@@ -29,19 +30,17 @@ library(sf)
 library(ggplot2)
 ```
 
-**For HYSPLIT dispersion runs**, install the SplitR package (provides HYSPLIT binaries):
-
-```{r, eval = FALSE}
-remotes::install_github("rich-iannone/SplitR")
-```
+**For HYSPLIT dispersion runs**, HYSPLIT binaries are required. If SplitR is
+installed, disperseR will use its bundled binaries; otherwise provide
+`binary_path` and `parhplot_path` to `hysplit_dispersion()`.
 
 ## Directory Structure
 
-`create_dirs()` sets up the project folder structure and defines global path variables.
-Run this at the start of each session:
+`create_dirs()` sets up the project folder structure and caches the paths for
+use by disperseR functions. Run this at the start of each session:
  
 ```{r}
-disperseR::create_dirs(location = "~/disperseR_project")
+dirs <- disperseR::create_dirs(location = "~/disperseR_project")
 ```
 
 This creates:

@@ -31,9 +31,9 @@ utils::globalVariables(c(
   # Used in formula/subset contexts
   "date", "i",
   
-  # .GlobalEnv assignments from create_dirs
+  # Directory cache entries set by create_dirs()
   "main_dir", "input_dir", "output_dir", "process_dir", "ziplink_dir",
   "hysp_dir", "meteo_dir", "zcta_dir", "raster_dir", "graph_dir",
   "exp_dir", "rank_dir", "crosswalk_dir", "census_dir", "proc_dir",
   "hpbl_dir", "rdata_dir"
-))
+), package = "disperseR")

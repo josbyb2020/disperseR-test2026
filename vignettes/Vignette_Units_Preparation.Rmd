@@ -10,7 +10,9 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE,
+  purl = FALSE
 )
 ```
 
@@ -33,22 +35,18 @@ disperseR::create_dirs()
 
 First, we need to download two files: Power Plant Emissions Data and 
 
-Power [Plant Emissions Data](https://doi.org/10.7910/DVN/M3D2NR) and [Emission Data from The US Environmental Protection Agency](ftp://newftp.epa.gov/air/emismod/2014/v2/2014fd/emissions/). 
+Power [Plant Emissions Data](https://doi.org/10.7910/DVN/M3D2NR) and emission data from the [US Environmental Protection Agency (NEI 2014)](https://www.epa.gov/air-emissions-inventories/2014-national-emissions-inventory-nei-data). 
 
 We start by downloading the first datasets. We will download it to the process folder, unzip it and read the csv: "2014fd_cb6_14j/inputs/ptegu/ptegu_2014NEIv2_POINT_20171103_final_21dec2017_nf_v2.csv"
 
 ### Download and read in data
 
 ```{r, eval = FALSE}
-url <-
-  "ftp://newftp.epa.gov/air/emismod/2014/v2/2014fd/emissions/2014fd_inputs_point.zip"
 directory <- proc_dir
 file <- file.path(directory, '2014fd_inputs_point.zip')
   
-if (!file.exists(file)) {
-# if file does not exist, download it
-  download.file(url = url, destfile = file)
-}
+# Download '2014fd_inputs_point.zip' from the EPA NEI 2014 portal
+# and save it to proc_dir before continuing.
 unzip(file, exdir = directory) # unzip the file
   
 file <- file.path( directory, "2014fd_cb6_14j", "inputs", "ptegu",
@@ -166,7 +164,7 @@ ampd <- ampd[, .(
 names(ampd)
 ```
 
-Many of the units in the provided datasets do not have stack height data. In these cases, it is suggested in [Henneman et al. (2019)](https://www.sciencedirect.com/science/article/pii/S1352231019300731) to fill with the average stack height of all units. We do that and create a variable that flags if the height was imputed. 
+Many of the units in the provided datasets do not have stack height data. In these cases, it is suggested in [Henneman et al. (2019)](https://doi.org/10.1016/j.atmosenv.2019.01.043) to fill with the average stack height of all units. We do that and create a variable that flags if the height was imputed. 
 
 ```{r, eval = FALSE}
 # create flag if Height is missing
@@ -291,5 +289,3 @@ save(units, file = "units.Rda")
 ```
 
 Now the units data should be in your environment. You can go ahead and use it. We have attached it to the disperseR package. 
-
-

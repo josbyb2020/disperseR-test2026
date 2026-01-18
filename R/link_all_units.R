@@ -91,12 +91,12 @@ link_all_units <- function(units.run,
     )
   }
 
-  # Resolve directory paths (create_dirs() stores these in the caller's .GlobalEnv).
+  # Resolve directory paths from package cache (set by create_dirs()).
   if (is.null(hysp_dir)) {
-    hysp_dir <- get0("hysp_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    hysp_dir <- .disperseR_cache_get("hysp_dir")
   }
   if (is.null(ziplink_dir)) {
-    ziplink_dir <- get0("ziplink_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    ziplink_dir <- .disperseR_cache_get("ziplink_dir")
   }
   if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
     stop("hysp_dir is not set. Run create_dirs() first or pass hysp_dir explicitly.", call. = FALSE)

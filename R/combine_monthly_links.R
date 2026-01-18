@@ -10,9 +10,9 @@
 #' @param filename Output filename. Defaults to 
 #'   `paste0('hyads_unwgted_', link.to, '.RData')`
 #' @param ziplink_dir Directory containing linked files from link_all_units().
-#'   If NULL, uses the global variable set by create_dirs().
+#'   If NULL, uses the directory cached by create_dirs().
 #' @param rdata_dir Directory to save output RData file.
-#'   If NULL, uses the global variable set by create_dirs().
+#'   If NULL, uses the directory cached by create_dirs().
 #'
 #' @return Saves an .RData file to rdata_dir with filename `filename`.
 #'   Returns a list of data.tables (one per month).
@@ -28,11 +28,11 @@ combine_monthly_links <- function(month_YYYYMMs,
                                    ziplink_dir = NULL,
                                    rdata_dir = NULL) {
 
- # Resolve directory paths from .GlobalEnv if not provided
+  # Resolve directory paths from package cache if not provided
   if (is.null(ziplink_dir)) {
-    ziplink_dir <- get0("ziplink_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    ziplink_dir <- .disperseR_cache_get("ziplink_dir")
     if (is.null(ziplink_dir)) {
-      stop("ziplink_dir not specified and not found in global environment.\n",
+      stop("ziplink_dir not specified and not found in cache.\n",
            "Either pass ziplink_dir explicitly or run create_dirs() first.",
            call. = FALSE)
     }
@@ -42,9 +42,9 @@ combine_monthly_links <- function(month_YYYYMMs,
   }
   
   if (is.null(rdata_dir)) {
-    rdata_dir <- get0("rdata_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    rdata_dir <- .disperseR_cache_get("rdata_dir")
     if (is.null(rdata_dir)) {
-      stop("rdata_dir not specified and not found in global environment.\n",
+      stop("rdata_dir not specified and not found in cache.\n",
            "Either pass rdata_dir explicitly or run create_dirs() first.",
            call. = FALSE)
     }

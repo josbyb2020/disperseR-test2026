@@ -25,13 +25,18 @@
 #' @param disp_name Character. Optional name prefix for output files.
 #' @param run_dir Character. Working directory for HYSPLIT output. Required.
 #'   Supports ~ expansion. Created if it doesn't exist.
+#' @param binary_path Character. Path to the HYSPLIT hycs_std binary. If NULL,
+#'   uses the binary bundled with SplitR when available.
+#' @param parhplot_path Character. Path to the HYSPLIT parhplot binary. If NULL,
+#'   uses the binary bundled with SplitR when available.
 #'
 #' @return If return_disp_df is TRUE, returns a data frame with dispersion results.
 #'   Otherwise returns invisibly.
 #'
 #' @details
-#' Requires the SplitR package for HYSPLIT binaries. Install with:
-#' `remotes::install_github("rich-iannone/SplitR")`
+#' HYSPLIT binaries are required for dispersion runs. If the SplitR package is
+#' installed, disperseR will use its bundled binaries; otherwise provide
+#' `binary_path` and `parhplot_path`.
 #'
 #' Meteorology files are downloaded automatically if not present in met_dir.
 #' Reanalysis files are ~120 MB each.
@@ -72,15 +77,9 @@ hysplit_dispersion <- function(lat = 49.263,
   return_disp_df = TRUE,
   write_disp_CSV = TRUE,
   disp_name = NULL,
-  run_dir) {
-
-  if (!requireNamespace("SplitR", quietly = TRUE)) {
-    stop(
-      "HYSPLIT dispersion requires the 'SplitR' package.\n",
-      "Install it with: remotes::install_github('rich-iannone/SplitR')",
-      call. = FALSE
-    )
-  }
+  run_dir,
+  binary_path = NULL,
+  parhplot_path = NULL) {
 
   # Validate and normalize run_dir
  if (missing(run_dir) || is.null(run_dir) || !nzchar(run_dir)) {
@@ -155,7 +154,7 @@ hysplit_dispersion <- function(lat = 49.263,
     width = 2, format = "d", flag = "0")
 
   # Format `start_hour` if given as a numeric value
-  if (class(start_hour) == "numeric") {
+  if (is.numeric(start_hour)) {
     start_hour <- formatC(sort(start_hour), width = 2, flag = 0)
   }
 
@@ -370,15 +369,11 @@ hysplit_dispersion <- function(lat = 49.263,
       }
 
       if (met_type == "gdas1") {
-        if (!requireNamespace("SplitR", quietly = TRUE)) {
-          stop(
-            "GDAS1 meteorological data requires the 'SplitR' package.\n",
-            "Install it with: devtools::install_github('rich-iannone/SplitR')\n",
-            "Or use met_type = 'reanalysis' instead.",
-            call. = FALSE
-          )
-        }
-        SplitR::get_met_gdas1(files = files_to_get, path_met_files = paste0(met_dir, "/"))
+        splitr_get_met_gdas1 <- .disperseR_require_splitr(
+          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if SplitR is unavailable)",
+          fn = "get_met_gdas1"
+        )
+        splitr_get_met_gdas1(files = files_to_get, path_met_files = paste0(met_dir, "/"))
       }
     }
   }
@@ -409,15 +404,11 @@ hysplit_dispersion <- function(lat = 49.263,
       }
 
       if (met_type == "gdas1") {
-        if (!requireNamespace("SplitR", quietly = TRUE)) {
-          stop(
-            "GDAS1 meteorological data requires the 'SplitR' package.\n",
-            "Install it with: devtools::install_github('rich-iannone/SplitR')\n",
-            "Or use met_type = 'reanalysis' instead.",
-            call. = FALSE
-          )
-        }
-        SplitR::get_met_gdas1(files = files_to_get, path_met_files = met_dir)
+        splitr_get_met_gdas1 <- .disperseR_require_splitr(
+          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if SplitR is unavailable)",
+          fn = "get_met_gdas1"
+        )
+        splitr_get_met_gdas1(files = files_to_get, path_met_files = met_dir)
       }
     }
   }
@@ -622,14 +613,53 @@ hysplit_dispersion <- function(lat = 49.263,
   # CONTROL file is now complete and in the
   # working directory; execute the model run
 
+  os <- disperseR::get_os()
+  if (!os %in% c("mac", "unix", "win")) {
+    stop("Unsupported operating system for HYSPLIT execution: ", os, call. = FALSE)
+  }
+
+  if (!is.null(binary_path)) {
+    binary_path <- path.expand(binary_path)
+    if (!file.exists(binary_path)) {
+      stop("binary_path does not exist: ", binary_path, call. = FALSE)
+    }
+  } else {
+    .disperseR_require_splitr(feature = "HYSPLIT dispersion")
+    if (os == "mac") {
+      binary_path <- system.file("osx/hycs_std", package = "SplitR")
+    } else if (os == "unix") {
+      binary_path <- system.file("linux-amd64/hycs_std", package = "SplitR")
+    } else {
+      binary_path <- system.file("win/hycs_std.exe", package = "SplitR")
+    }
+    if (!nzchar(binary_path)) {
+      stop("HYSPLIT binary not found. Provide binary_path or install SplitR.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(parhplot_path)) {
+    parhplot_path <- path.expand(parhplot_path)
+    if (!file.exists(parhplot_path)) {
+      stop("parhplot_path does not exist: ", parhplot_path, call. = FALSE)
+    }
+  } else {
+    .disperseR_require_splitr(feature = "HYSPLIT dispersion")
+    if (os == "mac") {
+      parhplot_path <- system.file("osx/parhplot", package = "SplitR")
+    } else if (os == "unix") {
+      parhplot_path <- system.file("linux-amd64/parhplot", package = "SplitR")
+    } else {
+      parhplot_path <- system.file("win/parhplot.exe", package = "SplitR")
+    }
+    if (!nzchar(parhplot_path)) {
+      stop("parhplot binary not found. Provide parhplot_path or install SplitR.",
+           call. = FALSE)
+    }
+  }
+
   # Execute HYSPLIT binary (paths quoted for space safety)
-  if (disperseR::get_os() == "mac") {
-    binary_path <- system.file("osx/hycs_std", package = "SplitR")
-    if (binary_path == "") {
-      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "mac") {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
     if (exit_status != 0) {
@@ -639,13 +669,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
   }
 
-  if (disperseR::get_os() == "unix") {
-    binary_path <- system.file("linux-amd64/hycs_std", package = "SplitR")
-    if (binary_path == "") {
-      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "unix") {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
     if (exit_status != 0) {
@@ -655,13 +679,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
   }
 
-  if (disperseR::get_os() == "win") {
-    binary_path <- system.file("win/hycs_std.exe", package = "SplitR")
-    if (binary_path == "") {
-      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "win") {
     exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", binary_path, "\""),
                         intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
     if (exit_status != 0) {
@@ -673,13 +691,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
 
   # Extract the particle positions at every hour
-  if (disperseR::get_os() == "mac") {
-    parhplot_path <- system.file("osx/parhplot", package = "SplitR")
-    if (parhplot_path == "") {
-      stop("parhplot binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "mac") {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
     if (exit_status != 0) {
@@ -689,13 +701,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
   }
 
-  if (disperseR::get_os() == "unix") {
-    parhplot_path <- system.file("linux-amd64/parhplot", package = "SplitR")
-    if (parhplot_path == "") {
-      stop("parhplot binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "unix") {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
     if (exit_status != 0) {
@@ -705,13 +711,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
   }
 
-  if (disperseR::get_os() == "win") {
-    parhplot_path <- system.file("win/parhplot.exe", package = "SplitR")
-    if (parhplot_path == "") {
-      stop("parhplot binary not found. Ensure SplitR is installed: ",
-           "remotes::install_github('rich-iannone/SplitR')",
-           call. = FALSE)
-    }
+  if (os == "win") {
     exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", parhplot_path,
       "\" -iPARDUMP -a1"),
       intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
@@ -723,32 +723,32 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   # Remove the .att files from run_dir
-  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+  if (os %in% c("mac", "unix")) {
     system(paste0("(cd ", shQuote(run_dir), " && rm -f GIS_part*.att)"))
   }
 
-  if (disperseR::get_os() == "win") {
+  if (os == "win") {
     shell(paste0("cd /d \"", run_dir, "\" && del /q GIS_part*.att 2>nul"))
   }
 
   # Remove the postscript plot from run_dir
-  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+  if (os %in% c("mac", "unix")) {
     system(paste0("(cd ", shQuote(run_dir), " && rm -f parhplot.ps)"))
   }
 
-  if (disperseR::get_os() == "win") {
+  if (os == "win") {
     shell(paste0("cd /d \"", run_dir, "\" && del /q parhplot.ps 2>nul"))
   }
   
   # Rename the TXT files as CSV files
-  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+  if (os %in% c("mac", "unix")) {
     system(paste0(
       "(cd ", shQuote(run_dir),
       " && for f in GIS*.txt; do [ -f \"$f\" ] && mv \"$f\" \"${f%.txt}.csv\"; done)"
     ))
   }
 
-  if (get_os() == "win") {
+  if (os == "win") {
     temp_file_list <-
       list.files(path = run_dir,
         pattern = "*._ps.txt",
@@ -827,7 +827,7 @@ hysplit_dispersion <- function(lat = 49.263,
           # paste0(hysp_dir, "/",
           #   folder_name))
 
-    if (any(c("mac", "unix") %in% disperseR::get_os())) {
+    if (os %in% c("mac", "unix")) {
       utils::write.table(
         disp_df,
         file = file.path(run_dir, #"/", #hysp_dir, "/",
@@ -837,7 +837,7 @@ hysplit_dispersion <- function(lat = 49.263,
         row.names = FALSE)
     }
 
-    if (disperseR::get_os() == "win") {
+    if (os == "win") {
       utils::write.table(
         disp_df,
         file = file.path( run_dir, #hysp_dir, "/",

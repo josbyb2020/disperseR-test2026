@@ -12,7 +12,8 @@
 #'   Default: 'SO2..tons.'.
 #' @param units.mo Data.frame or data.table with monthly unit emissions data.
 #'   Must contain columns: uID, year, month, and the pollutant column.
-#'   If NULL, attempts to use `PP.units.monthly1995_2017` from global environment.
+#'   If NULL, attempts to use `PP.units.monthly1995_2017` from the disperseR
+#'   cache (set by get_data()).
 #' @param rda_file Character. Path to RData file from `combine_monthly_links()`,
 #'   or 'loaded' if data is already in the environment.
 #' @param exp_dir Character. Directory to save exposure output. If NULL, uses
@@ -59,13 +60,13 @@ calculate_exposure <- function(year.E,
   # Validate units.mo
   if (is.null(units.mo)) {
     # Try to get from global environment
-    units.mo <- get0("PP.units.monthly1995_2017", envir = .GlobalEnv, ifnotfound = NULL)
+    units.mo <- .disperseR_cache_get("PP.units.monthly1995_2017")
     if (is.null(units.mo)) {
       stop("units.mo must be provided. This should be a data.table with monthly unit data.\n",
            "Use disperseR::PP.units.monthly1995_2017 or provide your own dataset.",
            call. = FALSE)
     }
-    message("Using PP.units.monthly1995_2017 from global environment for units.mo.")
+    message("Using PP.units.monthly1995_2017 from cache for units.mo.")
   }
   if (!inherits(units.mo, "data.frame")) {
     stop("units.mo must be a data.frame or data.table.", call. = FALSE)

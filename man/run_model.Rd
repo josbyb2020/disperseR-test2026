@@ -26,8 +26,7 @@ models use SplitR's hysplit_trajectory(); dispersion models use disperseR's
 hysplit_dispersion().
 }
 \details{
-Trajectory models require the SplitR package. Install with:
-`remotes::install_github("rich-iannone/SplitR")`
+Trajectory models require the SplitR package for HYSPLIT trajectory support.
 
 Model parameters (lat, lon, height, duration, met_type, etc.) should be
 set using [add_params()] before calling run_model().

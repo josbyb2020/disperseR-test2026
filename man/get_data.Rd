@@ -25,13 +25,14 @@ get_data(
 \item{end.month}{Character. Ending month for metfiles download (format: "MM").}
 }
 \value{
-Depends on data type:
+Depends on data type (results are also cached for use by other
+  disperseR functions):
   \itemize{
     \item crosswalk: Returns crosswalk data.table
     \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
     \item pblheight: Returns SpatRaster with planetary boundary layer heights
     \item metfiles: Downloads files, returns NULL invisibly
-    \item all: Downloads all data, assigns to global environment
+    \item all: Downloads all data, caches results, and returns a named list
   }
 }
 \description{

@@ -1,4 +1,4 @@
-#' This is a function from https://github.com/lhenneman/SplitR/blob/master/R/get_met_reanalysis.R
+#' Adapted from SplitR's get_met_reanalysis
 #' Get reanalysis meteorology data files
 #' @description This function downloads reanalysis
 #' meteorology data files from the NOAA FTP server and

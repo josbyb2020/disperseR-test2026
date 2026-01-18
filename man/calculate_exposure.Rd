@@ -30,7 +30,8 @@ Default: 'SO2..tons.'.}
 
 \item{units.mo}{Data.frame or data.table with monthly unit emissions data.
 Must contain columns: uID, year, month, and the pollutant column.
-If NULL, attempts to use `PP.units.monthly1995_2017` from global environment.}
+If NULL, attempts to use `PP.units.monthly1995_2017` from the disperseR
+cache (set by get_data()).}
 
 \item{rda_file}{Character. Path to RData file from `combine_monthly_links()`,
 or 'loaded' if data is already in the environment.}

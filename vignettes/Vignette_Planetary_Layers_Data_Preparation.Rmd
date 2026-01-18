@@ -8,7 +8,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE, eval = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = FALSE,
+  purl = FALSE
+)
 ```
 
 
@@ -28,7 +32,7 @@ In case you have not yet created your project folder use the following command.
 disperseR::create_dirs()
 ```
 
-First we specify the file names and the url where we download the data from. We used the data available on the [ESRL website](https://www.esrl.noaa.gov/psd/repository/entry/get/hpbl.mon.mean.nc?entryid=synth%3Ae570c8f9-ec09-4e89-93b4-babd5651e7a9%3AL05BUlIvTW9udGhsaWVzL21vbm9sZXZlbC9ocGJsLm1vbi5tZWFuLm5j).
+First we specify the file names and the url where we download the data from. We used the data available on the [NOAA PSL website](https://psl.noaa.gov/repository/entry/get/hpbl.mon.mean.nc?entryid=synth%3Ae570c8f9-ec09-4e89-93b4-babd5651e7a9%3AL05BUlIvTW9udGhsaWVzL21vbm9sZXZlbC9ocGJsLm1vbi5tZWFuLm5j).
 
 ```{r, eval = FALSE}
 directory <- hpbl_dir
@@ -54,7 +58,7 @@ hpbl_rasterin <- suppressWarnings(terra::rast(file, subds = "hpbl"))
 Sys.setenv(TZ = old_tz)
 ```
 
-The following is done to fix error in the dataset. For more information please see [here]("https://stackoverflow.com/questions/56806894/raster-warning-message-in-cbindmi-vals-number-of-rows-of-result-is-not/56807318#56807318")
+The following is done to fix error in the dataset. For more information please see [here](https://stackoverflow.com/questions/56806894/raster-warning-message-in-cbindmi-vals-number-of-rows-of-result-is-not/56807318#56807318)
 
 ```{r, eval = FALSE}
 terra::crs(hpbl_rasterin) <- "+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50"

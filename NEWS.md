@@ -6,7 +6,7 @@ Major update migrating from retired spatial packages to modern alternatives.
 
 - Requires R >= 4.1.0
 - Replaced `rgdal`, `rgeos`, `maptools`, `sp`, `raster` with `sf` and `terra`
-- SplitR is now a required dependency for HYSPLIT runs (install from GitHub)
+- SplitR is required for HYSPLIT runs and trajectory models (install if available)
 
 ## New Features
  
@@ -14,6 +14,7 @@ Major update migrating from retired spatial packages to modern alternatives.
 - `path.expand()` support for `~` paths in all directory arguments
 - Robust download validation with file existence and size checks
 - HYSPLIT binary exit status checks with clear error messages
+- Optional `binary_path` and `parhplot_path` support in `hysplit_dispersion()`
 - New spatial utility functions in `spatial_utils.R`
 
 ## Bug Fixes
@@ -29,7 +30,7 @@ Major update migrating from retired spatial packages to modern alternatives.
 
 - Fixed vignette title typo ("DipserseR" -> "DisperseR")
 - Removed outdated package references (ggsn, USAboundaries, tidyverse)
-- Updated SplitR install guidance to `rich-iannone/SplitR`
+- Updated SplitR install guidance
 - Tightened prose throughout vignettes
 
 ## Internal

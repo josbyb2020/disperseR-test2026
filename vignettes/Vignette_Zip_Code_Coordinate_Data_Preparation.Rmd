@@ -8,7 +8,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = FALSE,
+  purl = FALSE
+)
 ```
 
 ```{r, message = FALSE, warning = FALSE , eval = FALSE}
@@ -53,4 +57,3 @@ zipcodecoordinate <- zipcodecoordinate %>%
 ```
 
 Now the data set is ready to use in your plots! We added it to this package. 
-

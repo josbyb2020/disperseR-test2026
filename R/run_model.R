@@ -15,8 +15,7 @@
 #'   - For disp_model: `model$disp_df` contains dispersion data frame
 #'
 #' @details
-#' Trajectory models require the SplitR package. Install with:
-#' `remotes::install_github("rich-iannone/SplitR")`
+#' Trajectory models require the SplitR package for HYSPLIT trajectory support.
 #'
 #' Model parameters (lat, lon, height, duration, met_type, etc.) should be
 #' set using [add_params()] before calling run_model().
@@ -39,16 +38,13 @@ run_model <- function(model, npart = 2500, run.dir) {
 
   if (inherits(model, "traj_model")) {
     # Check if SplitR is available for trajectory models
-    if (!requireNamespace("SplitR", quietly = TRUE)) {
-      stop(
-        "Trajectory models require the 'SplitR' package.\n",
-        "Install it with: devtools::install_github('rich-iannone/SplitR')",
-        call. = FALSE
-      )
-    }
-    
+    splitr_traj <- .disperseR_require_splitr(
+      feature = "Trajectory models",
+      fn = "hysplit_trajectory"
+    )
+
     # Use model$met_dir (set by add_params), not model$meteo which is undefined
-    traj_df <- SplitR::hysplit_trajectory(
+    traj_df <- splitr_traj(
       lat = model$lat,
       lon = model$lon,
       height = model$height,
