@@ -1,13 +1,39 @@
-#' Run HYSPLIT model
+#' Run HYSPLIT trajectory or dispersion model
 #'
-#' @description Runs either trajectory or dispersion model depending on model type.
-#' Trajectory models require the SplitR package to be installed.
+#' @description Executes a HYSPLIT simulation based on model type. Trajectory
+#' models use SplitR's hysplit_trajectory(); dispersion models use disperseR's
+#' hysplit_dispersion().
 #'
-#' @param model A traj_model or disp_model object
-#' @param npart Number of particles (default 2500)
-#' @param run.dir Run directory path
+#' @param model A model object created by [create_disp_model()] or similar.
+#'   Must inherit from either "traj_model" or "disp_model".
+#' @param npart Numeric. Number of particles for dispersion runs. Default 2500.
+#' @param run.dir Character. Working directory for HYSPLIT output files.
+#'   Required for dispersion models.
 #'
-#' @return Model object with results attached
+#' @return The input model object with results attached:
+#'   - For traj_model: `model$traj_df` contains trajectory data frame
+#'   - For disp_model: `model$disp_df` contains dispersion data frame
+#'
+#' @details
+#' Trajectory models require the SplitR package. Install with:
+#' `remotes::install_github("rich-iannone/SplitR")`
+#'
+#' Model parameters (lat, lon, height, duration, met_type, etc.) should be
+#' set using [add_params()] before calling run_model().
+#'
+#' @examples
+#' \dontrun{
+#' # Create and run a dispersion model
+#' model <- create_disp_model() %>%
+#'   add_params(lat = 39.9, lon = -75.1, height = 100) %>%
+#'   add_emissions(my_emissions) %>%
+#'   add_species(my_species) %>%
+#'   add_grid(my_grid)
+#'
+#' result <- run_model(model, run.dir = "~/disperseR_output")
+#' }
+#'
+#' @seealso [create_disp_model()], [add_params()], [hysplit_dispersion()]
 #' @export
 run_model <- function(model, npart = 2500, run.dir) {
 

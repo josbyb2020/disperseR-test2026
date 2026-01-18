@@ -1,6 +1,58 @@
-# This is a modified SplitR function.
-#' @export hysplit_dispersion
-
+#' Run HYSPLIT dispersion model
+#'
+#' @description Executes a single HYSPLIT dispersion simulation. This is a
+#' modified version of SplitR's dispersion function, adapted for disperseR
+#' workflows.
+#'
+#' @param lat Numeric. Source latitude in decimal degrees. Default 49.263.
+#' @param lon Numeric. Source longitude in decimal degrees. Default -123.250.
+#' @param height Numeric. Source height in meters above ground. Default 50.
+#' @param duration Numeric. Simulation duration in hours. Default 24.
+#' @param start_day Character, Date, or POSIXt. Start date in "YYYY-MM-DD" format.
+#' @param start_hour Numeric. Start hour (0-23). Default 0.
+#' @param direction Character. "forward" or "backward". Default "forward".
+#' @param met_type Character. Meteorology type: "reanalysis" or "gdas1".
+#' @param met_dir Character. Path to meteorology files. Defaults to working directory.
+#' @param vert_motion Numeric. Vertical motion method (0-4). Default 0.
+#' @param model_height Numeric. Top of model domain in meters. Default 20000.
+#' @param particle_num Numeric. Number of particles released. Default 2500.
+#' @param particle_max Numeric. Maximum particles tracked. Default 10000.
+#' @param emissions Data frame. Emission parameters (see add_emissions).
+#' @param species Data frame. Species parameters (see add_species).
+#' @param grids Data frame. Grid parameters (see add_grid).
+#' @param return_disp_df Logical. Return dispersion data frame? Default TRUE.
+#' @param write_disp_CSV Logical. Write dispersion CSV to run_dir? Default TRUE.
+#' @param disp_name Character. Optional name prefix for output files.
+#' @param run_dir Character. Working directory for HYSPLIT output. Required.
+#'   Supports ~ expansion. Created if it doesn't exist.
+#'
+#' @return If return_disp_df is TRUE, returns a data frame with dispersion results.
+#'   Otherwise returns invisibly.
+#'
+#' @details
+#' Requires the SplitR package for HYSPLIT binaries. Install with:
+#' `remotes::install_github("rich-iannone/SplitR")`
+#'
+#' Meteorology files are downloaded automatically if not present in met_dir.
+#' Reanalysis files are ~120 MB each.
+#'
+#' @examples
+#' \dontrun{
+#' # Basic dispersion run
+#' result <- hysplit_dispersion(
+#'   lat = 39.9,
+#'   lon = -75.1,
+#'   height = 100,
+#'   start_day = "2005-06-15",
+#'   emissions = my_emissions,
+#'   species = my_species,
+#'   grids = my_grids,
+#'   run_dir = "~/disperseR_output/run1"
+#' )
+#' }
+#'
+#' @seealso [add_emissions()], [add_species()], [add_grid()], [run_model()]
+#' @export
 hysplit_dispersion <- function(lat = 49.263,
   lon = -123.250,
   height = 50,
