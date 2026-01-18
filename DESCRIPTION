@@ -32,7 +32,8 @@ Depends:
 Imports:
     sf (>= 1.0-0),
     terra (>= 1.7-0),
-    ncdf4,
+    magrittr,
+    maps,
     ggplot2,
     dplyr,
     tidyr,
@@ -51,8 +52,6 @@ Suggests:
     testthat (>= 3.0.0),
     rnaturalearth,
     downloader,
-    magrittr,
-    maps,
     SplitR
 Remotes:
     rich-iannone/SplitR
