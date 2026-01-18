@@ -2,14 +2,14 @@
 % Please edit documentation in R/calculate_exposure.R
 \name{calculate_exposure}
 \alias{calculate_exposure}
-\title{create a set of directories to run disperseR}
+\title{Calculate exposure from linked HYSPLIT outputs}
 \usage{
 calculate_exposure(
   year.E,
   year.D,
   link.to = "zips",
   pollutant = "SO2..tons.",
-  units.mo,
+  units.mo = NULL,
   rda_file = "loaded",
   exp_dir = NULL,
   source.agg = c("total", "facility", "unit"),
@@ -18,30 +18,37 @@ calculate_exposure(
 )
 }
 \arguments{
-\item{year.E}{emissions year}
+\item{year.E}{Numeric. Emissions year.}
 
-\item{year.D}{HYSPLIT year}
+\item{year.D}{Numeric. HYSPLIT dispersion year.}
 
-\item{link.to}{spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::link_all_units()}
+\item{link.to}{Character. Spatial scale: 'zips', 'counties', or 'grids'.
+Must match the original input to `link_all_units()`.}
 
-\item{pollutant}{name of column in `units.mo` for weighting}
+\item{pollutant}{Character. Column name in `units.mo` for emissions weighting.
+Default: 'SO2..tons.'.}
 
-\item{rda_file}{specification of data location produced by `disperseR::combine_monthly_links()`. Can denote 'loaded' if the object is loaded in the .GlobalEnv() or a file location}
+\item{units.mo}{Data.frame or data.table with monthly unit emissions data.
+Must contain columns: uID, year, month, and the pollutant column.
+If NULL, attempts to use `PP.units.monthly1995_2017` from global environment.}
 
-\item{source.agg}{source aggregation level}
+\item{rda_file}{Character. Path to RData file from `combine_monthly_links()`,
+or 'loaded' if data is already in the environment.}
 
-\item{time.agg}{time aggregation level}
+\item{exp_dir}{Character. Directory to save exposure output. If NULL, uses
+current working directory.}
 
-\item{return.monthly.data}{logical. If TRUE, returns monthly datasets if `time.agg = 'month'`. Set to FALSE to save memory space.}
+\item{source.agg}{Character. Source aggregation: 'total', 'facility', or 'unit'.}
 
-\item{exo_dir}{file path to save resulting exposure dataset}
+\item{time.agg}{Character. Time aggregation: 'year' or 'month'.}
+
+\item{return.monthly.data}{Logical. Return monthly data when time.agg='month'?}
 }
 \value{
-Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+A data.table with exposure values aggregated by the specified levels.
 }
 \description{
-`calculate_exposure()` takes linked HYSPLIT outputs combined using `disperseR::combine_monthly_links()` and sums them by emissions. The results can be aggregated to three different source levels and two different time scales. Various combinations of `year.E` and `year.D` can be applied to develop counterfactual scenarios.
-}
-\details{
-\code{calculate_exposure}
+Takes linked HYSPLIT outputs combined using 
+`disperseR::combine_monthly_links()` and sums them by emissions. Results 
+can be aggregated to three source levels and two time scales.
 }

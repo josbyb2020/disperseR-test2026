@@ -4,7 +4,13 @@
 \alias{combine_monthly_links}
 \title{Combine monthly linked files}
 \usage{
-combine_monthly_links(month_YYYYMMs, link.to = "zips", filename = NULL)
+combine_monthly_links(
+  month_YYYYMMs,
+  link.to = "zips",
+  filename = NULL,
+  ziplink_dir = NULL,
+  rdata_dir = NULL
+)
 }
 \arguments{
 \item{month_YYYYMMs}{Months and years to combine. Format created by 
@@ -15,10 +21,16 @@ or 'grids' that should match original input to `disperseR::link_all_units()`}
 
 \item{filename}{Output filename. Defaults to 
 `paste0('hyads_unwgted_', link.to, '.RData')`}
+
+\item{ziplink_dir}{Directory containing linked files from link_all_units().
+If NULL, uses the global variable set by create_dirs().}
+
+\item{rdata_dir}{Directory to save output RData file.
+If NULL, uses the global variable set by create_dirs().}
 }
 \value{
-Saves an .RData file to the rdata_dir defined by 
-  `disperseR::create_dirs()` with filename `filename`.
+Saves an .RData file to rdata_dir with filename `filename`.
+  Returns a list of data.tables (one per month).
 }
 \description{
 Combines linked files produced with `disperseR::link_all_units()` 

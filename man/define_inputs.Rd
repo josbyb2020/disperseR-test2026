@@ -2,7 +2,7 @@
 % Please edit documentation in R/define_inputs.R
 \name{define_inputs}
 \alias{define_inputs}
-\title{Define species parameters}
+\title{Define input runs for HYSPLIT simulations}
 \usage{
 define_inputs(
   units,
@@ -13,23 +13,22 @@ define_inputs(
 )
 }
 \arguments{
-\item{startday}{starting day for HyADS runs, must be in standard YYY-MM-DD format}
+\item{units}{Data.frame or data.table of units with `ID` and `year` columns.}
 
-\item{endday}{starting day for HyADS runs, must be in standard YYY-MM-DD format}
+\item{startday}{Start day in "YYYY-MM-DD" format.}
 
-\item{start.hours}{vector of starting hours (integers between 0 and 23) for each HYSPLIT run. Defaults to c(0, 6, 12, 18), i.e., HYSPLIT runs initiated at 12:00am, 6:00am, 12:00pm, and 6:00pm.}
+\item{endday}{End day in "YYYY-MM-DD" format.}
 
-\item{duration}{`duration = 240` denotes that the emitted air parcels are tracked for 240 hours (10 days). 10 days is the maximum (approximately) that sulfur stays in the atmosphere before it deposits to the ground.}
+\item{start.hours}{Integer vector of start hours (0-23). Defaults to
+`c(0, 6, 12, 18)`.}
+
+\item{duration}{Duration in hours for each run (default 240).}
 }
 \value{
-This function returns a data table of run parameters accepted by `run_disperser_parallel()`
-
-Once HYSPLIT has been run for each emissions event, the simulated parcel locations are aggregated by source, time, and location. The functions below are written to enable runs of many emissions events.
+A data.table of run parameters for `run_disperser_parallel()`.
 }
 \description{
-Once HYSPLIT has been run for each emissions event, the simulated parcel locations are aggregated by source, time, and location. The functions in `disperseR` are written to enable runs of many emissions events. o define an object that includes all emission events in a given time period, we can use the helper function `define_inputs()`. This takes as inputs a starting and ending day, and outputs a table of values whose rows will later correspond to inputs into the main `disperseR` functions. The following command combines the units defined above with four times a day for January-July in 2005
-}
-\details{
-\code{define_input}  takes as input a species name and
-provides a table of HYSPLIT species parameters accepted by `run_disperser_parallel()`
+Builds a run table by combining unit metadata with start
+dates/hours and run durations. The result is suitable for
+`run_disperser_parallel()`.
 }

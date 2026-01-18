@@ -1,29 +1,27 @@
-#' create a set of directories to run disperseR
+#' Calculate exposure from linked HYSPLIT outputs
 #'
-#' \code{calculate_exposure}
+#' @description Takes linked HYSPLIT outputs combined using 
+#' `disperseR::combine_monthly_links()` and sums them by emissions. Results 
+#' can be aggregated to three source levels and two time scales.
 #'
-#' @description `calculate_exposure()` takes linked HYSPLIT outputs combined using `disperseR::combine_monthly_links()` and sums them by emissions. The results can be aggregated to three different source levels and two different time scales. Various combinations of `year.E` and `year.D` can be applied to develop counterfactual scenarios.
+#' @param year.E Numeric. Emissions year.
+#' @param year.D Numeric. HYSPLIT dispersion year.
+#' @param link.to Character. Spatial scale: 'zips', 'counties', or 'grids'.
+#'   Must match the original input to `link_all_units()`.
+#' @param pollutant Character. Column name in `units.mo` for emissions weighting.
+#'   Default: 'SO2..tons.'.
+#' @param units.mo Data.frame or data.table with monthly unit emissions data.
+#'   Must contain columns: uID, year, month, and the pollutant column.
+#'   If NULL, attempts to use `PP.units.monthly1995_2017` from global environment.
+#' @param rda_file Character. Path to RData file from `combine_monthly_links()`,
+#'   or 'loaded' if data is already in the environment.
+#' @param exp_dir Character. Directory to save exposure output. If NULL, uses
+#'   current working directory.
+#' @param source.agg Character. Source aggregation: 'total', 'facility', or 'unit'.
+#' @param time.agg Character. Time aggregation: 'year' or 'month'.
+#' @param return.monthly.data Logical. Return monthly data when time.agg='month'?
 #'
-#'
-#' @param year.E emissions year
-#'
-#' @param year.D HYSPLIT year
-#'
-#' @param link.to spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::link_all_units()
-#'
-#' @param pollutant name of column in `units.mo` for weighting
-#'
-#' @param rda_file specification of data location produced by `disperseR::combine_monthly_links()`. Can denote 'loaded' if the object is loaded in the .GlobalEnv() or a file location
-#'
-#' @param exo_dir file path to save resulting exposure dataset
-#'
-#' @param source.agg source aggregation level
-#'
-#' @param time.agg time aggregation level
-#'
-#' @param return.monthly.data logical. If TRUE, returns monthly datasets if `time.agg = 'month'`. Set to FALSE to save memory space.
-#'
-#' @return Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+#' @return A data.table with exposure values aggregated by the specified levels.
 
 
 #' @export calculate_exposure
@@ -32,7 +30,7 @@ calculate_exposure <- function(year.E,
                                year.D,
                                link.to = 'zips',
                                pollutant = 'SO2..tons.',
-                               units.mo,
+                               units.mo = NULL,
                                rda_file = 'loaded',
                                exp_dir = NULL,
                                source.agg = c('total', 'facility', 'unit'),
@@ -40,7 +38,7 @@ calculate_exposure <- function(year.E,
                                return.monthly.data = FALSE) {
   `%ni%` <- Negate(`%in%`)
 
-  #define defaults if none provided
+  # Validate source.agg
   if (length(source.agg) > 1) {
     message('Multiple source.agg provided, defaulting to "total".')
     source.agg <- 'total'
@@ -48,6 +46,8 @@ calculate_exposure <- function(year.E,
   if (source.agg %ni% c('total', 'facility', 'unit')) {
     stop('source.agg not recognized, please provide one of c("total", "facility", "unit").')
   }
+  
+  # Validate time.agg
   if (length(time.agg) > 1) {
     message('Multiple time.agg provided, defaulting to "year".')
     time.agg <- 'year'
@@ -56,7 +56,22 @@ calculate_exposure <- function(year.E,
     stop('time.agg not recognized, please provide one of c("year", "month").')
   }
 
-  #define defaults if none provided
+  # Validate units.mo
+  if (is.null(units.mo)) {
+    # Try to get from global environment
+    units.mo <- get0("PP.units.monthly1995_2017", envir = .GlobalEnv, ifnotfound = NULL)
+    if (is.null(units.mo)) {
+      stop("units.mo must be provided. This should be a data.table with monthly unit data.\n",
+           "Use disperseR::PP.units.monthly1995_2017 or provide your own dataset.",
+           call. = FALSE)
+    }
+    message("Using PP.units.monthly1995_2017 from global environment for units.mo.")
+  }
+  if (!inherits(units.mo, "data.frame")) {
+    stop("units.mo must be a data.frame or data.table.", call. = FALSE)
+  }
+
+  # Load linked data if specified
   if (rda_file != 'loaded')
     load(rda_file, envir = environment())
 

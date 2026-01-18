@@ -109,15 +109,38 @@ get_data <- function(data,
                      end.year = NULL,
                      end.month = NULL) {
 
-  # Store parameters to avoid unused argument warnings
-
-startyear <- start.year
+  # Store parameters
+  startyear <- start.year
   startmonth <- start.month
   endyear <- end.year
   endmonth <- end.month
 
   # Standard projection for disperseR (North American Albers Equal Area Conic)
   p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
+
+  # Validate global directory variables for data types that require them
+  dirs_needed <- c("all", "zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset")
+  if (data %in% dirs_needed) {
+    zcta_dir <- get0("zcta_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    hpbl_dir <- get0("hpbl_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    meteo_dir <- get0("meteo_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    
+    if (data %in% c("all", "zctashapefile", "zctashapefileSF", "zcta_dataset")) {
+      if (is.null(zcta_dir) || !nzchar(zcta_dir)) {
+        stop("zcta_dir not found. Run create_dirs() first.", call. = FALSE)
+      }
+    }
+    if (data %in% c("all", "pblheight")) {
+      if (is.null(hpbl_dir) || !nzchar(hpbl_dir)) {
+        stop("hpbl_dir not found. Run create_dirs() first.", call. = FALSE)
+      }
+    }
+    if (data %in% c("all", "metfiles")) {
+      if (is.null(meteo_dir) || !nzchar(meteo_dir)) {
+        stop("meteo_dir not found. Run create_dirs() first.", call. = FALSE)
+      }
+    }
+  }
 
   # ==========================================================================
   # ALL DATA

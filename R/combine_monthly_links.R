@@ -9,9 +9,13 @@
 #'   or 'grids' that should match original input to `disperseR::link_all_units()`
 #' @param filename Output filename. Defaults to 
 #'   `paste0('hyads_unwgted_', link.to, '.RData')`
+#' @param ziplink_dir Directory containing linked files from link_all_units().
+#'   If NULL, uses the global variable set by create_dirs().
+#' @param rdata_dir Directory to save output RData file.
+#'   If NULL, uses the global variable set by create_dirs().
 #'
-#' @return Saves an .RData file to the rdata_dir defined by 
-#'   `disperseR::create_dirs()` with filename `filename`.
+#' @return Saves an .RData file to rdata_dir with filename `filename`.
+#'   Returns a list of data.tables (one per month).
 #'
 #' @export
 #' @importFrom data.table data.table rbindlist dcast setDT
@@ -20,7 +24,34 @@
 
 combine_monthly_links <- function(month_YYYYMMs,
                                    link.to = 'zips',
-                                   filename = NULL) {
+                                   filename = NULL,
+                                   ziplink_dir = NULL,
+                                   rdata_dir = NULL) {
+
+ # Resolve directory paths from .GlobalEnv if not provided
+  if (is.null(ziplink_dir)) {
+    ziplink_dir <- get0("ziplink_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    if (is.null(ziplink_dir)) {
+      stop("ziplink_dir not specified and not found in global environment.\n",
+           "Either pass ziplink_dir explicitly or run create_dirs() first.",
+           call. = FALSE)
+    }
+  }
+  if (!dir.exists(ziplink_dir)) {
+    stop("ziplink_dir does not exist: ", ziplink_dir, call. = FALSE)
+  }
+  
+  if (is.null(rdata_dir)) {
+    rdata_dir <- get0("rdata_dir", envir = .GlobalEnv, ifnotfound = NULL)
+    if (is.null(rdata_dir)) {
+      stop("rdata_dir not specified and not found in global environment.\n",
+           "Either pass rdata_dir explicitly or run create_dirs() first.",
+           call. = FALSE)
+    }
+  }
+  if (!dir.exists(rdata_dir)) {
+    dir.create(rdata_dir, recursive = TRUE, showWarnings = FALSE)
+  }
 
   names.map <- c()
 

@@ -19,12 +19,14 @@ utils::globalVariables(c(
   "ID", "uID", "ZIP", "ZCTA", "ZCTA5CE10", "year", "month", "yearmonth", "year.E",
   "Longitude", "Latitude", "lon", "x", "y", "long", "lat", "group",
   "hyads", "hyads.py.sum", "hyads.rank", "N", "SOx",
-  "Height", "Height.unit", "comb", "metric", "Measurement", "type", "label",
+  "Height", "height", "Height.unit", "comb", "metric", "Measurement", "type", "label",
   "statefp", "countyfp", "state_name", "name", "geoid", "geometry",
   "start_day", "start_hour", "duration", "direction", "hour",
   "file", "available", "run_dir", "met_dir",
-  "V1", "Pdate", "mo", "yr", "Exposure", "seq_len", "pollutant",
+  "V1", "Pdate", "Pmonth", "Pyear", "mo", "yr", "Exposure", "seq_len", "pollutant",
   "STATE", "CITY", "TOTALESTIMATE",
+  "particle_no", "pbl", "rastercell", "ref", "zcta",
+  ".", "..year",
   
   # Used in formula/subset contexts
   "date", "i",
