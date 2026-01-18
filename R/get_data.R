@@ -11,6 +11,11 @@
 #'
 # Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {
+  # Set a longer timeout for large downloads (CRAN recommendation)
+  old_timeout <- getOption("timeout")
+  on.exit(options(timeout = old_timeout), add = TRUE)
+  options(timeout = max(300, old_timeout))  # At least 5 minutes
+
   # Capture warnings but continue execution
   download_warnings <- NULL
   result <- tryCatch(
