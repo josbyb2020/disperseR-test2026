@@ -9,3 +9,24 @@
 #' @name disperseR-package
 #' @aliases disperseR
 "_PACKAGE"
+
+# Suppress R CMD check NOTEs for data.table NSE symbols and column names
+utils::globalVariables(c(
+
+  # data.table special symbols
+  ".N", ".SD", ".I", ".GRP", ":=",
+  
+# Column names used in data.table operations
+  "ID", "uID", "ZIP", "ZCTA5CE10", "year", "month", "yearmonth", "year.E",
+  "Longitude", "Latitude", "x", "y", "long", "lat", "group",
+  "hyads", "hyads.py.sum", "hyads.rank", "N", "SOx",
+  "Height", "Height.unit", "comb", "metric", "Measurement", "type",
+  "statefp", "countyfp", "state_name", "name", "geoid", "geometry",
+  "start_day", "start_hour", "duration", "direction",
+  "file", "available", "run_dir", "met_dir",
+  
+  # .GlobalEnv assignments from create_dirs
+  "main_dir", "input_dir", "output_dir", "process_dir", "ziplink_dir",
+  "hysp_dir", "meteo_dir", "zcta_dir", "raster_dir", "graph_dir",
+  "exp_dir", "rank_dir", "crosswalk_dir", "census_dir", "proc_dir"
+))
