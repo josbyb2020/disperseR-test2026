@@ -10,9 +10,6 @@
 #'
 #' @return List with ggmap and ggbar plot objects
 #' @export
-#' @importFrom ggplot2 ggplot aes geom_polygon geom_point labs coord_sf
-#' @importFrom ggplot2 theme_bw theme geom_bar facet_wrap scale_y_continuous xlab
-#' @importFrom scales comma
 plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
   # Filter BOTH datasets by year for consistency
@@ -58,13 +55,34 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
       inherit.aes = FALSE,
       size = 2,
       stroke = 2
-    ) +
-   ggrepel::geom_label_repel(data = facility_loc,
-      ggplot2::aes(x=x, y=y,label = label),
-      nudge_x = 10,
-      nudge_y = 10,
-      segment.size = 0.7,
-      na.rm = TRUE) +
+    )
+
+  # Add labels: use ggrepel if available, otherwise fall back to geom_text
+  if (requireNamespace("ggrepel", quietly = TRUE)) {
+    ggmap <- ggmap +
+      ggrepel::geom_label_repel(
+        data = facility_loc,
+        ggplot2::aes(x = x, y = y, label = label),
+        nudge_x = 10,
+        nudge_y = 10,
+        segment.size = 0.7,
+        na.rm = TRUE
+      )
+  } else {
+    warning("Package 'ggrepel' not installed; labels may overlap. ",
+            "Install with: install.packages('ggrepel')", call. = FALSE)
+    ggmap <- ggmap +
+      ggplot2::geom_text(
+        data = facility_loc,
+        ggplot2::aes(x = x, y = y, label = label),
+        nudge_x = 2,
+        nudge_y = 2,
+        size = 3,
+        na.rm = TRUE
+      )
+  }
+
+  ggmap <- ggmap +
     ggplot2::scale_shape_discrete(solid = TRUE) +
     ggplot2::coord_sf(xlim = c(minlong, maxlong),
       ylim = c(minlat, maxlat))+
