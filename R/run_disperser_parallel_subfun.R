@@ -337,7 +337,7 @@ add_species <- function(model,
 #' @param model A model object created by `create_disp_model()`.
 #' @param rate Emissions rate.
 #' @param duration Emissions duration.
-#' @param start_day Start day for emissions.
+#' @param start_day Start day for emissions in "YYYY-MM-DD" format.
 #' @param start_hour Start hour for emissions.
 #' @param name Emissions name (defaults to "emissions_1", "emissions_2", ...).
 #' @return Updated model object.
@@ -366,7 +366,8 @@ add_emissions <- function(model,
   }
 
   if (is.null(start_day)) {
-    start_day <- "10-05-01"
+    # Use YYYY-MM-DD format consistent with hysplit_dispersion()
+    start_day <- format(Sys.Date(), "%Y-%m-%d")
   }
 
   if (is.null(start_hour)) {

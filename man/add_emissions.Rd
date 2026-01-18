@@ -20,7 +20,7 @@ add_emissions(
 
 \item{duration}{Emissions duration.}
 
-\item{start_day}{Start day for emissions.}
+\item{start_day}{Start day for emissions in "YYYY-MM-DD" format.}
 
 \item{start_hour}{Start hour for emissions.}
 

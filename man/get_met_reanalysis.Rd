@@ -18,6 +18,9 @@ reanalysis files are to be obtained via FTP.}
 for the location of the meteorological data files;
 downloaded files will be saved in this location.}
 }
+\value{
+Invisibly returns a character vector of successfully downloaded files.
+}
 \description{
 This function downloads reanalysis
 meteorology data files from the NOAA FTP server and

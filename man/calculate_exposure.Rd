@@ -10,7 +10,8 @@ calculate_exposure(
   link.to = "zips",
   pollutant = "SO2..tons.",
   units.mo = NULL,
-  rda_file = "loaded",
+  monthly_maps = NULL,
+  rda_file = NULL,
   exp_dir = NULL,
   source.agg = c("total", "facility", "unit"),
   time.agg = c("year", "month"),
@@ -33,8 +34,12 @@ Must contain columns: uID, year, month, and the pollutant column.
 If NULL, attempts to use `PP.units.monthly1995_2017` from the disperseR
 cache (set by get_data()).}
 
-\item{rda_file}{Character. Path to RData file from `combine_monthly_links()`,
-or 'loaded' if data is already in the environment.}
+\item{monthly_maps}{Named list of monthly MAP data.tables from 
+`combine_monthly_links()`. Names should be in format "MAP\{month\}.\{year\}".
+If NULL, attempts to load from `rda_file`.}
+
+\item{rda_file}{Character. Path to RData file from `combine_monthly_links()`.
+Only used if `monthly_maps` is NULL. Default: NULL.}
 
 \item{exp_dir}{Character. Directory to save exposure output. If NULL, uses
 current working directory.}

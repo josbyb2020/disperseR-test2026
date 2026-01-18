@@ -14,8 +14,11 @@
 #'   Must contain columns: uID, year, month, and the pollutant column.
 #'   If NULL, attempts to use `PP.units.monthly1995_2017` from the disperseR
 #'   cache (set by get_data()).
-#' @param rda_file Character. Path to RData file from `combine_monthly_links()`,
-#'   or 'loaded' if data is already in the environment.
+#' @param monthly_maps Named list of monthly MAP data.tables from 
+#'   `combine_monthly_links()`. Names should be in format "MAP\{month\}.\{year\}".
+#'   If NULL, attempts to load from `rda_file`.
+#' @param rda_file Character. Path to RData file from `combine_monthly_links()`.
+#'   Only used if `monthly_maps` is NULL. Default: NULL.
 #' @param exp_dir Character. Directory to save exposure output. If NULL, uses
 #'   current working directory.
 #' @param source.agg Character. Source aggregation: 'total', 'facility', or 'unit'.
@@ -32,7 +35,8 @@ calculate_exposure <- function(year.E,
                                link.to = 'zips',
                                pollutant = 'SO2..tons.',
                                units.mo = NULL,
-                               rda_file = 'loaded',
+                               monthly_maps = NULL,
+                               rda_file = NULL,
                                exp_dir = NULL,
                                source.agg = c('total', 'facility', 'unit'),
                                time.agg = c('year', 'month'),
@@ -59,7 +63,6 @@ calculate_exposure <- function(year.E,
 
   # Validate units.mo
   if (is.null(units.mo)) {
-    # Try to get from global environment
     units.mo <- .disperseR_cache_get("PP.units.monthly1995_2017")
     if (is.null(units.mo)) {
       stop("units.mo must be provided. This should be a data.table with monthly unit data.\n",
@@ -72,17 +75,24 @@ calculate_exposure <- function(year.E,
     stop("units.mo must be a data.frame or data.table.", call. = FALSE)
   }
 
-  # Load linked data if specified
-  if (rda_file != 'loaded')
-    load(rda_file, envir = environment())
-
-  # start with the first map available in the given year
-  # map.names <- paste0("MAP", 1:12, ".", year.D)
-  # for( m in 1:12){
-  #   test <- map.names[m] %in% ls(envir = globalenv()) | map.names[m] %in% ls()
-  #   if( test)
-  #     break
-  # }
+  # Load or validate monthly_maps
+  if (is.null(monthly_maps)) {
+    if (is.null(rda_file)) {
+      stop("Either monthly_maps (from combine_monthly_links()) or rda_file must be provided.",
+           call. = FALSE)
+    }
+    if (!file.exists(rda_file)) {
+      stop("rda_file does not exist: ", rda_file, call. = FALSE)
+    }
+    # Load into a temporary environment to avoid global pollution
+    load_env <- new.env(parent = emptyenv())
+    load(rda_file, envir = load_env)
+    monthly_maps <- as.list(load_env)
+    message("Loaded ", length(monthly_maps), " monthly maps from ", basename(rda_file))
+  }
+  if (!is.list(monthly_maps)) {
+    stop("monthly_maps must be a named list of data.tables.", call. = FALSE)
+  }
 
   # Create directory to store output files if it does not exist
   if (is.null(exp_dir)) {
@@ -115,25 +125,13 @@ calculate_exposure <- function(year.E,
     PP_monthly <- PP.units_monthly[!duplicated(uID)]
     PP_monthly <- PP_monthly[is.na(pollutant), pollutant := 0]
 
-    #get HYPSPLIT mappings
+    # Get HYSPLIT mappings from monthly_maps list (no global env probing)
     map.name <- paste0("MAP", i, ".", year.D)
-    if (map.name %ni% ls(envir = globalenv())
-        & map.name %ni% ls()) {
-      message(
-        paste('  ',
-              map.name,
-              'not loaded in environment. If you want it linked, either load RData file before or specify rda_file'
-        )
-      )
+    if (!map.name %in% names(monthly_maps)) {
+      message("  ", map.name, " not found in monthly_maps. Skipping.")
       next
     }
-    if (map.name %in% ls()) {
-      month_mapping <-
-        data.table(eval(parse(text = map.name)))
-    } else{
-      month_mapping <- data.table(eval(parse(text = map.name),
-                                       envir = globalenv()))
-    }
+    month_mapping <- data.table::copy(monthly_maps[[map.name]])
 
     #melt them to long format
     if( link.to == 'zips'){

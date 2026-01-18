@@ -53,7 +53,8 @@ combine_monthly_links <- function(month_YYYYMMs,
     dir.create(rdata_dir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  names.map <- c()
+  # Use a local list to accumulate results (no assign() side effects)
+  monthly_maps <- list()
 
   for (ym in month_YYYYMMs) {
 
@@ -134,21 +135,16 @@ combine_monthly_links <- function(month_YYYYMMs,
       }
 
       name.map <- paste0("MAP", month.m, ".", year.h)
-      names.map <- append(names.map, name.map)
-      assign(name.map, Merged_cast)
+      monthly_maps[[name.map]] <- Merged_cast
       rm("MergedDT", "Merged_cast")
     }
   }
 
   # Put all grid links on consistent extent using terra
-  if (link.to == 'grids' && length(names.map) > 0) {
-    out.d <- mget(names.map)
-    
+  if (link.to == 'grids' && length(monthly_maps) > 0) {
     # Convert data.tables to SpatRasters using terra
-    out.r <- lapply(out.d, function(dt) {
-      # Create raster from xyz data
+    out.r <- lapply(monthly_maps, function(dt) {
       if (ncol(dt) > 2) {
-        # Multiple columns - create multi-layer raster
         r <- terra::rast(dt, type = "xyz", crs = "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m")
         return(r)
       }
@@ -157,16 +153,14 @@ combine_monthly_links <- function(month_YYYYMMs,
     out.r <- Filter(Negate(is.null), out.r)
     
     if (length(out.r) > 1) {
-      out.ids <- lapply(out.d, function(dt) names(dt))
-      
       # Calculate consistent extent using terra
       all_extents <- lapply(out.r, terra::ext)
       combined_ext <- Reduce(function(e1, e2) {
         terra::ext(
-          min(e1[1], e2[1]),  # xmin
-          max(e1[2], e2[2]),  # xmax
-          min(e1[3], e2[3]),  # ymin
-          max(e1[4], e2[4])   # ymax
+          min(e1[1], e2[1]),
+          max(e1[2], e2[2]),
+          min(e1[3], e2[3]),
+          max(e1[4], e2[4])
         )
       }, all_extents)
       
@@ -177,19 +171,13 @@ combine_monthly_links <- function(month_YYYYMMs,
       out.dt <- lapply(out.b, function(x) {
         df <- terra::as.data.frame(x, xy = TRUE, na.rm = FALSE)
         data.table::setDT(df)
+        df[, `:=`(x = round(x), y = round(y))]
         return(df)
       })
       
-      # Round coordinates to nearest meter
-      out.dt <- lapply(out.dt, function(dt) {
-        dt[, `:=`(x = round(x), y = round(y))]
-        return(dt)
-      })
-      
-      # Extract from list and assign
-      for (i in seq_along(names(out.dt))) {
-        nm <- names(out.dt)[i]
-        assign(nm, out.dt[[i]], envir = parent.frame())
+      # Update monthly_maps with extended grid data
+      for (nm in names(out.dt)) {
+        monthly_maps[[nm]] <- out.dt[[nm]]
       }
     }
   }
@@ -198,8 +186,12 @@ combine_monthly_links <- function(month_YYYYMMs,
     filename <- paste0('hyads_unwgted_', link.to, '.RData')
   
   rda.filename <- file.path(rdata_dir, filename)
-  save(list = names.map, file = rda.filename)
+  
+  # Save the list contents (not the list itself) for backward compatibility
+  names.map <- names(monthly_maps)
+  list2env(monthly_maps, envir = environment())
+  save(list = names.map, file = rda.filename, envir = environment())
 
   message("Monthly RData file written to ", rda.filename)
-  return(mget(names.map))
+  return(monthly_maps)
 }
