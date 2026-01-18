@@ -75,7 +75,7 @@ The next step is to get the data necessary for the analysis.  Let's start by loa
 
 ### Get the data with the `get_data()` function. 
 
-You can get most of the data required for the analysis by using the following function. This function will download the data necessary and for the data that is already attached with the package it will automatically assign it to variables in your R environment. If you want to load the data step by step check our vignette [here](https://htmlpreview.github.io/?https://github.com/garbulinskamaja/disperseR/blob/master/vignettesHTML/Vignette_Get_Data_One_by_One.html). It also contains more information about the data and their sources. 
+You can get most of the data required for the analysis by using the following function. This function will download the data necessary and for the data that is already attached with the package it will automatically assign it to variables in your R environment. If you want to load the data step by step check the `Vignette_Get_Data_One_by_One` vignette. It also contains more information about the data and their sources. 
 
 The arguments `start.year`, `start.month`,`end.year`, and `end.month` are necessary to download the meteorology reanalysis files. They will be downloaded if they are not already in the `meteo_dir` folder. The reanalysis met files are about 120 MB each.
 
@@ -94,7 +94,7 @@ disperseR::get_data(data = "all",
 
 The units data should be loaded separately so that you are able to select which units to process. 
 
-This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://ampd.epa.gov/ampd/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. Again, if you would like to know how these data were prepared please see the special vignette that we have attached to this package. Access it  [here](https://htmlpreview.github.io/?https://github.com/garbulinskamaja/disperseR/blob/master/vignettesHTML/Vignette_Units_Preparation.html)
+This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://ampd.epa.gov/ampd/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. Again, if you would like to know how these data were prepared please see the `Vignette_Units_Preparation` vignette.
 
 You can visualize the data like this in RStudio:
 

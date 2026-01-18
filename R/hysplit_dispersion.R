@@ -30,15 +30,19 @@ hysplit_dispersion <- function(lat = 49.263,
     )
   }
 
+  # Expand ~ in paths and normalize
   if (is.null(met_dir)) met_dir <- getwd()
+  met_dir <- path.expand(met_dir)
+  run_dir <- path.expand(run_dir)
 
   # Coerce start_day to character if Date or POSIXct
- if (inherits(start_day, c("Date", "POSIXt"))) {
+  if (inherits(start_day, c("Date", "POSIXt"))) {
     start_day <- format(start_day, "%Y-%m-%d")
   }
   
-  # Validate start_day format
+ # Validate start_day format (guard against NA)
   if (length(start_day) != 1 ||
+      is.na(start_day) ||
       !is.character(start_day) ||
       !grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", start_day)) {
     stop(

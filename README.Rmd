@@ -94,7 +94,7 @@ Use `get_data()` to download most inputs automatically.
 
 - Main vignette: `vignette("Vignette_DisperseR")`
 - Migration guide: `?migration_guide`
-- HTML vignettes: `vignettesHTML/`
+- Additional vignettes in `vignettes/` (render with `rmarkdown::render()`)
 
 ## System requirements
 
