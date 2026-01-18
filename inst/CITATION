@@ -1,0 +1,14 @@
+citHeader("To cite disperseR in publications, please use:")
+
+bibentry(
+  bibtype = "Manual",
+  title = "disperseR: Run HYSPLIT many times in parallel, aggregate to ZIP code level",
+  author = c(
+    person("Lucas", "Henneman"),
+    person("Christine", "Choirat"),
+    person("Maja", "Garbulinska")
+  ),
+  year = "2019",
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/josbyb2020/disperseR-test2026"
+)
