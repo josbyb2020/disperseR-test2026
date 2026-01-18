@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, purl = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -23,7 +23,7 @@ We cover directory setup, data downloads, dispersion runs, and exposure calculat
 
 disperseR uses `data.table` for performance. Load the required packages:
  
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, purl = FALSE}
 library(disperseR)
 library(data.table)
 library(sf)
@@ -39,7 +39,7 @@ installed, disperseR will use its bundled binaries; otherwise provide
 `create_dirs()` sets up the project folder structure and caches the paths for
 use by disperseR functions. Run this at the start of each session:
  
-```{r}
+```{r, purl = FALSE}
 dirs <- disperseR::create_dirs(location = "~/disperseR_project")
 ```
 
@@ -63,7 +63,7 @@ Existing data is preserved; only missing directories are created.
 For January-March 2005:
 
 
-```{r}
+```{r, purl = FALSE}
 disperseR::get_data(data = "all", 
   start.year = "2005", 
   start.month = "11", 
@@ -79,7 +79,7 @@ This package contains annual emissions and stack height data from [EPA's Air Mar
 
 You can visualize the data like this in RStudio:
 
-```{r}
+```{r, purl = FALSE}
 View(disperseR::units)
 ```
 
@@ -87,7 +87,7 @@ View(disperseR::units)
 Now, we need to select the power plants whose impact we will analyse. In this case, we'll use the two units in 2005 with the greatest SOx emissions, and two with the greatest SOx emissions in 2006. You are free to choose your own units. You can see that unit "3136-1" is on top of the ranking in both years. 
 
 
-```{r}
+```{r, purl = FALSE}
 unitsrun2005 <- disperseR::units %>% 
   dplyr::filter(year == 2005) %>% # only get data for 2005
   dplyr::top_n(2, SOx)  # sort and take the two rows with the biggest value for SOx
@@ -112,7 +112,7 @@ To define an object that includes all emission events in a given time period, we
 
 The result of running this function is a `data.table` that you can see below. 
 
-```{r}
+```{r, purl = FALSE}
 input_refs <- disperseR::define_inputs(units = unitsrun,
   startday = '2005-11-01',
   endday = '2006-02-28',
@@ -131,7 +131,7 @@ The `run_disperser_parallel()` function runs HYSPLIT for each emissions event. I
 
 Below we subset the data to run the process on a local computer. We only choose the first day and first hour of each month for each of the units that we chose. You can choose the events you are interested in. 
 
-```{r}
+```{r, purl = FALSE}
 input_refs_subset <- input_refs[format(as.Date(input_refs$start_day,
   format = "%Y-%m-%d"),
   format = "%d") == "01" & start_hour == 0]
@@ -148,7 +148,7 @@ The `parallel::detectCores()` function automatically detects the number of cores
 
 It is possible that running the below code with output a warning "WARNING: map background file not found ../graphics/arlmap". It is safe to ignore it. 
 
-```{r}
+```{r, purl = FALSE}
 hysp_raw <- disperseR::run_disperser_parallel(input.refs = input_refs_subset,
    pbl.height = pblheight,
    species = 'so2',
@@ -171,7 +171,7 @@ With the `link_all_units()` function, users can link all air parcels to three sp
 
 Below we present how to use `link_all_units()` for chosen units. First, we create an argument (called `yearmons` here) denoting the year and month combinations for which we would like to calculate unweighted exposure. Here we only choose July 2005 through June 2006 to cover all of the example runs specified above, and we create the variable using the `get_yearmon()` function.
 
-```{r}
+```{r, purl = FALSE}
 yearmons <- disperseR::get_yearmon(start.year = "2005", 
   start.month = "07", 
   end.year = "2006", 
@@ -180,7 +180,7 @@ yearmons <- disperseR::get_yearmon(start.year = "2005",
 
 Let's look again at our `unitsrun` data set. 
 
-```{r}
+```{r, purl = FALSE}
 unitsrun
 ```
 
@@ -194,7 +194,7 @@ Changing `duration.run.hours` to values less than that applied in `run_disperser
 
 `res.link` sets the grid resolution in meters (default is 12000 or 12km). Since parcel locations are first assigned to a grid before further spatial allocation, this setting has the potential to impact all results. A higher `res.link` with `link.to = "grids"` will result in faster run time and smaller output files.
 
-```{r}
+```{r, purl = FALSE}
 linked_zips <- disperseR::link_all_units(
   units.run = unitsrun,
   link.to = 'zips',
@@ -237,7 +237,7 @@ head(linked_grids)
 
 It could be the case that data could not have been linked for a specific month and unit. Below we show how to take a look at the combinations of units and months that were successfully linked. We can easily do it in the following way:
 
-```{r}
+```{r, purl = FALSE}
 unique(linked_zips$comb)
 ```
 
@@ -251,7 +251,7 @@ Keep in mind, since we only modeled a subset of the potential model runs defined
 
 We select the spatial link based on the `link.to` argument. The function returns data.tables that include an `sf` geometry column for easy plotting.
 
-```{r}
+```{r, purl = FALSE}
 impact_table_zip_single <- disperseR::create_impact_table_single(
   data.linked=linked_zips,
   link.to = 'zips',
@@ -283,7 +283,7 @@ In a similar way we can just plot the results using the `plot_impact_single()` f
 
 `zoom = TRUE` by default and is automatically adjusted depending on the plot values. You can set `zoom = FALSE` to display the map of the whole country. Note that the linked grids extend beyond the US borders because any grid across the world may be impacted by the given facilities.
 
-```{r, fig.height = 7, fig.width = 7}
+```{r, fig.height = 7, fig.width = 7, purl = FALSE}
 link_plot_zips <- disperseR::plot_impact_single(
   data.linked = linked_zips,
   link.to = 'zips',
@@ -342,7 +342,7 @@ In practice, these two worker functions may need to be implemented in parallel R
 
 
 
-```{r}
+```{r, purl = FALSE}
 combined_ziplinks <- disperseR::combine_monthly_links(
   month_YYYYMMs = yearmons,
   link.to = 'zips',
@@ -367,7 +367,7 @@ The `create_impact_table_weighted()` function takes as input the .RData file cre
 
 Here, we first calculate the annual HyADS emissions weighted exposure for all emissions modeled above and plot the results. The plots require a large amount of working memory, and may require you to clear your image history (if using RStudio).
 
-```{r}
+```{r, purl = FALSE}
 exp_ann_unit_zip <- disperseR::calculate_exposure(
   year.E = 2005,
   year.D = 2005,
@@ -411,7 +411,7 @@ Same as before, `zoom = TRUE` by default and is automatically adjusted depending
 
 Please note that the produced graph will be automatically saved in the folder specified in the `graph.dir` argument. Here we set `graph.dir  = graph_dir`. `graph_dir` should have been automatically created by the `create_dirs()` function. 
 
-```{r, fig.height = 7, fig.width = 7}
+```{r, fig.height = 7, fig.width = 7, purl = FALSE}
 zip_exp_ann_plot <- disperseR::plot_impact_weighted(
   data.linked = exp_ann_unit_zip,
   data.units = unitsrun,
@@ -467,7 +467,7 @@ Results are saved to the `exp_dir` and returned, but `return.monthly.data` must 
 
 **It is very important to provide a month for which we have available data**
 
-```{r}
+```{r, purl = FALSE}
 exp_mon_unit_zip <- disperseR::calculate_exposure(
   year.E = 2005,
   year.D = 2005,
@@ -507,7 +507,7 @@ exp_mon_unit_counties <- disperseR::calculate_exposure(
 
 
 
-```{r, fig.height = 7, fig.width = 7}
+```{r, fig.height = 7, fig.width = 7, purl = FALSE}
 zip_exp_mon_plot <- disperseR::plot_impact_weighted(
   data.linked = exp_mon_unit_zip,
   data.units = unitsrun,
@@ -526,7 +526,7 @@ zip_exp_mon_plot
 
 Next, we calculate the monthly emissions weighted HyADS exposure (again, only from the select few runs we initiated above). The code below plots the monthly exposure contributions of the three units in ZIP codes 17815, 08210, 13849, 17229. The location of the zip codes can be seen on the small map on the right side of the plot. Please note that the axis values are different for different ZIP codes. 
 
-```{r}
+```{r, purl = FALSE}
 zip_exp_unit_mon2005 <- disperseR::calculate_exposure(
   rda_file = file.path(rdata_dir, "hyads_vig_unwgted_zips.RData"),
   units.mo = PP.units.monthly1995_2017,
@@ -556,7 +556,7 @@ zip_exp_unit_mon <- rbind(zip_exp_unit_mon2005, zip_exp_unit_mon2006)
 ```
 
 And now we can plot the results
-```{r, fig.height = 4, fig.width = 7}
+```{r, fig.height = 4, fig.width = 7, purl = FALSE}
 zipcodes <- c("13039","21798", "03804")
 
 zip_exp_unit <- disperseR::plot_impact_unit(
@@ -571,7 +571,7 @@ In the examples provided above, we selected coal units a priori to analyze. Howe
 
 The following code snippet applies the `calc_exposure()` function to calculate annual impacts by unit (here, only the two units selected above), then rank-orders their population-weighted exposures on Pennsylvania using the `rankfacs_by_popwgt_location()` function. 
 
-```{r}
+```{r, purl = FALSE}
 zip_exp_ann_unit <- disperseR::calculate_exposure(
   year.E = 2005,
   year.D = 2005,
@@ -589,7 +589,7 @@ zip_exp_ann_unit[, year := 2005]
 In this function, the input ZIP-code linkage dataset is defined by  `zip_exp_ann_unit`; the `rank.by` argument defines the variables in `zip_exp_ann_unit` to rank by—it is possible to define multiple values (e.g., rank.by = c( 'hyads', 'SOx')) to rank by multiple ranking variables if they are available; finally, `state.value`, `city.value`, and `zip.value` can be defined to limit the area of influence (here, we only rank these units’ influences on Pennsylvania with state.value = 'PA'). For now, this function is only available for ZIP codes.
 
 
-```{r}
+```{r, purl = FALSE}
 unitRanks2005 <- disperseR::rankfacs_by_popwgt_location(
   data.linked = zip_exp_ann_unit,
   crosswalk. = crosswalk,
@@ -607,7 +607,7 @@ unitRanks2005
 
 The function below results in two graphs. One is a map showing where the units are and showing their rank and the other one contains bar plots. 
 
-```{r, fig.height = 4, fig.width = 7}
+```{r, fig.height = 4, fig.width = 7, purl = FALSE}
 plotUnitsRanked <- disperseR::plot_units_ranked(
   data.units = unitsrun, 
   data.ranked = unitRanks2005,

@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, purl = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, purl = FALSE}
 library(disperseR)
 library(data.table)
 library(sf)
@@ -28,7 +28,7 @@ In this vignette we will show you how you can use the `disperseR::get_data()` fu
 In case you have not yet created your project folder, use the following
 command (it also caches directory paths for disperseR):
 
-```{r}
+```{r, purl = FALSE}
 disperseR::create_dirs()
 ```
 
@@ -38,13 +38,13 @@ ZIP code linkage procedure requires a ZCTA-to-ZIP code crosswalk file. ZCTAs are
 
 Let's load the crosswalk file and assign it to `crosswalk`
 
-```{r}
+```{r, purl = FALSE}
 crosswalk <- disperseR::crosswalk
 ```
 
 Let's see the first rows of the dataset. 
 
-```{r}
+```{r, purl = FALSE}
 head(crosswalk)
 ```
 
@@ -53,13 +53,13 @@ head(crosswalk)
 
 The `disperseR` package also includes monthly power plant emissions, load, and heat input data, accessible using the following command:
 
-```{r}
+```{r, purl = FALSE}
 PP.units.monthly1995_2017 <- disperseR::PP.units.monthly1995_2017
 ```
 
 Let's see the first rows of the dataset. 
 
-```{r}
+```{r, purl = FALSE}
 head(PP.units.monthly1995_2017)
 ```
 
@@ -69,13 +69,13 @@ head(PP.units.monthly1995_2017)
 The `disperseR` package contains a data set with coordinates of ZIP codes. This might be useful for plotting, but it is not necessary as it will be used automatically by our plotting functions where required. We are using data from: [Open Data Soft](https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/table/)
 If needed however, you can access it as follows: 
 
-```{r}
+```{r, purl = FALSE}
 zipcodecoordinate <- disperseR::zipcodecoordinate
 ```
 
 Let's see the first rows of the dataset. 
 
-```{r}
+```{r, purl = FALSE}
 head(zipcodecoordinate)
 ```
 
@@ -85,11 +85,11 @@ See the `Vignette_Zip_Code_Coordinate_Data_Preparation` vignette for details on 
 
 Equally important is the ZCTA shape file. Using the `get_data()` function and setting `data = "zctashapefile"` you can download and preprocess the file from the [US census website](https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_zcta510_500k.zip) automatically. If the file already exists in the correct folder, this function will preprocess it and load it into your R environment. See the `Vignette_ZCTA_Shapefile_Preparation` vignette for preprocessing details.
 
-```{r}
+```{r, purl = FALSE}
 zcta <- disperseR::get_data(data = "zctashapefile")
 ```
 
-```{r}
+```{r, purl = FALSE}
 zcta
 ```
 
@@ -99,10 +99,10 @@ zcta
 Another input that we need are the monthly mean boundary layer heights. We used the data available on the [NOAA PSL website](https://psl.noaa.gov/repository/entry/get/hpbl.mon.mean.nc?entryid=synth%3Ae570c8f9-ec09-4e89-93b4-babd5651e7a9%3AL05BUlIvTW9udGhsaWVzL21vbm9sZXZlbC9ocGJsLm1vbi5tZWFuLm5j). Again, using the `get_data()` function and setting  `data = "pblheight"`. See the `Vignette_Planetary_Layers_Data_Preparation` vignette for more information on data preprocessing.
 
 
-```{r}
+```{r, purl = FALSE}
 pblheight <- disperseR::get_data(data = "pblheight")
 ```
-```{r}
+```{r, purl = FALSE}
 pblheight
 ```
 
@@ -113,7 +113,7 @@ This package contains annual emissions and stack height data from [EPA's Air Mar
 Now, we need to select the power plants whose impact we will analyse. In this case, we'll use the two units in 2005 with the greatest SOx emissions, and two with the greatest SOx emissions in 2006. You are free to choose your own units. You can see that unit "3136-1" is on top of the ranking in both years. 
 
 
-```{r}
+```{r, purl = FALSE}
 unitsrun2005 <- disperseR::units %>% 
   dplyr::filter(year ==2005)%>% 
   dplyr::top_n(2, SOx) 
@@ -129,12 +129,12 @@ head(unitsrun2006)
 
 Below append the two datasets together and transform it to `data.table` format.  
 
-```{r}
+```{r, purl = FALSE}
 unitsrun <- data.table::data.table(rbind(unitsrun2005, unitsrun2006)) 
 ```
 
 Let's look at the data. 
-```{r}
+```{r, purl = FALSE}
 unitsrun
 ```
 
@@ -144,7 +144,7 @@ Download reanalysis meteorology files. Below we show code to test for the meteor
 
 If you, for example, you want to download files for Jan-Jul 2005, you just have to use the `get_data()` function and set `data = "metfiles"`, `start.year = "2005"`, `start.month = "01"`, `end.year = "2005"`, and `end.month = "03"`. See below.
 
-```{r}
+```{r, purl = FALSE}
 disperseR::get_data(data = "metfiles", 
   start.year = "2005", 
   start.month = "07", 

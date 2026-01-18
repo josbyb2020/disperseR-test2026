@@ -4,8 +4,10 @@
 ^\.github$
 ^\.Rcheck$
 ^\.\.Rcheck$
+^.*\.Rcheck$
 ^\.DS_Store$
 ^\.git$
 ^\.gitignore$
 ^LICENSE\.md$
 ^cran-comments\.md$
+^disperseR_.*\.tar\.gz$

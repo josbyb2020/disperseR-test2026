@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, purl = FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,
   eval = FALSE,
@@ -19,7 +19,7 @@ In this vignette, we show how we prepared the crosswalk dataset that is attached
 
 First, we load the packages that we will need for completing this task. 
 
-```{r, message = FALSE, warning = FALSE, , eval = FALSE}
+```{r, message = FALSE, warning = FALSE, eval = FALSE, purl = FALSE}
 library(disperseR)
 library(data.table)
 library(tidyverse)
@@ -27,14 +27,14 @@ library(tidyverse)
 
 In case you have not yet created your project folder use the following command. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 disperseR::create_dirs()
 ```
 
 If the file does not exist, download it from [USDMAPPER](https://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx).
 Then, open it. 
 
-```{r,  eval = FALSE}
+```{r,  eval = FALSE, purl = FALSE}
 filename<- file.path(main_dir, "crosswalk.xlsx")
 if(!file.exists(filename)){
   download.file("https://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx", filename)
@@ -44,7 +44,7 @@ crosswalk <- readxl::read_excel(filename, skip = 0)
 
 Next step is to rename the `ZIP_CODE`, `CITY` variables.
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 crosswalk <- crosswalk %>% 
   dplyr::rename(.,ZIP=ZIP_CODE,
     CITY = PO_NAME)
@@ -54,7 +54,7 @@ We use 2017 census data from [data.census.gov](https://data.census.gov) (ACS 201
 
 We put the downloaded csv file in our main directory that has been specified in the `createdirs()` function and read it. We are also cleaning a the column names a little bit. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 file <- file.path(main_dir, "ACS_17_5YR_B01003_with_ann.csv")
 ZCTApop2017 <- read.csv(file, skip = 1, header = T)
 names(ZCTApop2017) <- c('ID', 'ID2', 'GEOGRAPHY', 'TOTALESTIMATE', 'MARGINOFERROR')
@@ -62,27 +62,27 @@ names(ZCTApop2017) <- c('ID', 'ID2', 'GEOGRAPHY', 'TOTALESTIMATE', 'MARGINOFERRO
 
 Now, we create a ZCTA code variable by extracting the 5 last digits from the `id` variable. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 ZCTApop2017 <- ZCTApop2017 %>% 
   dplyr::mutate(ZCTA=stringr::str_sub(ID,-5,-1))
 ```
 
 Merge the data to the crosswalk. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 crosswalk <- dplyr::inner_join(crosswalk, ZCTApop2017)
 ```
 
 Keep only some of the variables.
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 crosswalk<- crosswalk %>% 
   dplyr::select(ZIP, CITY, ZCTA, STATE, TOTALESTIMATE, MARGINOFERROR)
 ```
 
 Transform to data.table.
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 crosswalk <- data.table::data.table(crosswalk)
 ```
 

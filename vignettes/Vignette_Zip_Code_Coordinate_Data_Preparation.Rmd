@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, purl = FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,
   eval = FALSE,
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, message = FALSE, warning = FALSE , eval = FALSE}
+```{r, message = FALSE, warning = FALSE , eval = FALSE, purl = FALSE}
 library(tidyverse)
 library(disperseR)
 ```
@@ -24,13 +24,13 @@ In this vignette we show you how we prepared the zip code coordinate data that w
 
 In case you have not yet created your project folder use the following command. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 disperseR::create_dirs()
 ```
 
 We first download the data from [Open Data Soft](https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/table/)
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 filename <- file.path(main_dir, 'zipcodecoordinate.csv')
 url <- 'https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/download/?format=csv&timezone=Europe/Berlin&use_labels_for_header=true'
 
@@ -42,7 +42,7 @@ if(!file.exists(filename)){
 
 Read in the file. 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 zipcodecoordinate <- read.csv(filename, skip = 0, header = T, sep=";")
 ```
 
@@ -50,7 +50,7 @@ zipcodecoordinate <- read.csv(filename, skip = 0, header = T, sep=";")
 Select columns and rename them. 
 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, purl = FALSE}
 zipcodecoordinate <- zipcodecoordinate %>% 
   dplyr::select(Zip, City, Latitude, Longitude) %>% 
   dplyr::rename(ZIP=Zip)

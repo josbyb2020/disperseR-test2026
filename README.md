@@ -26,7 +26,7 @@ remotes::install_github("josbyb2020/disperseR-test2026")
 ```
 
 If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1
-meteorology, install SplitR if it is available on CRAN. If not, provide
+meteorology, install SplitR from GitHub for bundled binaries, or provide
 your own HYSPLIT binaries via `binary_path` and `parhplot_path`.
 
 Windows users who build vignettes will need Rtools.
@@ -72,9 +72,9 @@ Use `get_data()` to download most inputs automatically.
 
 ## Cross-platform notes
 
-- `create_dirs()` defaults to Desktop when available and falls back to
-  the home directory. Pass an explicit path on Windows or network
-  drives.
+- `create_dirs()` defaults to a session temp directory (CRAN-safe). For
+  persistent projects, pass an explicit path (especially on Windows or
+  network drives).
 - HYSPLIT binaries are required for dispersion runs. If SplitR is
   installed, disperseR will use its bundled binaries; otherwise provide
   `binary_path` and `parhplot_path` to `hysplit_dispersion()`.
