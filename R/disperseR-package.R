@@ -21,13 +21,16 @@ utils::globalVariables(c(
   "hyads", "hyads.py.sum", "hyads.rank", "N", "SOx",
   "Height", "Height.unit", "comb", "metric", "Measurement", "type", "label",
   "statefp", "countyfp", "state_name", "name", "geoid", "geometry",
-  "start_day", "start_hour", "duration", "direction",
+  "start_day", "start_hour", "duration", "direction", "hour",
   "file", "available", "run_dir", "met_dir",
-  "V1", "Pdate", "mo", "yr", "Exposure",
+  "V1", "Pdate", "mo", "yr", "Exposure", "seq_len", "pollutant",
   "STATE", "CITY", "TOTALESTIMATE",
   
+  # Used in formula/subset contexts
+  "date", "i",
+  
   # .GlobalEnv assignments from create_dirs
- "main_dir", "input_dir", "output_dir", "process_dir", "ziplink_dir",
+  "main_dir", "input_dir", "output_dir", "process_dir", "ziplink_dir",
   "hysp_dir", "meteo_dir", "zcta_dir", "raster_dir", "graph_dir",
   "exp_dir", "rank_dir", "crosswalk_dir", "census_dir", "proc_dir",
   "hpbl_dir", "rdata_dir"

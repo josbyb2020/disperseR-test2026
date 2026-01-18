@@ -4,11 +4,15 @@
 test_that("calculate_exposure validates source.agg", {
   skip_on_cran()
   
+  # Create a minimal mock to avoid file loading issues
+  # The function should validate source.agg before trying to load files
   expect_error(
     disperseR::calculate_exposure(
       year.E = 2005,
       year.D = 2005,
-      source.agg = "invalid"
+      source.agg = "invalid",
+      time.agg = "year",
+      rda_file = "loaded"  # avoid file loading
     ),
     "source.agg not recognized"
   )
@@ -21,17 +25,18 @@ test_that("calculate_exposure validates time.agg", {
     disperseR::calculate_exposure(
       year.E = 2005,
       year.D = 2005,
-      time.agg = "invalid"
+      source.agg = "total",
+      time.agg = "invalid",
+      rda_file = "loaded"
     ),
     "time.agg not recognized"
   )
 })
 
-test_that("calculate_exposure accepts valid source.agg values", {
+test_that("calculate_exposure accepts valid source.agg values without validation error", {
   skip_on_cran()
   
-  # These should not error on the source.agg validation
-  # (they may error later due to missing data, but that's expected)
+  # These should pass validation (may error later due to missing data)
   for (agg in c("total", "facility", "unit")) {
     result <- tryCatch(
       disperseR::calculate_exposure(
@@ -39,18 +44,21 @@ test_that("calculate_exposure accepts valid source.agg values", {
         year.D = 2005,
         source.agg = agg,
         time.agg = "year",
-        rda_file = "nonexistent"
+        rda_file = "loaded"  # avoid file loading
       ),
       error = function(e) e
     )
-    # Should NOT contain "source.agg not recognized"
+    # Should NOT be a source.agg validation error
     if (inherits(result, "error")) {
-      expect_false(grepl("source.agg not recognized", result$message))
+      expect_false(
+        grepl("source.agg not recognized", result$message),
+        info = paste("source.agg =", agg, "should be valid")
+      )
     }
   }
 })
 
-test_that("calculate_exposure accepts valid time.agg values", {
+test_that("calculate_exposure accepts valid time.agg values without validation error", {
   skip_on_cran()
   
   for (agg in c("year", "month")) {
@@ -60,13 +68,16 @@ test_that("calculate_exposure accepts valid time.agg values", {
         year.D = 2005,
         source.agg = "total",
         time.agg = agg,
-        rda_file = "nonexistent"
+        rda_file = "loaded"
       ),
       error = function(e) e
     )
-    # Should NOT contain "time.agg not recognized"
+    # Should NOT be a time.agg validation error
     if (inherits(result, "error")) {
-      expect_false(grepl("time.agg not recognized", result$message))
+      expect_false(
+        grepl("time.agg not recognized", result$message),
+        info = paste("time.agg =", agg, "should be valid")
+      )
     }
   }
 })
