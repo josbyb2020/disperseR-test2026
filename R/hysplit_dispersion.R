@@ -22,6 +22,14 @@ hysplit_dispersion <- function(lat = 49.263,
   disp_name = NULL,
   run_dir) {
 
+  if (!requireNamespace("SplitR", quietly = TRUE)) {
+    stop(
+      "HYSPLIT dispersion requires the 'SplitR' package for bundled binaries.\n",
+      "Install it with: remotes::install_github('rich-iannone/SplitR')",
+      call. = FALSE
+    )
+  }
+
   if (is.null(met_dir)) met_dir <- getwd()
 
   if (length(start_day) == 1 &

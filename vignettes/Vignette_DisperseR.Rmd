@@ -43,7 +43,7 @@ library(fst)
 library(USAboundaries)
 ```
 
-Next, we will use the `create_dirs()` function that creates a project folder with all the necessary sub folders. We recommend that you begin by setting up your project with this function. Provide the path to where you would like your project to live in the `location` argument. By default, if you do not specify the path, this function will create a main directory on your desktop. It will also assign paths to string variables in your environment. 
+Next, we will use the `create_dirs()` function that creates a project folder with all the necessary sub folders. We recommend that you begin by setting up your project with this function. Provide the path to where you would like your project to live in the `location` argument. By default, if you do not specify the path, this function will create a main directory on your Desktop when available, otherwise it will fall back to your home directory. It will also assign paths to string variables in your environment. 
 
 This will set up is the following folders and paths to them :
 
@@ -54,14 +54,14 @@ This will set up is the following folders and paths to them :
     * `meteo`: (reanalysis) meteorology files
   + `output`
     * `hysplit`: disperseR output (one file for each emissions event)
-    * `ziplink`: files containing ZIP code linkages
+    * `ziplinks`: files containing ZIP code linkages
     * `rdata`: RData files containing HyADS source-receptor matrices
     * `exp`: exposure per zipcode data 
     * `graph`: graphs saved here as pdf when running functions
   + `process`: temporary files that are created when the model is running and then deleted
 
 
-Note that not specifying the `location` argument will lead to a default Desktop location for the project folder. You can specify another folder by typing: `disperseR::create_dirs(location="/Users/username/projectlocation")` instead. 
+Note that not specifying the `location` argument will use the Desktop when available and otherwise your home directory. You can specify another folder by typing: `disperseR::create_dirs(location="/Users/username/projectlocation")` instead. 
 
 You should run this command before each disperseR session because the function defines global environment variables pointing to these directories. Don't worry, your previous data will not be overwritten.
 
@@ -638,5 +638,3 @@ plotUnitsRanked
 
 
 Please note graphical output is authomatically saved to the `graph_dir` by the plotting functions. 
-
-

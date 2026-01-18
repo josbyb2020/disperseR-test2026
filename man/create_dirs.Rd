@@ -7,7 +7,9 @@
 create_dirs(location = file.path("~", "Desktop"))
 }
 \arguments{
-\item{location}{this is the path to where you want your set of directories to be created. By default this is set to desktop.}
+\item{location}{Path where project directories are created. Defaults to the
+Desktop when available, otherwise the home directory. Creates the path
+if it does not exist.}
 }
 \value{
 Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.

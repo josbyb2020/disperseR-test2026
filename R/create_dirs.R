@@ -5,7 +5,9 @@
 #' @description `create_dirs()` takes 0 or the following argument `location`
 #'
 #'
-#' @param location this is the path to where you want your set of directories to be created. By default this is set to desktop.
+#' @param location Path where project directories are created. Defaults to the
+#'   Desktop when available, otherwise the home directory. Creates the path
+#'   if it does not exist.
 #'
 #'
 #' @return Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
@@ -13,7 +15,20 @@
 
 #' @export create_dirs
 
-create_dirs <- function(location=file.path('~', 'Desktop')) {
+create_dirs <- function(location = file.path("~", "Desktop")) {
+
+  is_default <- missing(location)
+  location <- path.expand(location)
+  if (is_default && !dir.exists(location)) {
+    location <- path.expand("~")
+    message("Default Desktop path not found; using home directory: ", location)
+  }
+  if (!dir.exists(location)) {
+    dir.create(location, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(location)) {
+    stop("location does not exist and could not be created: ", location, call. = FALSE)
+  }
 
   message("Creating project setup")
 

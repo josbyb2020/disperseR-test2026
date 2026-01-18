@@ -35,11 +35,6 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
 
   # Convert crosswalk to data.table
   crosswalk_dt <- data.table::data.table(crosswalk.)
-  
-  # Only set year column if year argument is provided
-  if (!is.null(year)) {
-    crosswalk_dt[, year := year]
-  }
 
   # Read from file if link.files provided
   if (!is.null(link.files)) {
@@ -59,18 +54,49 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
   } else {
     # Convert provided data.linked to data.table
     data.linked <- data.table::data.table(data.linked)
-    # Only set year if explicitly provided and not already present
-    if (!is.null(year)) {
+  }
+
+  if (!is.null(year)) {
+    year <- as.integer(year)
+    if (anyNA(year)) {
+      stop("year must be numeric.", call. = FALSE)
+    }
+    if ("year" %ni% names(crosswalk_dt)) {
+      if (length(year) != 1) {
+        stop(
+          "year must be length 1 when crosswalk. lacks a year column.",
+          call. = FALSE
+        )
+      }
+      crosswalk_dt[, year := year]
+    } else {
+      crosswalk_dt <- crosswalk_dt[year %in% ..year]
+    }
+    if ("year" %ni% names(data.linked)) {
+      if (length(year) != 1) {
+        stop(
+          "year must be length 1 when data.linked lacks a year column.",
+          call. = FALSE
+        )
+      }
       data.linked[, year := year]
+    } else {
+      data.linked <- data.linked[year %in% ..year]
     }
   }
 
   # Validate year column exists in both datasets
   if ('year' %ni% names(data.linked)) {
-    stop("data.linked must include a 'year' column, or provide 'year' argument.")
+    stop(
+      "data.linked must include a 'year' column, or provide 'year' argument.",
+      call. = FALSE
+    )
   }
   if ('year' %ni% names(crosswalk_dt)) {
-    stop("crosswalk. must include a 'year' column, or provide 'year' argument.")
+    stop(
+      "crosswalk. must include a 'year' column, or provide 'year' argument.",
+      call. = FALSE
+    )
   }
 
   # Create working copy of crosswalk
