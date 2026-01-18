@@ -186,7 +186,7 @@ hysp_raw <- disperseR::run_disperser_parallel(input.refs = input_refs_subset,
 Most current implementations of HyADS, instead of linking dispersion patterns from individual emissions events, link the patterns by month. 
 With the `link_all_units()` function, users can link all air parcels to three spatial domains---U.S. ZIP codes, U.S. counties, or a regular grid---by month for specified units. Here, we define the variables `yearmons` with combinations of years and months. `link_all_units()` uses the support functions `disperser_link_zips()`, `disperser_link_counties()`, `disperser_link_grids()` to read in raw HYSPLIT output files produced by the `run_disperser_parallel()` and links the corresponding parcel locations to the appropriate spatial domain. The user selects the spatial domain through the `link.to` argument---it can be set to one of "zips", "counties", or "grids".
 
-`link_all_units()` can be set to paralelize the runs by splitting different months on different cores, but you can make it serial just by setting the `mc.cores = 1`. The result of `link_all_units()` is a data.table of ZIP codes, counties, or grids and relative contributions `N`, and an identical `.csv` file is saved to the folder with a path specified by the `ziplink_dir` variable. `N` is not weighted by the `unit`'s emissions. 
+`link_all_units()` can be set to parallelize the runs by splitting different months on different cores, but you can make it serial just by setting the `mc.cores = 1`. The result of `link_all_units()` is a data.table of ZIP codes, counties, or grids and relative contributions `N`, and an identical `.csv` file is saved to the folder with a path specified by the `ziplink_dir` variable. `N` is not weighted by the `unit`'s emissions. 
 
 Below we present how to use `link_all_units()` for chosen units. First, we create an argument (called `yearmons` here) denoting the year and month combinations for which we would like to calculate unweighted exposure. Here we only choose July 2005 through June 2006 to cover all of the example runs specified above, and we create the variable using the `get_yearmon()` function.
 
@@ -300,7 +300,7 @@ head(impact_table_zip_single)
 
 In a similar way we can just plot the results using the `plot_impact_single()` function. A customized title can be set using the `plot.name` argument. Additional inputs can be passed to ggplot2's `theme` function to customize your plot.
 
-`zoom = T` by default and is authomatically adjusted depending on the plot values. You can set `zoom = F` to display the map of the whole country. Note that the linked grids extend beyond the US boarders because any grid across the world may be impacted by the given facilities.
+`zoom = TRUE` by default and is automatically adjusted depending on the plot values. You can set `zoom = FALSE` to display the map of the whole country. Note that the linked grids extend beyond the US borders because any grid across the world may be impacted by the given facilities.
 
 ```{r, fig.height = 7, fig.width = 7}
 link_plot_zips <- disperseR::plot_impact_single(
@@ -424,9 +424,9 @@ exp_ann_unit_counties <- disperseR::calculate_exposure(
   return.monthly.data = T)
 ```
 
-We can plot the results as following using the `plot_impact_weighted()` function. Again, a customized title can be set using the `plot.name` argument, and addional arguments can be passed to ggplot2's `theme` function to customize. 
+We can plot the results as follows using the `plot_impact_weighted()` function. Again, a customized title can be set using the `plot.name` argument, and additional arguments can be passed to ggplot2's `theme` function to customize. 
 
-Same as before, `zoom = T` by default and is authomatically adjusted depending on the plot values. You can set `zoom = F` to display the map of the whole country. 
+Same as before, `zoom = TRUE` by default and is automatically adjusted depending on the plot values. You can set `zoom = FALSE` to display the map of the whole country. 
 
 Please note that the produced graph will be automatically saved in the folder specified in the `graph.dir` argument. Here we set `graph.dir  = graph_dir`. `graph_dir` should have been automatically created by the `create_dirs()` function. 
 
@@ -637,4 +637,4 @@ plotUnitsRanked
 ```
 
 
-Please note graphical output is authomatically saved to the `graph_dir` by the plotting functions. 
+Please note graphical output is automatically saved to the `graph_dir` by the plotting functions. 

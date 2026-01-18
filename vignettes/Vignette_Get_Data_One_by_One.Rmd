@@ -27,7 +27,7 @@ library(ggsn)
 ```
 
 
-In this vignette we will show you how you can use the `disperseR::get_data()` function to download load your data one by one.
+In this vignette we will show you how you can use the `disperseR::get_data()` function to download/load your data one by one.
 
 In case you have not yet created your project folder use the following command. 
 
@@ -37,7 +37,7 @@ disperseR::create_dirs()
 
 ### The crosswalk
 
-ZIP code linkage procedure requires a ZCTA-to-ZIP code crosswalk file. ZCTAs are not exact geographic matches to ZIP codes, and multiple groups compile and maintain Crosswalk files. We used the Crosswalk maintained by [UDS Mapper]("https://www.udsmapper.org/zcta-crosswalk.cfm") and prepossessed it also including information about the population size. While not necessary for the HYSPLIT model or processing of its outputs, population-weighted exposure metrics allow for direct comparisons between power plants. If you would like to know more details about how this crosswalk was prepared, we have attached a vignette that explains it  [here](https://htmlpreview.github.io/?https://github.com/garbulinskamaja/disperseR/blob/master/vignettesHTML/Vignette_Crosswalk_preparation.html)
+ZIP code linkage procedure requires a ZCTA-to-ZIP code crosswalk file. ZCTAs are not exact geographic matches to ZIP codes, and multiple groups compile and maintain Crosswalk files. We used the Crosswalk maintained by [UDS Mapper]("https://www.udsmapper.org/zcta-crosswalk.cfm") and preprocessed it also including information about the population size. While not necessary for the HYSPLIT model or processing of its outputs, population-weighted exposure metrics allow for direct comparisons between power plants. If you would like to know more details about how this crosswalk was prepared, we have attached a vignette that explains it  [here](https://htmlpreview.github.io/?https://github.com/garbulinskamaja/disperseR/blob/master/vignettesHTML/Vignette_Crosswalk_preparation.html)
 
 Let's load the crosswalk file and assign it to `crosswalk`
 

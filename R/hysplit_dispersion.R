@@ -32,19 +32,29 @@ hysplit_dispersion <- function(lat = 49.263,
 
   if (is.null(met_dir)) met_dir <- getwd()
 
-  if (length(start_day) == 1 &
-      class(start_day) == "character" &
-      all(grepl("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]", start_day))) {
-
-    run_type <- "day"
-    run_day <- start_day
+  # Coerce start_day to character if Date or POSIXct
+ if (inherits(start_day, c("Date", "POSIXt"))) {
+    start_day <- format(start_day, "%Y-%m-%d")
   }
+  
+  # Validate start_day format
+  if (length(start_day) != 1 ||
+      !is.character(start_day) ||
+      !grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", start_day)) {
+    stop(
+      "start_day must be a single date in 'YYYY-MM-DD' format ",
+      "(character, Date, or POSIXt)",
+      call. = FALSE
+    )
+  }
+  
+  run_type <- "day"
+  run_day <- start_day
 
-  # If SETUP.CFG or ASCDATA.CFG do not exist in the
-  # working directory, write default versions of those
-  # config files
-  if (!("SETUP.CFG" %in% list.files()) |
-      !("ASCDATA.CFG" %in% list.files())) {
+  # If SETUP.CFG or ASCDATA.CFG do not exist in run_dir,
+  # write default versions of those config files
+  if (!("SETUP.CFG" %in% list.files(run_dir)) ||
+      !("ASCDATA.CFG" %in% list.files(run_dir))) {
     disperseR::hysplit_config_init(run_dir)
   }
 
@@ -543,81 +553,68 @@ hysplit_dispersion <- function(lat = 49.263,
   # CONTROL file is now complete and in the
   # working directory; execute the model run
 
+  # Execute HYSPLIT binary (paths quoted for space safety)
   if (disperseR::get_os() == "mac") {
-    system(paste0("(cd ", run_dir, " && ",
-      system.file("osx/hycs_std",
-        package = "SplitR"),
+    binary_path <- system.file("osx/hycs_std", package = "SplitR")
+    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
   }
-
-
 
   if (disperseR::get_os() == "unix") {
-    system(paste0("(cd ",  run_dir, " && ",
-      system.file("linux-amd64/hycs_std",
-        package = "SplitR"),
+    binary_path <- system.file("linux-amd64/hycs_std", package = "SplitR")
+    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
-    #    system(paste0("(cd ", getwd(), " && /nfs/home/H/henneman/shared_space/ci3_nsaph_scratch/henneman_software/software/hysplit/trunk/exec/hycs_std >> /dev/null 2>&1)"))
   }
 
-  ### finish these paths:
   if (disperseR::get_os() == "win") {
-    shell(paste0("(cd \"", run_dir, "\" && \"",
-      system.file("win/hycs_std.exe",
-        package = "SplitR"),
-      "\")"))
+    shell(paste0("cd /d \"", run_dir, "\" && \"",
+      system.file("win/hycs_std.exe", package = "SplitR"), "\""))
   }
 
 
   # Extract the particle positions at every hour
   if (disperseR::get_os() == "mac") {
-    system(paste0("(cd ", run_dir, "/", " && ",
-      system.file("osx/parhplot",
-        package = "SplitR"),
+    parhplot_path <- system.file("osx/parhplot", package = "SplitR")
+    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
   }
 
   if (disperseR::get_os() == "unix") {
-    system(paste0("(cd ", run_dir, "/", " && ",
-      system.file("linux-amd64/parhplot",
-        package = "SplitR"),
+    parhplot_path <- system.file("linux-amd64/parhplot", package = "SplitR")
+    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
   }
 
   if (disperseR::get_os() == "win") {
-    shell(paste0("(cd \"", run_dir, "\" && \"",
-      system.file("win/parhplot.exe",
-        package = "SplitR"),
-      "\" -iPARDUMP -a1)"))
+    shell(paste0("cd /d \"", run_dir, "\" && \"",
+      system.file("win/parhplot.exe", package = "SplitR"),
+      "\" -iPARDUMP -a1"))
   }
 
-  # Remove the .att files from the working directory
-  if (any(c("mac", "unix") %in%  disperseR::get_os())) {
-    system(paste0("(cd ", run_dir,
-      " && rm GIS_part*.att)"))
+  # Remove the .att files from run_dir
+  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+    system(paste0("(cd ", shQuote(run_dir), " && rm -f GIS_part*.att)"))
   }
 
-  if (get_os() == "win") {
-    shell(paste0("(cd \"", run_dir,
-      "\" && del GIS_part*.att)"))
+  if (disperseR::get_os() == "win") {
+    shell(paste0("cd /d \"", run_dir, "\" && del /q GIS_part*.att 2>nul"))
   }
 
-  # Remove the postscript plot from the working directory
-  if (any(c("mac", "unix") %in% get_os())) {
-    system(paste0("(cd ", run_dir,
-      " && rm parhplot.ps)"))
+  # Remove the postscript plot from run_dir
+  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+    system(paste0("(cd ", shQuote(run_dir), " && rm -f parhplot.ps)"))
   }
 
-  if ( disperseR::get_os() == "win") {
-    shell(paste0("(cd \"", run_dir,
-      "\" && del parhplot.ps)"))
+  if (disperseR::get_os() == "win") {
+    shell(paste0("cd /d \"", run_dir, "\" && del /q parhplot.ps 2>nul"))
   }
+  
   # Rename the TXT files as CSV files
-  if (any(c("mac", "unix") %in% get_os())) {
-    system(
-      paste0("(cd ", run_dir,
-        " && for files in GIS*.txt;",
-        " do mv \"$files\" \"${files%.txt}.csv\"; done)"))
+  if (any(c("mac", "unix") %in% disperseR::get_os())) {
+    system(paste0(
+      "(cd ", shQuote(run_dir),
+      " && for f in GIS*.txt; do [ -f \"$f\" ] && mv \"$f\" \"${f%.txt}.csv\"; done)"
+    ))
   }
 
   if (get_os() == "win") {
