@@ -51,35 +51,55 @@
 
 # Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {
-  result <- tryCatch({
-    download_status <- utils::download.file(url = url, destfile = file, mode = "wb")
-    if (download_status != 0) {
-      stop("download.file() returned non-zero exit status: ", download_status)
+  # Capture warnings but continue execution
+  download_warnings <- NULL
+  result <- tryCatch(
+    withCallingHandlers({
+      download_status <- utils::download.file(url = url, destfile = file, mode = "wb")
+      if (download_status != 0) {
+        stop("download.file() returned non-zero exit status: ", download_status)
+      }
+    },
+    warning = function(w) {
+      download_warnings <<- c(download_warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }),
+    error = function(cond) {
+      if (file.exists(file)) {
+        unlink(file, force = TRUE)
+      }
+      stop("Failed to download '", basename(file), "' from ", url, ".\n",
+           "Error: ", cond$message, "\n",
+           "Please check your network connection and try again.",
+           call. = FALSE)
     }
-    if (!file.exists(file)) {
-      stop("Download completed but file '", file, "' does not exist")
-    }
-    if (file.info(file)$size == 0) {
-      stop("Downloaded file '", file, "' is empty (0 bytes)")
-    }
-    if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
-      utils::unzip(file, exdir = dir)
-    }
-    return(invisible(TRUE))
-  },
-  error = function(cond) {
-    if (file.exists(file)) {
-      unlink(file, force = TRUE)
-    }
-    stop("Failed to download '", basename(file), "' from ", url, ".\n",
-         "Error: ", cond$message, "\n",
-         "Please check your network connection and try again.",
+  )
+  
+  # Report warnings if any occurred
+  if (length(download_warnings) > 0) {
+    warning("Download warnings: ", paste(download_warnings, collapse = "; "),
+            call. = FALSE)
+  }
+  
+  # Post-download validation (always runs, even after warnings)
+  if (!file.exists(file)) {
+    stop("Download completed but file '", file, "' does not exist.\n",
+         "URL: ", url,
          call. = FALSE)
-  },
-  warning = function(cond) {
-    warning("Download warning: ", cond$message, call. = FALSE)
-  })
-  return(result)
+  }
+  if (file.info(file)$size == 0) {
+    unlink(file, force = TRUE)
+    stop("Downloaded file '", file, "' is empty (0 bytes).\n",
+         "URL: ", url,
+         call. = FALSE)
+  }
+  
+  # Unzip if applicable
+  if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
+    utils::unzip(file, exdir = dir)
+  }
+  
+  return(invisible(TRUE))
 }
 
 
@@ -220,6 +240,15 @@ startyear <- start.year
     if (length(metfiles) > 0) {
       message("  Downloading: ", paste(metfiles, collapse = ", "))
       disperseR::get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
+      
+      # Validate downloads completed
+      still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
+      if (length(still_missing) > 0) {
+        stop("Meteorology download failed. Missing files: ",
+             paste(still_missing, collapse = ", "),
+             call. = FALSE)
+      }
+      message("  All meteorology files downloaded successfully.")
     } else {
       message("  All requested files already available.")
     }
@@ -294,6 +323,15 @@ startyear <- start.year
     if (length(metfiles) > 0) {
       message("Downloading: ", paste(metfiles, collapse = ", "))
       disperseR::get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
+      
+      # Validate downloads completed
+      still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
+      if (length(still_missing) > 0) {
+        stop("Meteorology download failed. Missing files: ",
+             paste(still_missing, collapse = ", "),
+             call. = FALSE)
+      }
+      message("All meteorology files downloaded successfully.")
     } else {
       message("All requested files already available.")
     }
