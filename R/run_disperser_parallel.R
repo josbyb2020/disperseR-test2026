@@ -170,7 +170,7 @@ run_fac <- function(x,
         shape_factor = 0,
         resuspension = 1e-10,
         ddep_vel = 0.002)
-  } else if (species == 'so4') {
+  } else if (species %in% c('so4', 'so4p')) {
     # so4p (particulate sulfate)
     species_param <-
       data.table(
