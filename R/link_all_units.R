@@ -151,7 +151,7 @@ link_all_units <- function(units.run,
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_zips) > 0) {
-      linked_zips[, month := as(month, 'character')]
+      linked_zips[, month := as.character(month)]
     }
     return(linked_zips)
   }
@@ -174,7 +174,7 @@ link_all_units <- function(units.run,
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_counties) > 0) {
-      linked_counties[, month := as(month, 'character')]
+      linked_counties[, month := as.character(month)]
     }
     return(linked_counties)
   }
@@ -197,7 +197,7 @@ link_all_units <- function(units.run,
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_grids) > 0) {
-      linked_grids[, month := as(month, 'character')]
+      linked_grids[, month := as.character(month)]
     }
     return(linked_grids)
   }

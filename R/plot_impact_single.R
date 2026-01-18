@@ -60,7 +60,7 @@ plot_impact_single  <- function(data.linked,
                                            map.unitID = map.unitID,
                                            metric = metric)
   dataset_sf$geometry <- st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
-  year.use <- as( substr( map.month, 1, 4), 'integer')
+  year.use <- as.integer( substr( map.month, 1, 4))
 
   ## coordinates
   coord <- data.table( st_coordinates( stats::na.omit( dataset_sf)$geometry))

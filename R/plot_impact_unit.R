@@ -52,7 +52,7 @@ plot_impact_unit <- function(data.linked = NULL,
   }
 
   dataplot <- data.linked[ZIP %in% zip.codes]
-  dataplot <- dataplot[, uID := as(uID, 'character')]
+  dataplot <- dataplot[, uID := as.character(uID)]
   dataplot <- dataplot[, year := as.numeric(substr(yearmonth, start = 1, stop = 4))]
   dataplot <- dataplot[, month := as.numeric(substr(yearmonth, start = 5, stop = 6))]
   dataplot$date <- with(dataplot, lubridate::ymd(sprintf('%04d%02d%02d', year, month, 1)))
@@ -124,7 +124,7 @@ plot_impact_unit <- function(data.linked = NULL,
       linewidth = 0.25
     ) +
     ggplot2::geom_point(
-      data = as.data.table(zipcodecoordinate)[ZIP %in% zip.codes],
+      data = data.table::as.data.table(zipcodecoordinate)[ZIP %in% zip.codes],
       ggplot2::aes(x = Longitude, y = Latitude),
       shape = 7,
       colour = "blue",

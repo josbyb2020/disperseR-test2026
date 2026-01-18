@@ -132,7 +132,7 @@ calculate_exposure <- function(year.E,
     names(month_mapping)[names(month_mapping) %ni% 'state_name'] <-
       gsub('_|-|\\*', '.', names(month_mapping)[names(month_mapping) %ni% 'state_name'])
 
-    month_mapping_long <- melt(
+    month_mapping_long <- data.table::melt(
       month_mapping,
       id.vars = id.v,
       variable.factor = FALSE,

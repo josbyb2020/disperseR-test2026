@@ -16,8 +16,8 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
   data.units <- data.units[data.units$year == year, ]
   data.ranked <- data.ranked[data.ranked$year == year, ]
   
-  data.units[, uID := as(uID, 'character')]
-  data.ranked[, uID := as(uID, 'character')]
+  data.units[, uID := as.character(uID)]
+  data.ranked[, uID := as.character(uID)]
   unitRanks <- merge(data.ranked, data.units, by = 'uID')
 
   ## coordinates

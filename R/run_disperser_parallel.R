@@ -255,7 +255,7 @@ run_fac <- function(x,
       disperseR::add_emissions(
         rate = 1,
         duration = subset$duration_emiss_hours,
-        start_day = as(subset$start_day, 'character'),
+        start_day = as.character(subset$start_day),
         start_hour = subset$start_hour
       ) %>%
       disperseR::add_species(
@@ -272,7 +272,7 @@ run_fac <- function(x,
         lon = subset$Longitude,
         height = subset$Height,
         duration = subset$duration_run_hours,
-        start_day = as(subset$start_day, 'character'),
+        start_day = as.character(subset$start_day),
         start_hour = subset$start_hour,
         direction = "forward",
         met_type = "reanalysis",
