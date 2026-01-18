@@ -2,22 +2,34 @@
 % Please edit documentation in R/create_dirs.R
 \name{create_dirs}
 \alias{create_dirs}
-\title{create a set of directories to run disperseR}
+\title{Create project directories for disperseR}
 \usage{
-create_dirs(location = file.path("~", "Desktop"))
+create_dirs(location = NULL)
 }
 \arguments{
-\item{location}{Path where project directories are created. Defaults to the
-Desktop when available, otherwise the home directory. Creates the path
-if it does not exist.}
+\item{location}{Path where project directories are created. Defaults to
+a session-specific temporary directory (CRAN policy). For persistent
+storage, provide an explicit path like `"~/disperseR_project"`.}
 }
 \value{
 A named list of directory paths. The paths are also stored in an
-internal package cache for use by other functions.
+  internal package cache for use by other functions.
 }
 \description{
-`create_dirs()` takes 0 or the following argument `location`
+Creates the directory structure required for disperseR analyses.
 }
 \details{
-\code{create_dirs}
+By default, directories are created in `tempdir()` which is
+  cleaned up when the R session ends. For persistent projects, pass an
+  explicit `location` argument.
+}
+\examples{
+\dontrun{
+# Temporary session directories (default, CRAN-safe)
+dirs <- create_dirs()
+
+# Persistent project directory
+dirs <- create_dirs(location = "~/disperseR_project")
+}
+
 }

@@ -12,12 +12,6 @@
 #' @format data.table with unit identifiers, location, and year fields.
 "units"
 
-#' Monthly power plant unit emissions
-#'
-#' @description Monthly emissions data by unit, used for exposure weighting.
-#' @format data.table with unit identifiers, year, month, and emissions columns.
-"units_monthly"
-
 #' ZIP code coordinate reference
 #'
 #' @description Coordinates for ZIP code centroids used in mapping.

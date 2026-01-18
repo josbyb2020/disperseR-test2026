@@ -10,7 +10,8 @@
 #' @param units.run A data.table with columns: ID (character), uID (character),
 #'   Latitude (numeric), Longitude (numeric), year (integer)
 #' @param link.to One of 'zips', 'counties', or 'grids'
-#' @param mc.cores Number of cores for parallel computation. Set to 1 for serial.
+#' @param mc.cores Number of cores for parallel computation. Default 2 (CRAN policy).
+#'   Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.
 #' @param year.mons Months for linking (use get_yearmon() to create)
 #' @param start.date Optional start date (alternative to year.mons)
 #' @param end.date Optional end date (alternative to year.mons)
@@ -35,7 +36,7 @@
 #' @importFrom data.table rbindlist
 link_all_units <- function(units.run,
                            link.to = 'zips',
-                           mc.cores = parallel::detectCores(),
+                           mc.cores = getOption("disperseR.mc.cores", 2L),
                            year.mons = NULL,
                            start.date = NULL,
                            end.date = NULL,

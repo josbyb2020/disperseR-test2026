@@ -13,7 +13,7 @@ run_disperser_parallel(
   meteo_dir = NULL,
   overwrite = FALSE,
   npart = 100,
-  mc.cores = parallel::detectCores(),
+  mc.cores = getOption("disperseR.mc.cores", 2L),
   keep.hysplit.files = FALSE
 )
 }
@@ -38,7 +38,8 @@ create_dirs()).}
 
 \item{npart}{Number of air parcels tracked by HYSPLIT. Default 100}
 
-\item{mc.cores}{Number of cores for parallel computation. Default detectCores().
+\item{mc.cores}{Number of cores for parallel computation. Default 2 (CRAN policy).
+Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.
 On Windows, a socket cluster is used instead of forking.}
 
 \item{keep.hysplit.files}{Keep HYSPLIT run files? Default FALSE}

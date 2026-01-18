@@ -35,6 +35,11 @@ get_met_reanalysis <- function(files = NULL,
     base_url <- paste0(base_url, "/")
   }
   
+  # Set a longer timeout for large meteorology files (CRAN recommendation)
+  old_timeout <- getOption("timeout")
+  on.exit(options(timeout = old_timeout), add = TRUE)
+  options(timeout = max(300, old_timeout))  # At least 5 minutes
+  
   # Internal helper for validated downloads
   .download_met_file <- function(url, destfile) {
     download_ok <- FALSE

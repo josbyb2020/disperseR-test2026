@@ -7,7 +7,7 @@
 link_all_units(
   units.run,
   link.to = "zips",
-  mc.cores = parallel::detectCores(),
+  mc.cores = getOption("disperseR.mc.cores", 2L),
   year.mons = NULL,
   start.date = NULL,
   end.date = NULL,
@@ -31,7 +31,8 @@ Latitude (numeric), Longitude (numeric), year (integer)}
 
 \item{link.to}{One of 'zips', 'counties', or 'grids'}
 
-\item{mc.cores}{Number of cores for parallel computation. Set to 1 for serial.}
+\item{mc.cores}{Number of cores for parallel computation. Default 2 (CRAN policy).
+Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.}
 
 \item{year.mons}{Months for linking (use get_yearmon() to create)}
 
