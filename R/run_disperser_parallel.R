@@ -1,66 +1,123 @@
-#' run the fac model in parallel
+#' Run the dispersion model in parallel
 #'
-#' \code{run_disperser_parallel}
+#' @description Runs HYSPLIT dispersion simulations in parallel across multiple
+#' emission sources/times. Automatically uses appropriate parallelization method
+#' based on the operating system (mclapply on Unix/macOS, parLapply on Windows).
 #'
-#' It is possible that running the below code with output a warning "WARNING: map background file not found ../graphics/arlmap". It is safe to ignore it.
+#' @param input.refs A data.table with columns: ID (character), uID (character),
+#'   Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
+#'   start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).
+#' @param pbl.height Monthly mean planetary boundary layer heights
+#' @param species Species type: 'so2' (default) or 'so4p' (particulate sulfate)
+#' @param proc_dir Directory for temporary files (from create_dirs())
+#' @param overwrite Overwrite existing output files? Default FALSE
+#' @param npart Number of air parcels tracked by HYSPLIT. Default 100
+#' @param mc.cores Number of cores for parallel computation. Default detectCores().
+#'   On Windows, a socket cluster is used instead of forking.
+#' @param keep.hysplit.files Keep HYSPLIT run files? Default FALSE
 #'
-#'
-#' @param input.refs A data.table with the following columns (and column classes): ID (character) a unique ID assigned to the particles emmission source. uID (character) same as ID. Latitude (numeric) and Longitude (numeric) the emmission source's latitude and longitude. Height (numeric) the emmission source's height in meters above ground level. start_day (Date) and start_hour (numeric) the date and time when the emissions occurrence begins. duration_emiss_hours (numeric) the length in hours of the emission event. duration_run_hours (numeric) the length in hours of the dispersion simulation. Be mindful of the default value of the parameter stringsAsFactors when using the function data.table() to convert a data.frame to a data.table. If disperseR::units data is used, then input.refs can take the data.table that is the result of the `define_input()` function or a subset of that dataset. 
-#'
-#' @param pbl.height Monthly mean planetary boundary layer heights. See vignettes for more information
-#'
-#' @param species The package has the possibility to use two types of species. The default one is `species = 'so2'`, but you can also use particulate sulfate `species = 'so4p'`.
-#'
-#' @param proc_dir directory where the function saves temporary files while running. This is automatically defined by `create_dirs()`
-#'
-#' @param overwrite if output files already exist should they be overwritten? This is `false` by default.
-#'
-#' @param npart number of air parcels tracked by HYSPLIT. Defaults to 100
-#'
-#' @param mc.cores on how many cores should R split the computations. set to  parallel::detectCores() or set to 1 if you want to serial computation.
-#'
-#' @param keep.hysplit.files logical. If FALSE (the default), clears storage space in the `proc_dir` by removing all HYSPLIT files
-#'
-#'
-#' @return This function returns fac model results.
-
-
-#' @export run_disperser_parallel
-
+#' @return List of results from each dispersion run
+#' @export
+#' @importFrom parallel detectCores mclapply makeCluster stopCluster clusterExport parLapply
 run_disperser_parallel <- function(input.refs = NULL,
   pbl.height = NULL,
   species = 'so2',
-  proc_dir = proc_dir,
-  overwrite = F,
+  proc_dir = NULL,
+  overwrite = FALSE,
   npart = 100,
   mc.cores = parallel::detectCores(),
-  keep.hysplit.files = FALSE){
+  keep.hysplit.files = FALSE) {
 
-  ## run_fac() below assums that there is one year data.
-    run_sample <- seq(1, nrow(input.refs))
+  if (is.null(input.refs) || nrow(input.refs) == 0) {
+    stop("input.refs must be a non-empty data.table")
+  }
+  
+  if (is.null(proc_dir)) {
+    stop("proc_dir must be specified")
+  }
 
-    ## run the run_fac in parallel
-      parallel::mclapply(X = run_sample,
+  run_sample <- seq_len(nrow(input.refs))
+  
+  # Detect OS and choose parallelization strategy
+ is_windows <- .Platform$OS.type == "windows"
+  
+  if (mc.cores == 1 || length(run_sample) == 1) {
+    # Sequential execution
+    results <- lapply(
+      X = run_sample,
       FUN = run_fac,
       input.refs = input.refs,
       pbl.height = pbl.height,
-      species =   species,
+      species = species,
       proc_dir = proc_dir,
       overwrite = overwrite,
-      npart =  npart,
+      npart = npart,
+      keep.hysplit.files = keep.hysplit.files
+    )
+  } else if (is_windows) {
+    # Windows: use socket cluster with parLapply
+    message(sprintf("Windows detected: using socket cluster with %d workers", mc.cores))
+    
+    cl <- parallel::makeCluster(mc.cores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+    
+    # Export required variables and packages to workers
+    parallel::clusterExport(cl, c(
+      "input.refs", "pbl.height", "species", "proc_dir",
+      "overwrite", "npart", "keep.hysplit.files", "run_fac"
+    ), envir = environment())
+    
+    # Load disperseR on each worker
+    parallel::clusterEvalQ(cl, {
+      library(disperseR)
+      library(data.table)
+      library(magrittr)
+    })
+    
+    results <- parallel::parLapply(
+      cl = cl,
+      X = run_sample,
+      fun = function(x) {
+        run_fac(
+          x = x,
+          input.refs = input.refs,
+          pbl.height = pbl.height,
+          species = species,
+          proc_dir = proc_dir,
+          overwrite = overwrite,
+          npart = npart,
+          keep.hysplit.files = keep.hysplit.files
+        )
+      }
+    )
+  } else {
+    # Unix/macOS: use mclapply (fork-based)
+    results <- parallel::mclapply(
+      X = run_sample,
+      FUN = run_fac,
+      input.refs = input.refs,
+      pbl.height = pbl.height,
+      species = species,
+      proc_dir = proc_dir,
+      overwrite = overwrite,
+      npart = npart,
       keep.hysplit.files = keep.hysplit.files,
-      mc.cores = mc.cores)
+      mc.cores = mc.cores
+    )
   }
+  
+  return(results)
+}
 
 
 run_fac <- function(x,
-  input.refs = input.refs,
-  pbl.height = pbl.height,
-  species = species,
-  npart = npart,
-  overwrite = overwrite,
-  keep.hysplit.files,
-  proc_dir = proc_dir) {
+  input.refs,
+  pbl.height = NULL,
+  species = "so2",
+  npart = 100,
+  overwrite = FALSE,
+  keep.hysplit.files = FALSE,
+  proc_dir) {
 
   subset <- input.refs[x]
   print(subset)
