@@ -19,11 +19,14 @@ install.packages("remotes")
 remotes::install_github("josbyb2020/disperseR-test2026")
 ```
 
-If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1 meteorology:
+**Required dependency for HYSPLIT runs:** SplitR provides the HYSPLIT binaries
+and is required for dispersion/trajectory models and GDAS1 meteorology:
 
 ```r
 remotes::install_github("rich-iannone/SplitR")
 ```
+
+Without SplitR, `hysplit_dispersion()` and `run_model()` with trajectory mode will fail.
 
 Windows users who build vignettes will need Rtools.
 

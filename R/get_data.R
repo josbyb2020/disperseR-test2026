@@ -51,22 +51,35 @@
 
 # Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {
-  out <- tryCatch({
-    utils::download.file(url = url, destfile = file, mode = "wb")
+  result <- tryCatch({
+    download_status <- utils::download.file(url = url, destfile = file, mode = "wb")
+    if (download_status != 0) {
+      stop("download.file() returned non-zero exit status: ", download_status)
+    }
+    if (!file.exists(file)) {
+      stop("Download completed but file '", file, "' does not exist")
+    }
+    if (file.info(file)$size == 0) {
+      stop("Downloaded file '", file, "' is empty (0 bytes)")
+    }
     if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
       utils::unzip(file, exdir = dir)
     }
+    return(invisible(TRUE))
   },
   error = function(cond) {
-    message("URL connection failed. You may need to try again later.")
-    message("Original error: ", cond$message)
-    return(NA)
+    if (file.exists(file)) {
+      unlink(file, force = TRUE)
+    }
+    stop("Failed to download '", basename(file), "' from ", url, ".\n",
+         "Error: ", cond$message, "\n",
+         "Please check your network connection and try again.",
+         call. = FALSE)
   },
   warning = function(cond) {
-    message("Warning: ", cond$message)
-    return(NULL)
+    warning("Download warning: ", cond$message, call. = FALSE)
   })
-  return(out)
+  return(result)
 }
 
 
@@ -122,10 +135,22 @@ startyear <- start.year
       message("  File already exists, skipping download.")
     }
 
+    if (!file.exists(file)) {
+      stop("ZCTA zip file '", file, "' does not exist after download attempt. ",
+           "Please check your network connection and try again.",
+           call. = FALSE)
+    }
+
     zcta_shp <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
     if (!file.exists(zcta_shp)) {
       message("  Unzipping ZCTA file...")
       utils::unzip(file, exdir = zcta_dir)
+    }
+
+    if (!file.exists(zcta_shp)) {
+      stop("ZCTA shapefile '", zcta_shp, "' does not exist after unzip. ",
+           "The zip file may be corrupted. Please delete '", file, "' and try again.",
+           call. = FALSE)
     }
 
     # Read and transform using sf (replaces raster::shapefile + sp::spTransform)
@@ -147,6 +172,12 @@ startyear <- start.year
       download_file(url, file, directory)
     } else {
       message("  File already exists, skipping download.")
+    }
+
+    if (!file.exists(file)) {
+      stop("PBL data file '", file, "' does not exist after download attempt. ",
+           "Please check your network connection and try again.",
+           call. = FALSE)
     }
 
     # Read using terra (replaces raster::brick)
@@ -277,6 +308,11 @@ startyear <- start.year
     } else {
       message("File already exists, skipping download.")
     }
+    if (!file.exists(file)) {
+      stop("Required file '", basename(file), "' does not exist after download attempt. ",
+           "Please check your network connection and try again.",
+           call. = FALSE)
+    }
   }
 
   # --- Process and return ZCTA dataset ---
@@ -284,7 +320,16 @@ startyear <- start.year
     message("Processing ZCTA dataset...")
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
     if (!file.exists(zcta_path)) {
+      if (!file.exists(file)) {
+        stop("ZCTA zip file '", file, "' does not exist. Cannot extract shapefile.",
+             call. = FALSE)
+      }
       utils::unzip(file, exdir = directory)
+    }
+    if (!file.exists(zcta_path)) {
+      stop("ZCTA shapefile '", zcta_path, "' does not exist after unzip. ",
+           "The zip file may be corrupted. Please delete '", file, "' and try again.",
+           call. = FALSE)
     }
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
     data.table::setnames(zcta, 'ZCTA5CE10', 'ZCTA')
@@ -303,7 +348,16 @@ startyear <- start.year
     message("Processing ZCTA shapefile...")
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
     if (!file.exists(zcta_path)) {
+      if (!file.exists(file)) {
+        stop("ZCTA zip file '", file, "' does not exist. Cannot extract shapefile.",
+             call. = FALSE)
+      }
       utils::unzip(file, exdir = directory)
+    }
+    if (!file.exists(zcta_path)) {
+      stop("ZCTA shapefile '", zcta_path, "' does not exist after unzip. ",
+           "The zip file may be corrupted. Please delete '", file, "' and try again.",
+           call. = FALSE)
     }
     # Use sf instead of raster::shapefile + sp::spTransform
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
@@ -314,6 +368,11 @@ startyear <- start.year
 
   # --- Process and return PBL height raster ---
   if (data == "pblheight") {
+    if (!file.exists(file)) {
+      stop("PBL data file '", file, "' does not exist. ",
+           "Please download it first using get_data(data = 'pblheight').",
+           call. = FALSE)
+    }
     old_tz <- Sys.getenv("TZ")
     Sys.setenv(TZ = "UTC")
     on.exit(Sys.setenv(TZ = old_tz), add = TRUE)

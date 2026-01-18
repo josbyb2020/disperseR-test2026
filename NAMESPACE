@@ -220,3 +220,7 @@ importFrom(grid, unit)
 
 # methods imports
 importFrom(methods, as)
+
+# SplitR imports
+importFrom(SplitR, get_met_gdas1)
+importFrom(SplitR, hysplit_trajectory)

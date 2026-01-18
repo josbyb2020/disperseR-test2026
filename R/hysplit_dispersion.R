@@ -24,8 +24,9 @@ hysplit_dispersion <- function(lat = 49.263,
 
   if (!requireNamespace("SplitR", quietly = TRUE)) {
     stop(
-      "HYSPLIT dispersion requires the 'SplitR' package for bundled binaries.\n",
-      "Install it with: remotes::install_github('rich-iannone/SplitR')",
+      "HYSPLIT dispersion requires the 'SplitR' package (Imports dependency).\n",
+      "Install it with: remotes::install_github('rich-iannone/SplitR')\n",
+      "If installing disperseR from GitHub, SplitR should install automatically.",
       call. = FALSE
     )
   }
@@ -573,39 +574,101 @@ hysplit_dispersion <- function(lat = 49.263,
   # Execute HYSPLIT binary (paths quoted for space safety)
   if (disperseR::get_os() == "mac") {
     binary_path <- system.file("osx/hycs_std", package = "SplitR")
-    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
+    if (binary_path == "") {
+      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
+    if (exit_status != 0) {
+      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
+           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
+           call. = FALSE)
+    }
   }
 
   if (disperseR::get_os() == "unix") {
     binary_path <- system.file("linux-amd64/hycs_std", package = "SplitR")
-    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
+    if (binary_path == "") {
+      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
       " >> /dev/null 2>&1)"))
+    if (exit_status != 0) {
+      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
+           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
+           call. = FALSE)
+    }
   }
 
   if (disperseR::get_os() == "win") {
-    shell(paste0("cd /d \"", run_dir, "\" && \"",
-      system.file("win/hycs_std.exe", package = "SplitR"), "\""))
+    binary_path <- system.file("win/hycs_std.exe", package = "SplitR")
+    if (binary_path == "") {
+      stop("HYSPLIT binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", binary_path, "\""),
+                        intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    if (exit_status != 0) {
+      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
+           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
+           call. = FALSE)
+    }
   }
 
 
   # Extract the particle positions at every hour
   if (disperseR::get_os() == "mac") {
     parhplot_path <- system.file("osx/parhplot", package = "SplitR")
-    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
+    if (parhplot_path == "") {
+      stop("parhplot binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
+    if (exit_status != 0) {
+      stop("parhplot execution failed with exit status ", exit_status, ". ",
+           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
+           call. = FALSE)
+    }
   }
 
   if (disperseR::get_os() == "unix") {
     parhplot_path <- system.file("linux-amd64/parhplot", package = "SplitR")
-    system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
+    if (parhplot_path == "") {
+      stop("parhplot binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
       " -iPARDUMP -a1)"))
+    if (exit_status != 0) {
+      stop("parhplot execution failed with exit status ", exit_status, ". ",
+           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
+           call. = FALSE)
+    }
   }
 
   if (disperseR::get_os() == "win") {
-    shell(paste0("cd /d \"", run_dir, "\" && \"",
-      system.file("win/parhplot.exe", package = "SplitR"),
-      "\" -iPARDUMP -a1"))
+    parhplot_path <- system.file("win/parhplot.exe", package = "SplitR")
+    if (parhplot_path == "") {
+      stop("parhplot binary not found. Ensure SplitR is installed: ",
+           "remotes::install_github('rich-iannone/SplitR')",
+           call. = FALSE)
+    }
+    exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", parhplot_path,
+      "\" -iPARDUMP -a1"),
+      intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    if (exit_status != 0) {
+      stop("parhplot execution failed with exit status ", exit_status, ". ",
+           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
+           call. = FALSE)
+    }
   }
 
   # Remove the .att files from run_dir
