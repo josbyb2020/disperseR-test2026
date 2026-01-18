@@ -30,10 +30,23 @@ hysplit_dispersion <- function(lat = 49.263,
     )
   }
 
-  # Expand ~ in paths and normalize
+  # Validate and normalize run_dir
+ if (missing(run_dir) || is.null(run_dir) || !nzchar(run_dir)) {
+    stop("run_dir must be specified (working directory for HYSPLIT output)",
+         call. = FALSE)
+  }
+  run_dir <- path.expand(run_dir)
+  if (!dir.exists(run_dir)) {
+    dir.create(run_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(run_dir)) {
+      stop("run_dir '", run_dir, "' does not exist and could not be created",
+           call. = FALSE)
+    }
+  }
+
+  # Normalize met_dir
   if (is.null(met_dir)) met_dir <- getwd()
   met_dir <- path.expand(met_dir)
-  run_dir <- path.expand(run_dir)
 
   # Coerce start_day to character if Date or POSIXct
   if (inherits(start_day, c("Date", "POSIXt"))) {

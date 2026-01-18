@@ -82,7 +82,7 @@ Let's see the first rows of the dataset.
 head(zipcodecoordinate)
 ```
 
-Click [here](vignettes/Vignette_Zip_Code_Coordinate_Data_Preparation.html) for an optional vignette on how we prepared these data. 
+See the `Vignette_Zip_Code_Coordinate_Data_Preparation` vignette for details on how we prepared these data. 
 
 ### The shape files
 
