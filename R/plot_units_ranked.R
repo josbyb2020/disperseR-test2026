@@ -37,22 +37,22 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
   rank<-unitRanks$hyads.rank
 
   facility_loc <- data.table(x = long, y = lat, hyads.py.sum = hyads.py.sum, rank = rank, uID = uID) %>%
-    mutate(label = paste("UNIT:", uID, "ranked", rank))
+    dplyr::mutate(label = paste("UNIT:", uID, "ranked", rank))
 
   title <- paste("Ranking (The biggest polluters) for year: ", year)
 
   ggmap <- ggplot2::ggplot(data = ggplot2::map_data("state")) +
     ggplot2::theme_bw() +
-    labs(title = title) +
+    ggplot2::labs(title = title) +
     ggplot2::geom_polygon(
-      aes(x = long, y = lat, group = group),
+      ggplot2::aes(x = long, y = lat, group = group),
       fill = NA,
       colour = "grey50",
       linewidth = 0.25
     ) +
     ggplot2::geom_point(
       data = facility_loc,
-      aes(x = x, y = y),
+      ggplot2::aes(x = x, y = y),
       shape = 1,
       colour = "forestgreen",
       inherit.aes = FALSE,
@@ -60,7 +60,7 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
       stroke = 2
     ) +
    ggrepel::geom_label_repel(data = facility_loc,
-      aes(x=x, y=y,label = label),
+      ggplot2::aes(x=x, y=y,label = label),
       nudge_x = 10,
       nudge_y = 10,
       segment.size = 0.7,
@@ -72,7 +72,7 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, "plot_ranking_map.pdf")
-    ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
   }
 
   unitRanks <- unitRanks %>%
@@ -81,11 +81,11 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
       names_to = "type",
       values_to = "Measurement"
     ) %>%
-    mutate(type = ifelse(type == "hyads.py.sum",
+    dplyr::mutate(type = ifelse(type == "hyads.py.sum",
       "Hyads Exposure",
       "SOx emission"))
 
-  ggbar <- ggplot2::ggplot(data=unitRanks, aes(x = as.character(uID), y = Measurement))+
+  ggbar <- ggplot2::ggplot(data=unitRanks, ggplot2::aes(x = as.character(uID), y = Measurement))+
     ggplot2::geom_bar(stat = 'identity',
       color = "navyblue",
       fill = "grey",
@@ -93,7 +93,7 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
     ggplot2::facet_wrap(.~type, scales="free")+
     ggplot2::theme_bw()+
     ggplot2::scale_y_continuous(labels = scales::comma)+
-    xlab("Unit ID")
+    ggplot2::xlab("Unit ID")
 
   return(list(ggbar = ggbar, ggmap = ggmap))
 

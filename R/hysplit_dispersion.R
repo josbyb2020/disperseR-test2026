@@ -76,9 +76,8 @@ hysplit_dispersion <- function(lat = 49.263,
 
   if (!requireNamespace("SplitR", quietly = TRUE)) {
     stop(
-      "HYSPLIT dispersion requires the 'SplitR' package (Imports dependency).\n",
-      "Install it with: remotes::install_github('rich-iannone/SplitR')\n",
-      "If installing disperseR from GitHub, SplitR should install automatically.",
+      "HYSPLIT dispersion requires the 'SplitR' package.\n",
+      "Install it with: remotes::install_github('rich-iannone/SplitR')",
       call. = FALSE
     )
   }
@@ -339,7 +338,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
   # Are the met files available in the
   # selected path?
-  met_file_df <- setNames(data.frame(mat.or.vec(nr = length(met),
+  met_file_df <- stats::setNames(data.frame(mat.or.vec(nr = length(met),
     nc = 2)),
     nm = c("file", "available"))
 

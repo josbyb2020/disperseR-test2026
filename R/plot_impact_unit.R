@@ -60,7 +60,7 @@ plot_impact_unit <- function(data.linked = NULL,
   #################################################################################
 
   plot1 <-
-    ggplot2::ggplot(data = dataplot, aes(
+    ggplot2::ggplot(data = dataplot, ggplot2::aes(
       x = date,
       y = hyads,
       colour = as.factor(uID)
@@ -72,7 +72,7 @@ plot_impact_unit <- function(data.linked = NULL,
     ggplot2::labs(colour = "Unit ID") +
     ggplot2::facet_grid(ZIP ~ ., scales = "free") +
     ggplot2::theme(legend.position = "bottom")+
-    ggplot2::scale_x_date(labels = date_format("%m-%Y"))
+    ggplot2::scale_x_date(labels = scales::date_format("%m-%Y"))
 
   #################################################################################
 
@@ -83,10 +83,10 @@ plot_impact_unit <- function(data.linked = NULL,
     discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
-    oob = squish,
+    oob = scales::squish,
     direction = 1,
     na.value = NA,
-    guide = guide_colorbar(
+    guide = ggplot2::guide_colorbar(
       title.position = 'top',
       title.hjust = 0.5,
       title.vjust = 0 ,
@@ -99,10 +99,10 @@ plot_impact_unit <- function(data.linked = NULL,
     discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
-    oob = squish,
+    oob = scales::squish,
     direction = 1,
     na.value = NA,
-    guide = guide_colorbar(
+    guide = ggplot2::guide_colorbar(
       title.position = 'top',
       title.hjust = 0.5,
       title.vjust = 0,
@@ -113,19 +113,19 @@ plot_impact_unit <- function(data.linked = NULL,
   coordsf <- ggplot2::coord_sf(xlim = x.lim,
     ylim = y.lim)
 
-  plot2 <- ggplot() +
+  plot2 <- ggplot2::ggplot() +
     ggplot2::theme_bw() +
     ggplot2::labs(title = plot.title) +
     ggplot2::geom_polygon(
-      data = map_data("state"),
-      aes(x = long, y = lat, group = group),
+      data = ggplot2::map_data("state"),
+      ggplot2::aes(x = long, y = lat, group = group),
       fill = NA,
       colour = "grey50",
       linewidth = 0.25
     ) +
     ggplot2::geom_point(
       data = as.data.table(zipcodecoordinate)[ZIP %in% zip.codes],
-      aes(x = Longitude, y = Latitude),
+      ggplot2::aes(x = Longitude, y = Latitude),
       shape = 7,
       colour = "blue",
       inherit.aes = FALSE,
@@ -136,13 +136,13 @@ plot_impact_unit <- function(data.linked = NULL,
     colorscale +
     fillscale +
     ggplot2::theme(
-      axis.title = element_blank(),
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
+      axis.title = ggplot2::element_blank(),
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
       legend.position = c(.20, .15),
-      legend.text = element_text(size = 8, angle = legend.text.angle),
-      legend.background = element_rect(fill = 'transparent'),
-      legend.key.size = unit(.05, 'npc'),
+      legend.text = ggplot2::element_text(size = 8, angle = legend.text.angle),
+      legend.background = ggplot2::element_rect(fill = 'transparent'),
+      legend.key.size = grid::unit(.05, 'npc'),
       legend.direction = 'horizontal'
     )
 
@@ -155,6 +155,6 @@ plot_impact_unit <- function(data.linked = NULL,
 
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, "plot_impact_unit.pdf")
-    ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
   }
 }

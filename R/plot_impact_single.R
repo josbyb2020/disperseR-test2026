@@ -63,7 +63,7 @@ plot_impact_single  <- function(data.linked,
   year.use <- as( substr( map.month, 1, 4), 'integer')
 
   ## coordinates
-  coord <- data.table( st_coordinates( na.omit( dataset_sf)$geometry))
+  coord <- data.table( st_coordinates( stats::na.omit( dataset_sf)$geometry))
   setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
   if (isTRUE(zoom)) {
     long <- coord$Longitude
@@ -92,15 +92,15 @@ plot_impact_single  <- function(data.linked,
   }
 
   ### graph parameters
-  colorscale <- scale_color_viridis(
+  colorscale <- viridis::scale_color_viridis(
     name = legend.name,
     discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
-    oob = squish,
+    oob = scales::squish,
     direction = 1,
     na.value = NA,
-    guide = guide_colorbar(
+    guide = ggplot2::guide_colorbar(
       title.position = 'top',
       title.hjust = 0.5,
       title.vjust = 0 ,
@@ -108,15 +108,15 @@ plot_impact_single  <- function(data.linked,
     )
   )
 
-  fillscale <- scale_fill_viridis(
+  fillscale <- viridis::scale_fill_viridis(
     name = legend.name,
     discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
-    oob = squish,
+    oob = scales::squish,
     direction = 1,
     na.value = NA,
-    guide = guide_colorbar(
+    guide = ggplot2::guide_colorbar(
       title.position = 'top',
       title.hjust = 0.5,
       title.vjust = 0,
@@ -138,56 +138,56 @@ plot_impact_single  <- function(data.linked,
   }
 
   # make a default
-  theme.default <- theme(
+  theme.default <- ggplot2::theme(
     plot.title = if (!is.null(plot.name)) {
-      element_text(size = 16, hjust = 0.5)
+      ggplot2::element_text(size = 16, hjust = 0.5)
     } else
-      element_blank(),
-    axis.title = element_blank(),
+      ggplot2::element_blank(),
+    axis.title = ggplot2::element_blank(),
     legend.position = c(.20, .15),
-    legend.text = element_text(size = 8),
-    legend.background = element_rect(fill = 'transparent'),
-    legend.key.size = unit(.05, 'npc'),
+    legend.text = ggplot2::element_text(size = 8),
+    legend.background = ggplot2::element_rect(fill = 'transparent'),
+    legend.key.size = grid::unit(.05, 'npc'),
     legend.direction = 'horizontal'
   )
 
 
   # make the plot
   gg <-
-    ggplot(data = dataset_sf, aes(fill  = metric, color = metric)) +
-    theme_bw() +
-    labs(title = plot.name) +
-    geom_polygon(
-      data = map_data("state"),
-      aes(x = long, y = lat, group = group),
+    ggplot2::ggplot(data = dataset_sf, ggplot2::aes(fill  = metric, color = metric)) +
+    ggplot2::theme_bw() +
+    ggplot2::labs(title = plot.name) +
+    ggplot2::geom_polygon(
+      data = ggplot2::map_data("state"),
+      ggplot2::aes(x = long, y = lat, group = group),
       fill = 'white',
       colour = "grey50",
       linewidth = 0.25
     ) +
-    geom_sf(aes(geometry = geometry), size = 0.01) +
-    geom_point(
+    ggplot2::geom_sf(ggplot2::aes(geometry = geometry), size = 0.01) +
+    ggplot2::geom_point(
       data = facility_loc,
-      aes(x = x, y = y),
+      ggplot2::aes(x = x, y = y),
       shape = 1,
       colour = "forestgreen",
       inherit.aes = FALSE,
       size = 2,
       stroke = 2
     ) +
-    scale_shape_discrete(solid = TRUE) +
+    ggplot2::scale_shape_discrete(solid = TRUE) +
     ggplot2::coord_sf(xlim = c(minlong, maxlong),
                       ylim = c(minlat, maxlat)) +
     colorscale +
     fillscale +
     theme.default +
-    theme(
+    ggplot2::theme(
       ...
     )
 
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, paste0( "plot_impact_single_", link.to, '_', map.unitID, '_',
                                          map.month, ".pdf"))
-    ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
   }
 
   return(gg)
