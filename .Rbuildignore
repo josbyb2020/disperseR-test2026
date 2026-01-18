@@ -3,3 +3,9 @@
 ^README\.Rmd$
 ^\.github$
 ^\.Rcheck$
+^\.\.Rcheck$
+^\.DS_Store$
+^\.git$
+^\.gitignore$
+^LICENSE\.md$
+^cran-comments\.md$

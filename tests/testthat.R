@@ -1,5 +1,6 @@
 # Run all testthat tests for disperseR
-library(testthat)
-library(disperseR)
-
-test_check("disperseR")
+# Guard against missing testthat (e.g., during R CMD check with Suggests unavailable)
+if (requireNamespace("testthat", quietly = TRUE)) {
+  library(disperseR)
+  testthat::test_check("disperseR")
+}

@@ -24,30 +24,24 @@ URL: https://github.com/lhenneman/disperseR
 BugReports: https://github.com/lhenneman/disperseR/issues
 License: GPL-3
 LazyData: true
+LazyDataCompression: xz
 Encoding: UTF-8
 Depends:
     R (>= 4.1.0),
-    data.table,
-    magrittr
+    data.table
 Imports:
     sf (>= 1.0-0),
     terra (>= 1.7-0),
     ncdf4,
-    maps,
     ggplot2,
     dplyr,
     tidyr,
     lubridate,
-    stringr,
     parallel,
     scales,
     gridExtra,
     viridis,
     fst,
-    stats,
-    utils,
-    grDevices,
-    methods,
     grid
 Suggests:
     ggmap,
@@ -57,6 +51,8 @@ Suggests:
     testthat (>= 3.0.0),
     rnaturalearth,
     downloader,
+    magrittr,
+    maps,
     SplitR
 Remotes:
     rich-iannone/SplitR
