@@ -21,6 +21,7 @@ run_model <- function(model, npart = 2500, run.dir) {
       )
     }
     
+    # Use model$met_dir (set by add_params), not model$meteo which is undefined
     traj_df <- SplitR::hysplit_trajectory(
       lat = model$lat,
       lon = model$lon,
@@ -36,7 +37,7 @@ run_model <- function(model, npart = 2500, run.dir) {
       return_traj_df = TRUE,
       traj_name = model$traj_name,
       exec_dir = model$exec_dir,
-      met_dir = model$meteo,
+      met_dir = model$met_dir,
       binary_path = model$binary_path
     )
 

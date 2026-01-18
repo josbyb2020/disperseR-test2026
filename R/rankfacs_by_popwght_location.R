@@ -10,7 +10,8 @@
 #' @param zip.value ZIP code filter pattern (default: '*' for all)
 #' @param state.value State filter pattern (default: '*' for all)
 #' @param city.value City filter pattern (default: '*' for all)
-#' @param year Year to analyze
+#' @param year Year to analyze. If NULL, the function expects data.linked and
+#'   crosswalk. to already contain a 'year' column.
 #'
 #' @return data.table with ranked facilities
 #' @export
@@ -30,27 +31,46 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
     stop("Please provide EITHER link.files OR data.linked, not both or neither.")
   }
 
-  # Now convert to data.table
-  crosswalk_dt <- data.table::data.table(crosswalk.)[, year := year]
-  
   `%ni%` <- Negate(`%in%`)
 
-  # Read from file if link.files provided
-if (!is.null(link.files)) {
-    data.linked <- data.table::fread(link.files)[, V1 := NULL]
-    data.linked[, `:=`(
-      ZIP = formatC(ZIP, width = 5, format = "d", flag = "0"),
-      uID = gsub('_|-|\\*', '.', uID),
-      year = as.integer(gsub('_.*$', '', yearmonth))
-    )]
-  } else {
-    # Convert provided data.linked to data.table
-    data.linked <- data.table::data.table(data.linked)[, year := year]
+  # Convert crosswalk to data.table
+  crosswalk_dt <- data.table::data.table(crosswalk.)
+  
+  # Only set year column if year argument is provided
+  if (!is.null(year)) {
+    crosswalk_dt[, year := year]
   }
 
-  # Validate year column exists
-  if (('year' %ni% names(data.linked)) || ('year' %ni% names(crosswalk_dt))) {
-    stop("data.linked and crosswalk. should both include a column named 'year'.")
+  # Read from file if link.files provided
+  if (!is.null(link.files)) {
+    data.linked <- data.table::fread(link.files)
+    # Remove V1 if it exists (row numbers from CSV)
+    if ("V1" %in% names(data.linked)) {
+      data.linked[, V1 := NULL]
+    }
+    data.linked[, `:=`(
+      ZIP = formatC(ZIP, width = 5, format = "d", flag = "0"),
+      uID = gsub('_|-|\\*', '.', uID)
+    )]
+    # Extract year from yearmonth if present
+    if ("yearmonth" %in% names(data.linked)) {
+      data.linked[, year := as.integer(gsub('_.*$', '', yearmonth))]
+    }
+  } else {
+    # Convert provided data.linked to data.table
+    data.linked <- data.table::data.table(data.linked)
+    # Only set year if explicitly provided and not already present
+    if (!is.null(year)) {
+      data.linked[, year := year]
+    }
+  }
+
+  # Validate year column exists in both datasets
+  if ('year' %ni% names(data.linked)) {
+    stop("data.linked must include a 'year' column, or provide 'year' argument.")
+  }
+  if ('year' %ni% names(crosswalk_dt)) {
+    stop("crosswalk. must include a 'year' column, or provide 'year' argument.")
   }
 
   # Create working copy of crosswalk
