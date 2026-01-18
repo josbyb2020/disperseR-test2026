@@ -23,6 +23,8 @@ run_disperser_parallel <- function(input.refs = NULL,
   pbl.height = NULL,
   species = 'so2',
   proc_dir = NULL,
+  hysp_dir = NULL,
+  meteo_dir = NULL,
   overwrite = FALSE,
   npart = 100,
   mc.cores = parallel::detectCores(),
@@ -34,6 +36,26 @@ run_disperser_parallel <- function(input.refs = NULL,
   
   if (is.null(proc_dir)) {
     stop("proc_dir must be specified")
+  }
+
+  # Resolve directory paths (create_dirs() stores these in the caller's .GlobalEnv)
+  if (is.null(hysp_dir)) {
+    hysp_dir <- get0("hysp_dir", envir = .GlobalEnv, ifnotfound = NULL)
+  }
+  if (is.null(meteo_dir)) {
+    meteo_dir <- get0("meteo_dir", envir = .GlobalEnv, ifnotfound = NULL)
+  }
+  if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
+    stop(
+      "hysp_dir is not set. Run create_dirs() first or pass hysp_dir explicitly.",
+      call. = FALSE
+    )
+  }
+  if (is.null(meteo_dir) || !nzchar(meteo_dir)) {
+    stop(
+      "meteo_dir is not set. Run create_dirs() first or pass meteo_dir explicitly.",
+      call. = FALSE
+    )
   }
 
   run_sample <- seq_len(nrow(input.refs))
@@ -50,6 +72,8 @@ run_disperser_parallel <- function(input.refs = NULL,
       pbl.height = pbl.height,
       species = species,
       proc_dir = proc_dir,
+      hysp_dir = hysp_dir,
+      meteo_dir = meteo_dir,
       overwrite = overwrite,
       npart = npart,
       keep.hysplit.files = keep.hysplit.files
@@ -64,6 +88,7 @@ run_disperser_parallel <- function(input.refs = NULL,
     # Export required variables and packages to workers
     parallel::clusterExport(cl, c(
       "input.refs", "pbl.height", "species", "proc_dir",
+      "hysp_dir", "meteo_dir",
       "overwrite", "npart", "keep.hysplit.files", "run_fac"
     ), envir = environment())
     
@@ -84,6 +109,8 @@ run_disperser_parallel <- function(input.refs = NULL,
           pbl.height = pbl.height,
           species = species,
           proc_dir = proc_dir,
+          hysp_dir = hysp_dir,
+          meteo_dir = meteo_dir,
           overwrite = overwrite,
           npart = npart,
           keep.hysplit.files = keep.hysplit.files
@@ -99,6 +126,8 @@ run_disperser_parallel <- function(input.refs = NULL,
       pbl.height = pbl.height,
       species = species,
       proc_dir = proc_dir,
+      hysp_dir = hysp_dir,
+      meteo_dir = meteo_dir,
       overwrite = overwrite,
       npart = npart,
       keep.hysplit.files = keep.hysplit.files,
@@ -117,7 +146,9 @@ run_fac <- function(x,
   npart = 100,
   overwrite = FALSE,
   keep.hysplit.files = FALSE,
-  proc_dir) {
+  proc_dir,
+  hysp_dir,
+  meteo_dir) {
 
   subset <- input.refs[x]
   print(subset)
@@ -170,7 +201,7 @@ run_fac <- function(x,
   ## Check if Height parameter in unit is NA
 
   # create sharded directory structure
-  hysp_dir_yr <- file.path( hysp_dir, subset$year)
+  hysp_dir_yr <- file.path(hysp_dir, subset$year)
   hysp_dir_mo <- file.path( hysp_dir_yr,
                             formatC(
                               month( subset$start_day),

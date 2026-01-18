@@ -39,10 +39,12 @@ link_all_units <- function(units.run,
                            pbl.height = NULL,
                            crosswalk. = NULL,
                            counties. = NULL,
+                           hysp_dir = NULL,
+                           ziplink_dir = NULL,
                            duration.run.hours = 240,
                            res.link = 12000,
                            overwrite = FALSE,
-                           pbl.trim = FALSE,
+                           pbl.trim = NULL,
                            crop.usa = FALSE,
                            return.linked.data = TRUE) {
 
@@ -63,9 +65,58 @@ link_all_units <- function(units.run,
     stop("pbl.height must be provided if pbl_trim == TRUE")
   }
 
+  # Backward-compat: pbl.trim was historically used internally; prefer pbl_trim.
+  if (!is.null(pbl.trim)) {
+    pbl_trim_effective <- isTRUE(pbl.trim)
+  } else {
+    pbl_trim_effective <- isTRUE(pbl_trim)
+  }
+
+  # If year.mons not provided, derive from start/end dates.
+  if (is.null(year.mons)) {
+    sd <- as.Date(start.date)
+    ed <- as.Date(end.date)
+    if (is.na(sd) || is.na(ed)) {
+      stop("start.date and end.date must be coercible to Date (e.g., '2005-01-02')", call. = FALSE)
+    }
+    year.mons <- disperseR::get_yearmon(
+      start.year = format(sd, "%Y"),
+      start.month = format(sd, "%m"),
+      end.year = format(ed, "%Y"),
+      end.month = format(ed, "%m")
+    )
+  }
+
+  # Resolve directory paths (create_dirs() stores these in the caller's .GlobalEnv).
+  if (is.null(hysp_dir)) {
+    hysp_dir <- get0("hysp_dir", envir = .GlobalEnv, ifnotfound = NULL)
+  }
+  if (is.null(ziplink_dir)) {
+    ziplink_dir <- get0("ziplink_dir", envir = .GlobalEnv, ifnotfound = NULL)
+  }
+  if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
+    stop("hysp_dir is not set. Run create_dirs() first or pass hysp_dir explicitly.", call. = FALSE)
+  }
+  if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
+    stop("ziplink_dir is not set. Run create_dirs() first or pass ziplink_dir explicitly.", call. = FALSE)
+  }
+
   # Detect OS for parallelization strategy
   is_windows <- .Platform$OS.type == "windows"
   use_parallel <- mc.cores > 1 && length(year.mons) > 1
+
+  # On Windows, creating a socket cluster is expensive; create once and reuse.
+  cl <- NULL
+  if (use_parallel && is_windows) {
+    cl <- parallel::makeCluster(mc.cores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+
+    parallel::clusterExport(cl, c("hysp_dir", "ziplink_dir"), envir = environment())
+    parallel::clusterEvalQ(cl, {
+      library(disperseR)
+      library(data.table)
+    })
+  }
 
   # Cross-platform parallel apply helper
   safe_mclapply <- function(X, FUN, ...) {
@@ -73,16 +124,7 @@ link_all_units <- function(units.run,
       # Sequential execution
       return(lapply(X, FUN, ...))
     } else if (is_windows) {
-      # Windows: socket cluster
-      cl <- parallel::makeCluster(mc.cores)
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-      
-      # Export required objects to workers
-      parallel::clusterEvalQ(cl, {
-        library(disperseR)
-        library(data.table)
-      })
-      
+      # Windows: socket cluster (created once above)
       return(parallel::parLapply(cl, X, FUN, ...))
     } else {
       # Unix/macOS: fork-based
@@ -101,11 +143,11 @@ link_all_units <- function(units.run,
       duration.run.hours = duration.run.hours,
       overwrite = overwrite,
       res.link. = res.link,
-      pbl. = pbl.trim,
+      pbl. = pbl_trim_effective,
       return.linked.data. = return.linked.data
     )
 
-    linked_zips <- data.table::rbindlist(Filter(is.data.table, linked_zips))
+    linked_zips <- data.table::rbindlist(Filter(data.table::is.data.table, linked_zips))
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_zips) > 0) {
@@ -124,11 +166,11 @@ link_all_units <- function(units.run,
       duration.run.hours = duration.run.hours,
       overwrite = overwrite,
       res.link. = res.link,
-      pbl. = pbl.trim,
+      pbl. = pbl_trim_effective,
       return.linked.data. = return.linked.data
     )
 
-    linked_counties <- data.table::rbindlist(Filter(is.data.table, linked_counties))
+    linked_counties <- data.table::rbindlist(Filter(data.table::is.data.table, linked_counties))
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_counties) > 0) {
@@ -146,12 +188,12 @@ link_all_units <- function(units.run,
       duration.run.hours = duration.run.hours,
       overwrite = overwrite,
       res.link. = res.link,
-      pbl. = pbl.trim,
+      pbl. = pbl_trim_effective,
       crop.usa = crop.usa,
       return.linked.data. = return.linked.data
     )
 
-    linked_grids <- data.table::rbindlist(Filter(is.data.table, linked_grids))
+    linked_grids <- data.table::rbindlist(Filter(data.table::is.data.table, linked_grids))
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_grids) > 0) {
