@@ -48,14 +48,14 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
       aes(x = long, y = lat, group = group),
       fill = NA,
       colour = "grey50",
-      size = .25
+      linewidth = 0.25
     ) +
     ggplot2::geom_point(
       data = facility_loc,
       aes(x = x, y = y),
       shape = 1,
       colour = "forestgreen",
-      inherit.aes = F,
+      inherit.aes = FALSE,
       size = 2,
       stroke = 2
     ) +
@@ -65,7 +65,7 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
       nudge_y = 10,
       segment.size = 0.7,
       na.rm = TRUE) +
-    ggplot2::scale_shape_discrete(solid = T) +
+    ggplot2::scale_shape_discrete(solid = TRUE) +
     ggplot2::coord_sf(xlim = c(minlong, maxlong),
       ylim = c(minlat, maxlat))+
     ggplot2::theme(legend.position = "bottom")
@@ -75,12 +75,13 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
     ggsave(path, width = 20, height = 20, units = "cm")
   }
 
-  unitRanks<-unitRanks %>%
-    tidyr::gather(., key = "type",
-      value = "Measurement",
-      hyads.py.sum,
-      SOx) %>%
-    mutate(type=ifelse(type=="hyads.py.sum",
+  unitRanks <- unitRanks %>%
+    tidyr::pivot_longer(
+      cols = c(hyads.py.sum, SOx),
+      names_to = "type",
+      values_to = "Measurement"
+    ) %>%
+    mutate(type = ifelse(type == "hyads.py.sum",
       "Hyads Exposure",
       "SOx emission"))
 

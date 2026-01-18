@@ -8,20 +8,14 @@ get_output_df <- function(model) {
     if (is.null(model$traj_df)) {
       return(NA)
     }
-
-    if (!is.null(model$traj_df)) {
-      return(dplyr::as.tbl(model$traj_df))
-    }
+    return(model$traj_df)
   }
 
   if (inherits(model, "disp_model")) {
     if (is.null(model$disp_df)) {
       return(NA)
     }
-
-    if (!is.null(model$disp_df)) {
-      return(dplyr::as.tbl(model$disp_df))
-    }
+    return(model$disp_df)
   }
 }
 

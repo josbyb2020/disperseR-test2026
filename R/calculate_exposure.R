@@ -37,19 +37,19 @@ calculate_exposure <- function(year.E,
                                exp_dir = NULL,
                                source.agg = c('total', 'facility', 'unit'),
                                time.agg = c('year', 'month'),
-                               return.monthly.data = F) {
+                               return.monthly.data = FALSE) {
   `%ni%` <- Negate(`%in%`)
 
   #define defaults if none provided
   if (length(source.agg) > 1) {
-    message('Multiple source.agg provided, deaulting to "total".')
+    message('Multiple source.agg provided, defaulting to "total".')
     source.agg <- 'total'
   }
   if (source.agg %ni% c('total', 'facility', 'unit')) {
     stop('source.agg not recognized, please provide one of c("total", "facility", "unit").')
   }
   if (length(time.agg) > 1) {
-    message('Multiple time.agg provided, deaulting to "year".')
+    message('Multiple time.agg provided, defaulting to "year".')
     time.agg <- 'year'
   }
   if (time.agg %ni% c('year', 'month')) {
@@ -73,7 +73,7 @@ calculate_exposure <- function(year.E,
     exp_dir <- file.path(getwd(), 'rdata_hyspdisp')
     message(paste('No exp_dir provided. Defaulting to', exp_dir))
   }
-  dir.create(exp_dir, recursive = TRUE, showWarnings = F)
+  dir.create(exp_dir, recursive = TRUE, showWarnings = FALSE)
 
   #initiate exposure data.table
   exposures <-  data.table()
@@ -147,7 +147,7 @@ calculate_exposure <- function(year.E,
       merge(month_mapping_long,
             PP_monthly,
             by = 'uID',
-            all.y = T)
+            all.y = TRUE)
 
     #  clean house
     rm(list = c('month_mapping_long', 'PP_monthly', 'month_mapping'))

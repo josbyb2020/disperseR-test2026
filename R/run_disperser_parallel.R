@@ -159,7 +159,7 @@ run_fac <- function(x,
   }
 
   #########################################################################################################
-  ## define speciec params depening on species.
+  ## Define species parameters
 
   if (species == 'so2') {
     species_param <-

@@ -65,7 +65,7 @@ plot_impact_single  <- function(data.linked,
   ## coordinates
   coord <- data.table( st_coordinates( na.omit( dataset_sf)$geometry))
   setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-  if (zoom == T){
+  if (isTRUE(zoom)) {
     long <- coord$Longitude
     minlong <-min(long) - 8
     maxlong <-max(long) + 8
@@ -73,7 +73,7 @@ plot_impact_single  <- function(data.linked,
     minlat <-min(lat) - 8
     maxlat <-max(lat) + 8
   }
-  if (zoom == F) {
+  if (!isTRUE(zoom)) {
     ## show all the US map
     minlong <- (-123)
     maxlong <- (-69)
@@ -88,13 +88,13 @@ plot_impact_single  <- function(data.linked,
   facility_loc <- data.table(x = long, y = lat)
 
   if (is.null(legend.lims)) {
-    legend.lims <- c(0, quantile(dataset_sf$metric, .95, na.rm = T))
+    legend.lims <- c(0, quantile(dataset_sf$metric, .95, na.rm = TRUE))
   }
 
   ### graph parameters
   colorscale <- scale_color_viridis(
     name = legend.name,
-    discrete = F,
+    discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
     oob = squish,
@@ -110,7 +110,7 @@ plot_impact_single  <- function(data.linked,
 
   fillscale <- scale_fill_viridis(
     name = legend.name,
-    discrete = F,
+    discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
     oob = squish,
@@ -162,7 +162,7 @@ plot_impact_single  <- function(data.linked,
       aes(x = long, y = lat, group = group),
       fill = 'white',
       colour = "grey50",
-      size = .25
+      linewidth = 0.25
     ) +
     geom_sf(aes(geometry = geometry), size = 0.01) +
     geom_point(
@@ -170,11 +170,11 @@ plot_impact_single  <- function(data.linked,
       aes(x = x, y = y),
       shape = 1,
       colour = "forestgreen",
-      inherit.aes = F,
+      inherit.aes = FALSE,
       size = 2,
       stroke = 2
     ) +
-    scale_shape_discrete(solid = T) +
+    scale_shape_discrete(solid = TRUE) +
     ggplot2::coord_sf(xlim = c(minlong, maxlong),
                       ylim = c(minlat, maxlat)) +
     colorscale +

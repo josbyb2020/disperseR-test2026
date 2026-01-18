@@ -72,7 +72,7 @@ plot_impact_weighted <- function(data.linked,
           zcta.dataset,
           data.linked,
           by = c('ZIP'),
-          all.y = T
+          all.y = TRUE
         ))
     } else if( link.to == 'counties'){
       dataset_sf <- data.table(merge(
@@ -88,7 +88,7 @@ plot_impact_weighted <- function(data.linked,
                                          "state_name",
                                          "name",
                                          "geoid"),
-                               all.y = T
+                               all.y = TRUE
                               ))
     } else if( link.to == 'grids'){
       # Use terra instead of raster for grid conversion
@@ -118,7 +118,7 @@ plot_impact_weighted <- function(data.linked,
     ## coordinates
     coord <- data.table( st_coordinates( na.omit( dataset_sf)$geometry))
     setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-    if (zoom == T){
+    if (isTRUE(zoom)) {
       long <- coord$Longitude
       minlong <-min(long) - 8
       maxlong <-max(long) + 8
@@ -126,7 +126,7 @@ plot_impact_weighted <- function(data.linked,
       minlat <-min(lat) - 8
       maxlat <-max(lat) + 8
     }
-    if (zoom == F) {
+    if (!isTRUE(zoom)) {
       ## show all the US map
       minlong <- (-123)
       maxlong <- (-69)
@@ -146,7 +146,7 @@ plot_impact_weighted <- function(data.linked,
     ### graph parameters
     colorscale <- scale_color_viridis(
       name = legend.name,
-      discrete = F,
+      discrete = FALSE,
       option = 'magma',
       limits = legend.lims,
       oob = squish,
@@ -162,7 +162,7 @@ plot_impact_weighted <- function(data.linked,
 
     fillscale <- scale_fill_viridis(
       name = legend.name,
-      discrete = F,
+      discrete = FALSE,
       option = 'magma',
       limits = legend.lims,
       oob = squish,
@@ -199,18 +199,18 @@ plot_impact_weighted <- function(data.linked,
         aes(x = long, y = lat, group = group),
         fill = NA,
         colour = "grey50",
-        size = .25
+        linewidth = 0.25
       ) +
       geom_point(
         data = facility_loc,
         aes(x = x, y = y),
         shape = 1,
         colour = "forestgreen",
-        inherit.aes = F,
+        inherit.aes = FALSE,
         size = 2,
         stroke = 2
       ) +
-      scale_shape_discrete(solid = T) +
+      scale_shape_discrete(solid = TRUE) +
       ggplot2::coord_sf(xlim = c(minlong, maxlong),
                         ylim = c(minlat, maxlat)) +
       colorscale +
@@ -237,7 +237,7 @@ plot_impact_weighted <- function(data.linked,
           zcta.dataset,
           data.linked,
           by = c('ZIP'),
-          all.y = T
+          all.y = TRUE
         ))
     } else if( link.to == 'counties'){
       dataset_sf <- data.table(merge(
@@ -253,7 +253,7 @@ plot_impact_weighted <- function(data.linked,
                                          "state_name",
                                          "name",
                                          "geoid"),
-                                 all.y = T
+                                 all.y = TRUE
                                ))
       dataset_sf[, uID := NULL]
     } else if( link.to == 'grids'){
@@ -284,7 +284,7 @@ plot_impact_weighted <- function(data.linked,
     ## coordinates
     coord <- data.table( st_coordinates( na.omit( dataset_sf)$geometry))
     setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-    if (zoom == T){
+    if (isTRUE(zoom)) {
       long <- coord$Longitude
       minlong <-min(long) - 10
       maxlong <-max(long) + 10
@@ -292,7 +292,7 @@ plot_impact_weighted <- function(data.linked,
       minlat <-min(lat) - 10
       maxlat <-max(lat) + 10
     }
-    if (zoom == F) {
+    if (!isTRUE(zoom)) {
       ## show all the US map
       minlong <- (-123)
       maxlong <- (-69)
@@ -311,7 +311,7 @@ plot_impact_weighted <- function(data.linked,
     ### graph parameters
     colorscale <- scale_color_viridis(
       name = legend.name,
-      discrete = F,
+      discrete = FALSE,
       option = 'magma',
       limits = legend.lims,
       oob = squish,
@@ -327,7 +327,7 @@ plot_impact_weighted <- function(data.linked,
 
     fillscale <- scale_fill_viridis(
       name = legend.name,
-      discrete = F,
+      discrete = FALSE,
       option = 'magma',
       limits = legend.lims,
       oob = squish,
@@ -359,7 +359,7 @@ plot_impact_weighted <- function(data.linked,
         aes(x = long, y = lat, group = group),
         fill = 'white',
         colour = "grey50",
-        size = .25
+        linewidth = 0.25
       ) +
       geom_sf(aes(geometry = geometry), size = 0.01) +
       geom_point(
@@ -367,11 +367,11 @@ plot_impact_weighted <- function(data.linked,
         aes(x = x, y = y),
         shape = 1,
         colour = "forestgreen",
-        inherit.aes = F,
+        inherit.aes = FALSE,
         size = 2,
         stroke = 2
       ) +
-      scale_shape_discrete(solid = T) +
+      scale_shape_discrete(solid = TRUE) +
       colorscale +
       fillscale +
       ggplot2::coord_sf(xlim = c(minlong, maxlong),

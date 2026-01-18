@@ -80,7 +80,7 @@ plot_impact_unit <- function(data.linked = NULL,
 
   colorscale <- viridis::scale_color_viridis(
     name = legend.title,
-    discrete = F,
+    discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
     oob = squish,
@@ -96,7 +96,7 @@ plot_impact_unit <- function(data.linked = NULL,
 
   fillscale <- viridis::scale_fill_viridis(
     name = legend.title,
-    discrete = F,
+    discrete = FALSE,
     option = 'magma',
     limits = legend.lims,
     oob = squish,
@@ -121,17 +121,17 @@ plot_impact_unit <- function(data.linked = NULL,
       aes(x = long, y = lat, group = group),
       fill = NA,
       colour = "grey50",
-      size = .25
+      linewidth = 0.25
     ) +
     ggplot2::geom_point(
       data = as.data.table(zipcodecoordinate)[ZIP %in% zip.codes],
       aes(x = Longitude, y = Latitude),
       shape = 7,
       colour = "blue",
-      inherit.aes = F,
+      inherit.aes = FALSE,
       size = 3
     ) +
-    ggplot2::scale_shape_discrete(solid = T) +
+    ggplot2::scale_shape_discrete(solid = TRUE) +
     coordsf +
     colorscale +
     fillscale +
