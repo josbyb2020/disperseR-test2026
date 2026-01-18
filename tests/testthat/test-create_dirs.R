@@ -32,8 +32,9 @@ test_that("create_dirs creates output subdirectories", {
   
   disperseR::create_dirs(location = temp_loc)
   
+  # Use actual directory names from create_dirs()
   expect_true(dir.exists(file.path(temp_loc, "main", "output", "hysplit")))
-  expect_true(dir.exists(file.path(temp_loc, "main", "output", "ziplink")))
+  expect_true(dir.exists(file.path(temp_loc, "main", "output", "ziplinks")))
   expect_true(dir.exists(file.path(temp_loc, "main", "output", "rdata")))
 })
 
