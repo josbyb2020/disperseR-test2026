@@ -1,8 +1,8 @@
 ---
-title: "Vignette - Get Data One by One"
+title: "Loading Data Step by Step"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette - Get Data One by One}
+  %\VignetteIndexEntry{Loading Data Step by Step}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,20 +10,15 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
-Load packages 
-
 ```{r, message = FALSE, warning = FALSE}
-library(disperseR) # our package
-library(ncdf4)
+library(disperseR)
 library(data.table)
-library(tidyverse)
 library(sf)
-library(scales)
-library(ggsn)
 ```
 
 

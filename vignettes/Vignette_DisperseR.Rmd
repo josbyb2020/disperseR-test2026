@@ -1,8 +1,8 @@
 ---
-title: "Vignette - DipserseR"
+title: "DisperseR: Getting Started"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette - DipserseR}
+  %\VignetteIndexEntry{DisperseR: Getting Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,76 +10,58 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
-In this vignette you will see how to use the `disperseR` package. We will walk you through an example step by step. We will be using functions that will automatically download the needed data for you to be able to run a complete analysis for the United States. We also provide other vignettes that show you how we processed the data and how to load datasets one by one (optional).  
+This vignette walks through a complete disperseR analysis for US power plants.
+We cover directory setup, data downloads, dispersion runs, and exposure calculations.
 
-## The step up 
+## Setup
 
-We start by importing the packages that we will use in the analysis. Make sure you have them installed. The functions in `disperseR` are based on the `data.table` package for faster computation, but this vignette contains many functions from the `tidyverse` family to illustrate another syntax. First, install a slightly modified version of `SplitR`.
-
+disperseR uses `data.table` for performance. Load the required packages:
+ 
 ```{r, message = FALSE, warning = FALSE}
-devtools::install_github( 'lhenneman/SplitR')
-```
-
-
-```{r, message = FALSE, warning = FALSE}
-library(disperseR) # our package
-library(ncdf4)
+library(disperseR)
 library(data.table)
-library(tidyverse)
-library(parallel)
 library(sf)
-library(viridis)
 library(ggplot2)
-library(scales)
-library(ggsn)
-library(gridExtra)
-library(ggmap)
-library(ggrepel)
-library(fst)
-library(USAboundaries)
 ```
 
-Next, we will use the `create_dirs()` function that creates a project folder with all the necessary sub folders. We recommend that you begin by setting up your project with this function. Provide the path to where you would like your project to live in the `location` argument. By default, if you do not specify the path, this function will create a main directory on your Desktop when available, otherwise it will fall back to your home directory. It will also assign paths to string variables in your environment. 
+**For HYSPLIT dispersion runs**, install the SplitR package (provides HYSPLIT binaries):
 
-This will set up is the following folders and paths to them :
+```{r, eval = FALSE}
+remotes::install_github("rich-iannone/SplitR")
+```
 
-* `main`: the main folder where the project will be located. 
-  + `input`: the input that we need for calculations. 
-    * `zcta_500k`: ZCTA (A Zip Code Tabulation Area) shape files
-    * `hpbl`: monthly global planetary boundary layer files.
-    * `meteo`: (reanalysis) meteorology files
-  + `output`
-    * `hysplit`: disperseR output (one file for each emissions event)
-    * `ziplinks`: files containing ZIP code linkages
-    * `rdata`: RData files containing HyADS source-receptor matrices
-    * `exp`: exposure per zipcode data 
-    * `graph`: graphs saved here as pdf when running functions
-  + `process`: temporary files that are created when the model is running and then deleted
+## Directory Structure
 
-
-Note that not specifying the `location` argument will use the Desktop when available and otherwise your home directory. You can specify another folder by typing: `disperseR::create_dirs(location="/Users/username/projectlocation")` instead. 
-
-You should run this command before each disperseR session because the function defines global environment variables pointing to these directories. Don't worry, your previous data will not be overwritten.
-
+`create_dirs()` sets up the project folder structure and defines global path variables.
+Run this at the start of each session:
+ 
 ```{r}
-disperseR::create_dirs() 
+disperseR::create_dirs(location = "~/disperseR_project")
 ```
 
-## The inputs 
+This creates:
 
-The next step is to get the data necessary for the analysis.  Let's start by loading data sets that are provided inside the `disperseR` package.
+- `main/input/zcta_500k/` - ZCTA shapefiles
+- `main/input/hpbl/` - planetary boundary layer data
+- `main/input/meteo/` - reanalysis meteorology files
+- `main/output/hysplit/` - dispersion outputs
+- `main/output/ziplinks/` - ZIP code linkages
+- `main/output/rdata/` - HyADS matrices
+- `main/output/exp/` - exposure tables
+- `main/output/graph/` - plots
 
-### Get the data with the `get_data()` function. 
+Existing data is preserved; only missing directories are created.
 
-You can get most of the data required for the analysis by using the following function. This function will download the data necessary and for the data that is already attached with the package it will automatically assign it to variables in your R environment. If you want to load the data step by step check the `Vignette_Get_Data_One_by_One` vignette. It also contains more information about the data and their sources. 
+## Loading Data
 
-The arguments `start.year`, `start.month`,`end.year`, and `end.month` are necessary to download the meteorology reanalysis files. They will be downloaded if they are not already in the `meteo_dir` folder. The reanalysis met files are about 120 MB each.
+`get_data()` downloads required datasets. Meteorology files are ~120 MB each.
 
-If you, for example, you want to download files for Jan-March 2005, you just have to use the `get_data()` function and set `data = "all"`, `start.year = "2005"`, `start.month = "01"`, `end.year = "2005"`, and `end.month = "03"`. See below.
+For January-March 2005:
 
 
 ```{r}
