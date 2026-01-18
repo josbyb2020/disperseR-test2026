@@ -13,7 +13,11 @@
 #' @param path_met_files a full path should be provided
 #' for the location of the meteorological data files;
 #' downloaded files will be saved in this location.
-#' @return Invisibly returns a character vector of successfully downloaded files.
+#' @return A list with two elements:
+#'   \itemize{
+#'     \item \code{downloaded}: character vector of successfully downloaded file paths
+#'     \item \code{failed}: character vector of filenames that failed to download
+#'   }
 #' @export get_met_reanalysis
 get_met_reanalysis <- function(files = NULL,
   years = NULL,
@@ -66,6 +70,7 @@ get_met_reanalysis <- function(files = NULL,
   }
   
   downloaded <- character(0)
+  failed <- character(0)
 
   # Download list of reanalysis met files by name
   if (!is.null(files)) {
@@ -75,6 +80,8 @@ get_met_reanalysis <- function(files = NULL,
       
       if (.download_met_file(url, destfile)) {
         downloaded <- c(downloaded, destfile)
+      } else {
+        failed <- c(failed, files[i])
       }
     }
   }
@@ -89,10 +96,18 @@ get_met_reanalysis <- function(files = NULL,
         
         if (.download_met_file(url, destfile)) {
           downloaded <- c(downloaded, destfile)
+        } else {
+          failed <- c(failed, filename)
         }
       }
     }
   }
   
-  invisible(downloaded)
+  # Report summary
+  if (length(failed) > 0) {
+    warning(length(failed), " file(s) failed to download: ",
+            paste(failed, collapse = ", "), call. = FALSE)
+  }
+  
+  list(downloaded = downloaded, failed = failed)
 }

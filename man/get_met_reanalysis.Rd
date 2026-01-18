@@ -19,7 +19,11 @@ for the location of the meteorological data files;
 downloaded files will be saved in this location.}
 }
 \value{
-Invisibly returns a character vector of successfully downloaded files.
+A list with two elements:
+  \itemize{
+    \item \code{downloaded}: character vector of successfully downloaded file paths
+    \item \code{failed}: character vector of filenames that failed to download
+  }
 }
 \description{
 This function downloads reanalysis

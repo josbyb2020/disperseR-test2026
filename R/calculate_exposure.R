@@ -93,6 +93,26 @@ calculate_exposure <- function(year.E,
   if (!is.list(monthly_maps)) {
     stop("monthly_maps must be a named list of data.tables.", call. = FALSE)
   }
+  if (length(monthly_maps) == 0) {
+    stop("monthly_maps is empty. No data to process.", call. = FALSE)
+  }
+  
+  # Pre-check which maps are available for the requested year
+  expected_maps <- paste0("MAP", 1:12, ".", year.D)
+  available_maps <- intersect(expected_maps, names(monthly_maps))
+  if (length(available_maps) == 0) {
+    stop("No monthly maps found for year ", year.D, " in monthly_maps.\n",
+         "Expected names like 'MAP1.", year.D, "', 'MAP2.", year.D, "', etc.\n",
+         "Available names: ", paste(utils::head(names(monthly_maps), 5), collapse = ", "),
+         if (length(names(monthly_maps)) > 5) "..." else "",
+         call. = FALSE)
+  }
+  missing_maps <- setdiff(expected_maps, names(monthly_maps))
+  if (length(missing_maps) > 0) {
+    warning("Missing ", length(missing_maps), " of 12 monthly maps for year ", year.D, ": ",
+            paste(missing_maps, collapse = ", "),
+            call. = FALSE)
+  }
 
   # Create directory to store output files if it does not exist
   if (is.null(exp_dir)) {

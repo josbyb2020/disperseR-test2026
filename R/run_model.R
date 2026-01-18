@@ -87,7 +87,9 @@ run_model <- function(model, npart = 2500, run.dir) {
       grids = model$grids,
       return_disp_df = TRUE,
       write_disp_CSV = FALSE,
-      run_dir = run.dir
+      run_dir = run.dir,
+      binary_path = model$binary_path,
+      parhplot_path = model$parhplot_path
     )
 
     model$disp_df <- disp_df
