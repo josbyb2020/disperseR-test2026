@@ -283,7 +283,15 @@ hysplit_dispersion <- function(lat = 49.263,
       }
 
       if (met_type == "gdas1") {
-        get_met_gdas1( files = files_to_get, path_met_files = paste0(met_dir, "/"))
+        if (!requireNamespace("SplitR", quietly = TRUE)) {
+          stop(
+            "GDAS1 meteorological data requires the 'SplitR' package.\n",
+            "Install it with: devtools::install_github('rich-iannone/SplitR')\n",
+            "Or use met_type = 'reanalysis' instead.",
+            call. = FALSE
+          )
+        }
+        SplitR::get_met_gdas1(files = files_to_get, path_met_files = paste0(met_dir, "/"))
       }
     }
   }
@@ -314,7 +322,15 @@ hysplit_dispersion <- function(lat = 49.263,
       }
 
       if (met_type == "gdas1") {
-        get_met_gdas1(files = files_to_get, path_met_files = met_dir)
+        if (!requireNamespace("SplitR", quietly = TRUE)) {
+          stop(
+            "GDAS1 meteorological data requires the 'SplitR' package.\n",
+            "Install it with: devtools::install_github('rich-iannone/SplitR')\n",
+            "Or use met_type = 'reanalysis' instead.",
+            call. = FALSE
+          )
+        }
+        SplitR::get_met_gdas1(files = files_to_get, path_met_files = met_dir)
       }
     }
   }

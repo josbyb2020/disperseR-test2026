@@ -271,13 +271,13 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
                                   start.date = NULL,
                                   end.date = NULL,
                                   unit,
-                                  duration.run.hours = duration.run.hours,
-                                  pbl.height,
-                                  res.link.,
+                                  duration.run.hours = 240,
+                                  pbl.height = NULL,
+                                  res.link. = 12000,
                                   overwrite = FALSE,
                                   pbl. = TRUE,
                                   crop.usa = FALSE,
-                                  return.linked.data.) {
+                                  return.linked.data. = TRUE) {
   
   unitID <- unit$ID
   
@@ -405,12 +405,12 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
                                      end.date = NULL,
                                      counties,
                                      unit,
-                                     duration.run.hours = duration.run.hours,
-                                     pbl.height,
-                                     res.link.,
+                                     duration.run.hours = 240,
+                                     pbl.height = NULL,
+                                     res.link. = 12000,
                                      overwrite = FALSE,
                                      pbl. = TRUE,
-                                     return.linked.data.) {
+                                     return.linked.data. = TRUE) {
   
   unitID <- unit$ID
   
@@ -542,13 +542,13 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
                                  start.date = NULL,
                                  end.date = NULL,
                                  unit,
-                                 duration.run.hours = duration.run.hours,
+                                 duration.run.hours = 240,
                                  pbl.height = NULL,
-                                 crosswalk.,
-                                 res.link.,
+                                 crosswalk. = NULL,
+                                 res.link. = 12000,
                                  overwrite = FALSE,
                                  pbl. = TRUE,
-                                 return.linked.data.) {
+                                 return.linked.data. = TRUE) {
   
   unitID <- unit$ID
   

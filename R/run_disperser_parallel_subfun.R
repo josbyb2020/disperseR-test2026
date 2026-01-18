@@ -350,6 +350,34 @@ add_emissions <- function(model,
 
 
 #########################################################
+################# create_grid (local implementation)
+#' Create a grid of lat/lon points
+#' @description Creates a regular grid of latitude/longitude points.
+#' This is a local implementation based on SplitR::create_grid.
+#' @param lat Center latitude
+#' @param lon Center longitude
+#' @param range Range around center (lat, lon)
+#' @param division Grid spacing (lat, lon)
+#' @return List with lat and lon vectors
+#' @keywords internal
+create_grid <- function(lat, lon, range, division) {
+  # Calculate grid boundaries
+  lat_min <- lat - range[1] / 2
+  lat_max <- lat + range[1] / 2
+  lon_min <- lon - range[2] / 2
+  lon_max <- lon + range[2] / 2
+  
+  # Create sequences
+  lat_seq <- seq(lat_min, lat_max, by = division[1])
+  lon_seq <- seq(lon_min, lon_max, by = division[2])
+  
+  # Create grid
+  grid_expand <- expand.grid(lat = lat_seq, lon = lon_seq)
+  
+  list(lat = grid_expand$lat, lon = grid_expand$lon)
+}
+
+#########################################################
 ################# add_grid
 #' @export add_grid
 add_grid <- function(model,
@@ -367,14 +395,13 @@ add_grid <- function(model,
   samp_interval = 24,
   name = NULL) {
   if (inherits(model, "traj_model")) {
-    # Obtain the grid of lat/lon points
-    grid <-
-      create_grid(
-        lat = lat,
-        lon = lon,
-        range = range,
-        division = division
-      )
+    # Obtain the grid of lat/lon points using local create_grid
+    grid <- create_grid(
+      lat = lat,
+      lon = lon,
+      range = range,
+      division = division
+    )
 
     # Add the grid points to the model object
     model$lat <- grid$lat
