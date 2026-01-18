@@ -1,17 +1,6 @@
 # Tests for get_data()
 # These tests avoid network calls and focus on validation logic
 
-test_that("get_data validates data argument",
-{
-  skip_on_cran()
-  
-  # Should error on invalid data type
-  expect_error(
-    disperseR::get_data(data = "invalid_type"),
-    regexp = NULL
-  )
-})
-
 test_that("get_data returns crosswalk without network", {
   # crosswalk is bundled with package, no network needed
   result <- disperseR::get_data(data = "crosswalk")

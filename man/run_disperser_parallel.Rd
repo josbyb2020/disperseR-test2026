@@ -2,35 +2,46 @@
 % Please edit documentation in R/run_disperser_parallel.R
 \name{run_disperser_parallel}
 \alias{run_disperser_parallel}
-\title{run the fac model in parallel}
+\title{Run the dispersion model in parallel}
 \usage{
-run_disperser_parallel(input.refs = NULL, pbl.height = NULL,
-  species = "so2", proc_dir = proc_dir, overwrite = F, npart = 100,
-  mc.cores = parallel::detectCores(), keep.hysplit.files = FALSE)
+run_disperser_parallel(
+  input.refs = NULL,
+  pbl.height = NULL,
+  species = "so2",
+  proc_dir = NULL,
+  hysp_dir = NULL,
+  meteo_dir = NULL,
+  overwrite = FALSE,
+  npart = 100,
+  mc.cores = parallel::detectCores(),
+  keep.hysplit.files = FALSE
+)
 }
 \arguments{
-\item{input.refs}{should be the data table that is the result of the `define_input()` function or a subset of that dataset}
+\item{input.refs}{A data.table with columns: ID (character), uID (character),
+Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
+start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).}
 
-\item{pbl.height}{Monthly mean planetary boundary layer heights. See vignettes for more information}
+\item{pbl.height}{Monthly mean planetary boundary layer heights}
 
-\item{species}{The package has the possibility to use two types of species. The default one is `species = 'so2'`, but you can also use particulate sulfate `species = 'so4p'`.}
+\item{species}{Species type: 'so2' (default) or 'so4p' (particulate sulfate)}
 
-\item{proc_dir}{directory where the function saves temporary files while running. This is automatically defined by `create_dirs()`}
+\item{proc_dir}{Directory for temporary files (from create_dirs())}
 
-\item{overwrite}{if output files already exist should they be overwritten? This is `false` by default.}
+\item{overwrite}{Overwrite existing output files? Default FALSE}
 
-\item{npart}{number of air parcels tracked by HYSPLIT. Defaults to 100}
+\item{npart}{Number of air parcels tracked by HYSPLIT. Default 100}
 
-\item{mc.cores}{on how many cores should R split the computations. set to  parallel::detectCores() or set to 1 if you want to serial computation.}
+\item{mc.cores}{Number of cores for parallel computation. Default detectCores().
+On Windows, a socket cluster is used instead of forking.}
 
-\item{keep.hysplit.files}{logical. If FALSE (the default), clears storage space in the `proc_dir` by removing all HYSPLIT files}
+\item{keep.hysplit.files}{Keep HYSPLIT run files? Default FALSE}
 }
 \value{
-This function returns fac model results.
+List of results from each dispersion run
 }
 \description{
-\code{run_disperser_parallel}
-}
-\details{
-It is possible that running the below code with output a warning "WARNING: map background file not found ../graphics/arlmap". It is safe to ignore it.
+Runs HYSPLIT dispersion simulations in parallel across multiple
+emission sources/times. Automatically uses appropriate parallelization method
+based on the operating system (mclapply on Unix/macOS, parLapply on Windows).
 }

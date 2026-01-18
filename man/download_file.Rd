@@ -2,27 +2,58 @@
 % Please edit documentation in R/get_data.R
 \name{download_file}
 \alias{download_file}
-\title{create a set of directories to run disperseR}
+\title{Download and prepare data for disperseR analysis}
 \usage{
 download_file(url, file, dir)
 }
 \arguments{
-\item{data}{`data = "all"` will download all the data that can be downloaded with the function. It has to be used with `start.year`, `start.month`, `end.year` and `end.month`. Other possible options are: `data = "zctashapefile"`, `data = "pblheight"`, `data = "metfiles"` and `data = "zcta_dataset"`.}
+\item{data}{Character. Type of data to retrieve. Options: "all", "crosswalk",
+"zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset"}
 
-\item{start.year}{specify what year of metfiles data you would like to start with. Please supply it like as a string for example "2005".}
+\item{start.year}{Character. Starting year for metfiles download (format: "YYYY").}
 
-\item{end.year}{specify what year of metfiles data you would like to end with. Please supply it like as a string for example "2005".}
+\item{end.year}{Character. Ending year for metfiles download (format: "YYYY").}
 
-\item{start.month}{what month of `start.year` you would like to start the download with? Please supply a string for example "07" for July.}
+\item{start.month}{Character. Starting month for metfiles download (format: "MM").}
 
-\item{end.month}{what month of `end.year` you would like to end the download with? Please supply a string for example "07" for July.}
+\item{end.month}{Character. Ending month for metfiles download (format: "MM").}
 }
 \value{
-Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+Depends on data type:
+  \itemize{
+    \item crosswalk: Returns crosswalk data.table
+    \item zctashapefile/zctashapefileSF: Returns sf object with ZCTA polygons
+    \item pblheight: Returns SpatRaster with planetary boundary layer heights
+    \item metfiles: Downloads files, returns NULL invisibly
+    \item all: Downloads all data, assigns to global environment
+  }
 }
 \description{
-`get_data()` helps the user get data for necessary for function execution.
+Downloads and prepares data required for disperseR analysis.
+This includes crosswalk data, ZCTA shapefiles, planetary boundary layer 
+height data, and meteorological files.
 }
 \details{
-\code{get_data}
+This function uses modern spatial packages (sf, terra) instead of the 
+retired rgdal/rgeos packages. Return types are sf objects for vector 
+data and terra SpatRaster for raster data.
+}
+\examples{
+\dontrun{
+# Create directories first
+create_dirs(location = tempdir())
+
+# Get all data for a specific time period
+get_data(
+  data = "all",
+  start.year = "2005",
+  start.month = "01",
+  end.year = "2005",
+  end.month = "03"
+)
+
+# Get only crosswalk data
+crosswalk <- get_data(data = "crosswalk")
+}
+
 }

@@ -48,8 +48,7 @@ Imports:
     utils,
     grDevices,
     methods,
-    grid,
-    SplitR
+    grid
 Suggests:
     ggmap,
     ggrepel,
@@ -57,9 +56,10 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     rnaturalearth,
-    downloader
+    downloader,
+    SplitR
 Remotes:
     rich-iannone/SplitR
 VignetteBuilder: knitr
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3

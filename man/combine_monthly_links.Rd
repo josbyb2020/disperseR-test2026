@@ -2,23 +2,25 @@
 % Please edit documentation in R/combine_monthly_links.R
 \name{combine_monthly_links}
 \alias{combine_monthly_links}
-\title{create a set of directories to run disperseR}
+\title{Combine monthly linked files}
 \usage{
 combine_monthly_links(month_YYYYMMs, link.to = "zips", filename = NULL)
 }
 \arguments{
-\item{month_YYYYMMs}{months and years to combine. Format created by `disperseR::get_yearmon()``}
+\item{month_YYYYMMs}{Months and years to combine. Format created by 
+`disperseR::get_yearmon()`}
 
-\item{link.to}{spatial scale for plotting. One of 'zips', 'counties', or 'grids' that should match original input to disperseR::link_all_units()}
+\item{link.to}{Spatial scale for plotting. One of 'zips', 'counties', 
+or 'grids' that should match original input to `disperseR::link_all_units()`}
 
-\item{filename}{What should the resulting RData file be called? Defulats to `paste0( 'hyads_unwgted_', link.to, '.RData')`}
+\item{filename}{Output filename. Defaults to 
+`paste0('hyads_unwgted_', link.to, '.RData')`}
 }
 \value{
-Saves an .RData file to the rdata_dir defined by `disperseR::create_dirs()` with filename `filename`.
+Saves an .RData file to the rdata_dir defined by 
+  `disperseR::create_dirs()` with filename `filename`.
 }
 \description{
-`combine_monthly_links()` combines linked files produced with `disperseR::link_all_units()` into lists of data.tables for easier manipulating
-}
-\details{
-\code{combine_monthly_links}
+Combines linked files produced with `disperseR::link_all_units()` 
+into lists of data.tables for easier manipulation.
 }

@@ -2,42 +2,71 @@
 % Please edit documentation in R/link_all_units.R
 \name{link_all_units}
 \alias{link_all_units}
-\title{create a set of directories to run disperseR}
+\title{Link air parcels to spatial units for multiple emission sources}
 \usage{
-link_all_units(units.run, link.to = "zips", mc.cores = detectCores(),
-  year.mons = NULL, start.date = NULL, end.date = NULL,
-  pbl.height = pblheight, crosswalk. = NULL, counties. = NULL,
-  duration.run.hours = 240, res.link = 12000, overwrite = FALSE)
+link_all_units(
+  units.run,
+  link.to = "zips",
+  mc.cores = parallel::detectCores(),
+  year.mons = NULL,
+  start.date = NULL,
+  end.date = NULL,
+  pbl_trim = TRUE,
+  pbl.height = NULL,
+  crosswalk. = NULL,
+  counties. = NULL,
+  hysp_dir = NULL,
+  ziplink_dir = NULL,
+  duration.run.hours = 240,
+  res.link = 12000,
+  overwrite = FALSE,
+  pbl.trim = NULL,
+  crop.usa = FALSE,
+  return.linked.data = TRUE
+)
 }
 \arguments{
-\item{units.run}{information on unit locations as output from disperseR::units()}
+\item{units.run}{A data.table with columns: ID (character), uID (character),
+Latitude (numeric), Longitude (numeric), year (integer)}
 
-\item{link.to}{one of 'zips', 'counties', or 'grids' to denote spatial linkage scale. zips and counties are only for the USA}
+\item{link.to}{One of 'zips', 'counties', or 'grids'}
 
-\item{mc.cores}{`link_all_units()` enables the parallel run by default splitting different months on different cores, but you can make it serial just by setting the `mc.cores` argument to `1`.As mentioned before  `link_all_units()` enables the parallel run by default splitting different months on different cores, but you can make it serial just by setting the `mc.cores` argument to `1`.}
+\item{mc.cores}{Number of cores for parallel computation. Set to 1 for serial.}
 
-\item{year.mons}{these are the months for which we would like to do the linking. You can use the get_yearmon() function to create a vector that can be an input here.}
+\item{year.mons}{Months for linking (use get_yearmon() to create)}
 
-\item{start.date}{this argument is not necessary, but can be used if the user is interested in specifying a specific date to start the analysis with as opposed to using months. For example `start.date="2005-01-02"` for 2 January 2005. This argument are set to `NULL` by default and the function computes the start and the end dates using the `year.mons` provided.}
+\item{start.date}{Optional start date (alternative to year.mons)}
 
-\item{pbl.height}{`pbl.height = pblheight` by default but you can change it. See the vignette}
+\item{end.date}{Optional end date (alternative to year.mons)}
 
-\item{crosswalk.}{`crosswalk. = crosswalk` by default but you can change it. See the vignette}
+\item{pbl_trim}{Trim parcels under monthly PBL heights? Default TRUE}
 
-\item{duration.run.hours}{`duration.run.hours = 240` by default which equals 10 days. 10 days is the maximum (approximately) that sulfur stays in the atmosphere before it deposits to the ground.}
+\item{pbl.height}{Monthly boundary layer heights (required if pbl_trim=TRUE)}
 
-\item{res.link}{Defines the grid resolution (in meters---defaults to 12000m = 12km) for linking. This is important for all link.to values, since parcel locations are first put on this grid before spatially allocating to other spatial domains.}
+\item{crosswalk.}{Crosswalk data (required if link.to='zips')}
 
-\item{overwrite}{`overwrite = FALSE` by default. Would you like to overwrite files that already exist?}
+\item{counties.}{County sf object (required if link.to='counties')}
 
-\item{start.end}{this argument is not necessary, but can be used if the user is interested in specifying a specific date to end the analysis with as opposed to using months. For example `start.date="2005-01-02"` for 2 January 2005.This argument are set to `NULL` by default and the function computes the start and the end dates using the `year.mons` provided.}
+\item{duration.run.hours}{Duration in hours (default 240 = 10 days)}
+
+\item{res.link}{Grid resolution in meters (default 12000)}
+
+\item{overwrite}{Overwrite existing files? Default FALSE}
+
+\item{pbl.trim}{Legacy parameter, use pbl_trim instead}
+
+\item{crop.usa}{Crop output to lower 48 states? (grids only)}
+
+\item{return.linked.data}{Return linked data? Default TRUE}
 }
 \value{
-vector of months that you can loop over
+data.table with linked spatial data
 }
 \description{
-with `link_all_units()` users can link all air parcels to relevant spatial scales by month for specified units with combinations of years and months. `link_all_units()` reads in all the relevant HYSPLIT files (i.e., those that correspond to the provided units) produced by the `run_disperser_parallel()` function and saves them. Then it links them to relevant spatial scales.
-}
-\details{
-\code{link_all_units}
+Links all air parcels to relevant spatial scales (ZIP codes,
+counties, or grids) by month for specified units. Reads HYSPLIT output files
+produced by run_disperser_parallel() and performs spatial aggregation.
+
+Automatically uses appropriate parallelization based on OS:
+mclapply on Unix/macOS, parLapply on Windows.
 }
