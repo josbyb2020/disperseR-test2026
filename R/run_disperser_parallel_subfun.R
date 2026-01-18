@@ -75,7 +75,8 @@ dispersion_read <- function(archive_folder) {
 #' @param traj_name Optional trajectory name.
 #' @param exec_dir Directory containing HYSPLIT executables.
 #' @param met_dir Directory containing meteorological files.
-#' @param binary_path Path to a specific HYSPLIT binary.
+#' @param binary_path Path to a custom HYSPLIT dispersion binary (hycs_std).
+#' @param parhplot_path Path to a custom parhplot binary for particle output.
 #' @return Updated model object.
 #' @export
 add_params <- function(model,
@@ -94,7 +95,8 @@ add_params <- function(model,
   traj_name = NULL,
   exec_dir = NULL,
   met_dir = NULL,
-  binary_path = NULL) {
+  binary_path = NULL,
+  parhplot_path = NULL) {
   if (!is.null(lat)) {
     model$lat <- lat
   }
@@ -157,6 +159,10 @@ add_params <- function(model,
 
   if (!is.null(binary_path)) {
     model$binary_path <- binary_path
+  }
+
+  if (!is.null(parhplot_path)) {
+    model$parhplot_path <- parhplot_path
   }
 
   return(model)

@@ -24,8 +24,12 @@
 #' @param source.agg Character. Source aggregation: 'total', 'facility', or 'unit'.
 #' @param time.agg Character. Time aggregation: 'year' or 'month'.
 #' @param return.monthly.data Logical. Return monthly data when time.agg='month'?
+#' @param allow.partial Logical. If FALSE (default), errors when any monthly maps
+#'   are missing. If TRUE, warns and continues with available data.
 #'
 #' @return A data.table with exposure values aggregated by the specified levels.
+#'   If \code{allow.partial = TRUE} and some months were missing, the result
+#'   has an attribute "missing_maps" listing the skipped months.
 
 
 #' @export calculate_exposure
@@ -40,7 +44,8 @@ calculate_exposure <- function(year.E,
                                exp_dir = NULL,
                                source.agg = c('total', 'facility', 'unit'),
                                time.agg = c('year', 'month'),
-                               return.monthly.data = FALSE) {
+                               return.monthly.data = FALSE,
+                               allow.partial = FALSE) {
   `%ni%` <- Negate(`%in%`)
 
   # Validate source.agg
@@ -109,9 +114,12 @@ calculate_exposure <- function(year.E,
   }
   missing_maps <- setdiff(expected_maps, names(monthly_maps))
   if (length(missing_maps) > 0) {
-    warning("Missing ", length(missing_maps), " of 12 monthly maps for year ", year.D, ": ",
-            paste(missing_maps, collapse = ", "),
-            call. = FALSE)
+    msg <- paste0("Missing ", length(missing_maps), " of 12 monthly maps for year ", year.D, ": ",
+                  paste(missing_maps, collapse = ", "))
+    if (!allow.partial) {
+      stop(msg, "\nSet allow.partial = TRUE to proceed with available data.", call. = FALSE)
+    }
+    warning(msg, call. = FALSE)
   }
 
   # Create directory to store output files if it does not exist
@@ -296,6 +304,10 @@ calculate_exposure <- function(year.E,
                 path = file.yr)
     }
 
+    # Attach missing maps info if partial processing occurred
+    if (length(missing_maps) > 0) {
+      attr(exposures, "missing_maps") <- missing_maps
+    }
     return(exposures)
   } else {
     if (return.monthly.data) {
@@ -305,8 +317,15 @@ calculate_exposure <- function(year.E,
       if( link.to == 'zips')
         out <- out[ZIP != '   NA']
 
+      if (length(missing_maps) > 0) {
+        attr(out, "missing_maps") <- missing_maps
+      }
       return(out)
-    } else
+    } else {
+      if (length(missing_maps) > 0) {
+        attr(monthly.filelist, "missing_maps") <- missing_maps
+      }
       return(monthly.filelist)
+    }
   }
 }

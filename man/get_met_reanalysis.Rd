@@ -5,18 +5,21 @@
 \title{Adapted from SplitR's get_met_reanalysis
 Get reanalysis meteorology data files}
 \usage{
-get_met_reanalysis(files = NULL, years = NULL, path_met_files)
+get_met_reanalysis(files = NULL, years = NULL, path_met_files, base_url = NULL)
 }
 \arguments{
 \item{files}{a vector list of exact filenames for
 the reanalysis files.}
 
 \item{years}{a vector list of years for which
-reanalysis files are to be obtained via FTP.}
+reanalysis files are to be obtained.}
 
 \item{path_met_files}{a full path should be provided
 for the location of the meteorological data files;
 downloaded files will be saved in this location.}
+
+\item{base_url}{Base URL for reanalysis archive. Defaults to NOAA HTTPS.
+Can be overridden for mirror sites or local servers.}
 }
 \value{
 A list with two elements:
@@ -27,7 +30,7 @@ A list with two elements:
 }
 \description{
 This function downloads reanalysis
-meteorology data files from the NOAA FTP server and
+meteorology data files from the NOAA server and
 saves them to a specified folder. Files can be
 downloaded either by specifying a list of filenames
 (in the form of \code{'RP[YYYY][MM].gbl'}) or

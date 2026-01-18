@@ -21,7 +21,8 @@ add_params(
   traj_name = NULL,
   exec_dir = NULL,
   met_dir = NULL,
-  binary_path = NULL
+  binary_path = NULL,
+  parhplot_path = NULL
 )
 }
 \arguments{
@@ -49,7 +50,9 @@ add_params(
 
 \item{met_dir}{Directory containing meteorological files.}
 
-\item{binary_path}{Path to a specific HYSPLIT binary.}
+\item{binary_path}{Path to a custom HYSPLIT dispersion binary (hycs_std).}
+
+\item{parhplot_path}{Path to a custom parhplot binary for particle output.}
 }
 \value{
 Updated model object.

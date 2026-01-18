@@ -15,7 +15,8 @@ calculate_exposure(
   exp_dir = NULL,
   source.agg = c("total", "facility", "unit"),
   time.agg = c("year", "month"),
-  return.monthly.data = FALSE
+  return.monthly.data = FALSE,
+  allow.partial = FALSE
 )
 }
 \arguments{
@@ -49,9 +50,14 @@ current working directory.}
 \item{time.agg}{Character. Time aggregation: 'year' or 'month'.}
 
 \item{return.monthly.data}{Logical. Return monthly data when time.agg='month'?}
+
+\item{allow.partial}{Logical. If FALSE (default), errors when any monthly maps
+are missing. If TRUE, warns and continues with available data.}
 }
 \value{
 A data.table with exposure values aggregated by the specified levels.
+  If \code{allow.partial = TRUE} and some months were missing, the result
+  has an attribute "missing_maps" listing the skipped months.
 }
 \description{
 Takes linked HYSPLIT outputs combined using 
