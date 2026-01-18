@@ -1,10 +1,17 @@
 # Tests for calculate_exposure()
 # Focus on parameter validation and logic, not full workflow
 
+# Create minimal mock units.mo data for tests
+mock_units_mo <- data.table::data.table(
+  uID = "unit1",
+  year = 2005,
+  month = 1,
+  `SO2..tons.` = 100
+)
+
 test_that("calculate_exposure validates source.agg", {
   skip_on_cran()
   
-  # Create minimal mock data to pass monthly_maps validation
   mock_maps <- list("MAP1.2005" = data.table::data.table(ZIP = "12345", uID = 1))
   
   expect_error(
@@ -13,7 +20,8 @@ test_that("calculate_exposure validates source.agg", {
       year.D = 2005,
       source.agg = "invalid",
       time.agg = "year",
-      monthly_maps = mock_maps
+      monthly_maps = mock_maps,
+      units.mo = mock_units_mo
     ),
     "source.agg not recognized"
   )
@@ -30,7 +38,8 @@ test_that("calculate_exposure validates time.agg", {
       year.D = 2005,
       source.agg = "total",
       time.agg = "invalid",
-      monthly_maps = mock_maps
+      monthly_maps = mock_maps,
+      units.mo = mock_units_mo
     ),
     "time.agg not recognized"
   )
@@ -44,7 +53,8 @@ test_that("calculate_exposure requires monthly_maps or rda_file", {
       year.E = 2005,
       year.D = 2005,
       source.agg = "total",
-      time.agg = "year"
+      time.agg = "year",
+      units.mo = mock_units_mo
     ),
     "Either monthly_maps.*or rda_file must be provided"
   )
@@ -59,6 +69,7 @@ test_that("calculate_exposure validates rda_file existence", {
       year.D = 2005,
       source.agg = "total",
       time.agg = "year",
+      units.mo = mock_units_mo,
       rda_file = "/nonexistent/path/file.RData"
     ),
     "rda_file does not exist"
@@ -77,7 +88,8 @@ test_that("calculate_exposure accepts valid source.agg values without validation
         year.D = 2005,
         source.agg = agg,
         time.agg = "year",
-        monthly_maps = mock_maps
+        monthly_maps = mock_maps,
+        units.mo = mock_units_mo
       ),
       error = function(e) e
     )
@@ -103,7 +115,8 @@ test_that("calculate_exposure accepts valid time.agg values without validation e
         year.D = 2005,
         source.agg = "total",
         time.agg = agg,
-        monthly_maps = mock_maps
+        monthly_maps = mock_maps,
+        units.mo = mock_units_mo
       ),
       error = function(e) e
     )
