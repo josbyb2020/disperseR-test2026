@@ -34,8 +34,8 @@ get_yearmon <- function(start.year = NULL,
   vector <- as.character(seq(as.Date(startdate), as.Date(enddate), "months"))
 
   getstring <- function(date) {
-    year <- as.numeric(substr(date, 1, 4))
-    month <- as.numeric(substr(date, 6, 7))
+    year <- substr(date, 1, 4)
+    month <- substr(date, 6, 7)
     out <- paste0(year, month)
     return(out)
   }
