@@ -9,23 +9,36 @@
   invisible(value)
 }
 
+.disperseR_splitr_package <- function() {
+  if (requireNamespace("splitr", quietly = TRUE)) {
+    return("splitr")
+  }
+  if (requireNamespace("SplitR", quietly = TRUE)) {
+    return("SplitR")
+  }
+  NULL
+}
+
 .disperseR_require_splitr <- function(feature = NULL, fn = NULL) {
-  splitr_path <- suppressWarnings(system.file(package = "SplitR"))
-  if (!nzchar(splitr_path)) {
+  splitr_pkg <- .disperseR_splitr_package()
+  if (is.null(splitr_pkg)) {
     if (is.null(feature)) {
-      stop("This feature requires the 'SplitR' package.", call. = FALSE)
+      stop("This feature requires the 'splitr' package (aka 'SplitR').",
+           call. = FALSE)
     }
-    stop(feature, " requires the 'SplitR' package.", call. = FALSE)
+    stop(feature, " requires the 'splitr' package (aka 'SplitR').",
+         call. = FALSE)
   }
   if (is.null(fn)) {
-    return(invisible(TRUE))
+    return(invisible(splitr_pkg))
   }
   splitr_fun <- tryCatch(
-    getExportedValue("SplitR", fn),
+    getExportedValue(splitr_pkg, fn),
     error = function(e) e
   )
   if (inherits(splitr_fun, "error")) {
-    stop("SplitR does not export '", fn, "'. Please update SplitR.", call. = FALSE)
+    stop("SplitR/splitr does not export '", fn,
+         "'. Please update splitr.", call. = FALSE)
   }
   splitr_fun
 }

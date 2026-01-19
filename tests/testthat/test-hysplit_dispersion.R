@@ -1,14 +1,15 @@
 # Tests for hysplit_dispersion()
-# Integration tests are skipped on CRAN and when SplitR is not available
+# Integration tests are skipped on CRAN and when splitr is not available
 
 splitr_available <- function() {
-  nzchar(suppressWarnings(system.file(package = "SplitR")))
+  requireNamespace("splitr", quietly = TRUE) ||
+    requireNamespace("SplitR", quietly = TRUE)
 }
 
-test_that("hysplit_dispersion requires SplitR", {
+test_that("hysplit_dispersion requires splitr", {
   skip_on_cran()
   skip_if(splitr_available(),
-          "SplitR is installed, skipping missing-package test")
+          "splitr is installed, skipping missing-package test")
   
   met_dir <- file.path(tempdir(), paste0("disperseR_met_", Sys.getpid()))
   run_dir <- file.path(tempdir(), paste0("disperseR_run_", Sys.getpid()))
@@ -16,7 +17,7 @@ test_that("hysplit_dispersion requires SplitR", {
   dir.create(run_dir, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(c(met_dir, run_dir), recursive = TRUE), add = TRUE)
 
-  # Create minimal inputs to reach the SplitR check without downloading met files
+  # Create minimal inputs to reach the splitr check without downloading met files
   model <- disperseR::create_disp_model()
   model <- disperseR::add_params(
     model,
@@ -64,13 +65,13 @@ test_that("hysplit_dispersion requires SplitR", {
       write_disp_CSV = FALSE,
       run_dir = run_dir
     ),
-    "SplitR"
+    "splitr|SplitR"
   )
 })
 
 test_that("hysplit_dispersion validates run_dir", {
   skip_on_cran()
-  skip_if(!splitr_available(), "SplitR not installed")
+  skip_if(!splitr_available(), "splitr not installed")
   
   expect_error(
     disperseR::hysplit_dispersion(run_dir = NULL),
@@ -85,7 +86,7 @@ test_that("hysplit_dispersion validates run_dir", {
 
 test_that("hysplit_dispersion validates start_day format", {
   skip_on_cran()
-  skip_if(!splitr_available(), "SplitR not installed")
+  skip_if(!splitr_available(), "splitr not installed")
   
   temp_dir <- file.path(tempdir(), "hysplit_test")
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
@@ -111,7 +112,7 @@ test_that("hysplit_dispersion validates start_day format", {
 
 test_that("hysplit_dispersion accepts Date objects", {
   skip_on_cran()
-  skip_if(!splitr_available(), "SplitR not installed")
+  skip_if(!splitr_available(), "splitr not installed")
   
   temp_dir <- file.path(tempdir(), "hysplit_test2")
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)

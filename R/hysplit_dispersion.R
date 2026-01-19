@@ -618,22 +618,24 @@ hysplit_dispersion <- function(lat = 49.263,
     stop("Unsupported operating system for HYSPLIT execution: ", os, call. = FALSE)
   }
 
+  splitr_pkg <- NULL
+
   if (!is.null(binary_path)) {
     binary_path <- path.expand(binary_path)
     if (!file.exists(binary_path)) {
       stop("binary_path does not exist: ", binary_path, call. = FALSE)
     }
   } else {
-    .disperseR_require_splitr(feature = "HYSPLIT dispersion")
+    splitr_pkg <- .disperseR_require_splitr(feature = "HYSPLIT dispersion")
     if (os == "mac") {
-      binary_path <- system.file("osx/hycs_std", package = "SplitR")
+      binary_path <- system.file("osx/hycs_std", package = splitr_pkg)
     } else if (os == "unix") {
-      binary_path <- system.file("linux-amd64/hycs_std", package = "SplitR")
+      binary_path <- system.file("linux-amd64/hycs_std", package = splitr_pkg)
     } else {
-      binary_path <- system.file("win/hycs_std.exe", package = "SplitR")
+      binary_path <- system.file("win/hycs_std.exe", package = splitr_pkg)
     }
     if (!nzchar(binary_path)) {
-      stop("HYSPLIT binary not found. Provide binary_path or install SplitR.",
+      stop("HYSPLIT binary not found. Provide binary_path or install splitr.",
            call. = FALSE)
     }
   }
@@ -644,16 +646,18 @@ hysplit_dispersion <- function(lat = 49.263,
       stop("parhplot_path does not exist: ", parhplot_path, call. = FALSE)
     }
   } else {
-    .disperseR_require_splitr(feature = "HYSPLIT dispersion")
+    if (is.null(splitr_pkg)) {
+      splitr_pkg <- .disperseR_require_splitr(feature = "HYSPLIT dispersion")
+    }
     if (os == "mac") {
-      parhplot_path <- system.file("osx/parhplot", package = "SplitR")
+      parhplot_path <- system.file("osx/parhplot", package = splitr_pkg)
     } else if (os == "unix") {
-      parhplot_path <- system.file("linux-amd64/parhplot", package = "SplitR")
+      parhplot_path <- system.file("linux-amd64/parhplot", package = splitr_pkg)
     } else {
-      parhplot_path <- system.file("win/parhplot.exe", package = "SplitR")
+      parhplot_path <- system.file("win/parhplot.exe", package = splitr_pkg)
     }
     if (!nzchar(parhplot_path)) {
-      stop("parhplot binary not found. Provide parhplot_path or install SplitR.",
+      stop("parhplot binary not found. Provide parhplot_path or install splitr.",
            call. = FALSE)
     }
   }
