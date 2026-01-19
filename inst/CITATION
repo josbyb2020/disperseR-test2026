@@ -2,7 +2,7 @@ citHeader("To cite disperseR in publications, please use:")
 
 bibentry(
   bibtype = "Manual",
-  title = "disperseR: Run HYSPLIT many times in parallel, aggregate to ZIP code level",
+  title = "disperseR: An R package for HYSPLIT dispersion modeling and ZIP code-level exposure assessment",
   author = c(
     person("Lucas", "Henneman"),
     person("Christine", "Choirat"),

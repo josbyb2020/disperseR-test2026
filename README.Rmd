@@ -107,6 +107,7 @@ Use `get_data()` to download most inputs automatically.
 
 ```
 Henneman, L., Choirat, C., & Garbulinska, M. (2019). disperseR:
-Run HYSPLIT many times in parallel, aggregate to zip code level.
-R package version 0.2.0. https://github.com/josbyb2020/disperseR-test2026
+An R package for HYSPLIT dispersion modeling and ZIP code-level
+exposure assessment. R package version 0.2.0.
+https://github.com/josbyb2020/disperseR-test2026
 ```
