@@ -636,12 +636,9 @@ subset_nc_date <- function(hpbl_file = NULL,
     rasterin <- hpbl_brick
   }
 
-  # Get time vector to select layers
-  dates <- terra::names(rasterin)
-  dates <- gsub('X', '', dates)
-  dates <- gsub('\\.', '-', dates)
-  dates <- gsub('_', '-', dates)
-
+  # Get time vector from terra (NetCDF time dimension)
+  time_vals <- terra::time(rasterin)
+  
   # Get first day of the month for vardate
   vardate_month <- as.Date(paste(
     lubridate::year(vardate),
@@ -650,14 +647,28 @@ subset_nc_date <- function(hpbl_file = NULL,
     sep = '-'
   ))
 
-  # Select layer
-  layer <- which(as.Date(dates) == vardate_month)
-  
-  if (length(layer) == 0) {
-    # Try matching by year-month only
+  # Select layer by matching year-month
+  if (!is.null(time_vals) && length(time_vals) > 0) {
+    # Match by year-month (first of month)
     target_ym <- format(vardate_month, "%Y-%m")
-    dates_ym <- substr(dates, 1, 7)
-    layer <- which(dates_ym == target_ym)
+    time_ym <- format(time_vals, "%Y-%m")
+    layer <- which(time_ym == target_ym)
+  } else {
+    # Fallback: try layer names (legacy format)
+    dates <- terra::names(rasterin)
+    dates <- gsub('X', '', dates)
+    dates <- gsub('\\.', '-', dates)
+    dates <- gsub('_', '-', dates)
+    
+    layer <- tryCatch(
+      which(as.Date(dates) == vardate_month),
+      error = function(e) {
+        # Try matching by year-month only  
+        target_ym <- format(vardate_month, "%Y-%m")
+        dates_ym <- substr(dates, 1, 7)
+        which(dates_ym == target_ym)
+      }
+    )
   }
   
   if (length(layer) == 0) {

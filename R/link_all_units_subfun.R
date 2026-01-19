@@ -79,8 +79,18 @@ link_to <- function(d,
     r[as.numeric(names(tab))] <- as.numeric(tab)
   }
   
-  # Trim to data extent
-  r2 <- terra::trim(r, padding = 1)
+  # Trim to data extent (only if there's actual data)
+  if (all(is.na(terra::values(r)))) {
+    warning("No valid parcel-to-cell mappings found for linking. Returning empty result.")
+    return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+  }
+  r2 <- tryCatch(
+    terra::trim(r, padding = 1),
+    error = function(e) {
+      warning("trim failed: ", e$message, ". Using original raster.")
+      r
+    }
+  )
   
   # Crop to USA if requested
   if (crop.usa) {
@@ -225,8 +235,18 @@ trim_pbl <- function(Min, rasterin) {
     )
   )
   
-  # Create coordinate matrix
+  # Create coordinate matrix (assumes input is lon/lat WGS84)
   xy <- as.matrix(M[, .(lon, lat)])
+  
+  # Project coordinates to raster CRS if needed
+  rast_crs <- terra::crs(rasterin)
+  if (!terra::is.lonlat(rasterin)) {
+    # Raster is in projected CRS - transform parcel coords to match
+    xy_sf <- sf::st_as_sf(data.frame(lon = xy[,1], lat = xy[,2]), 
+                          coords = c("lon", "lat"), crs = 4326)
+    xy_proj <- sf::st_transform(xy_sf, rast_crs)
+    xy <- sf::st_coordinates(xy_proj)
+  }
   
   # Get cell indices
   M$rastercell <- terra::cellFromXY(rasterin, xy)
@@ -367,11 +387,14 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl.) {
-      d_xmin <- min(d$lon)
-      e_xmin <- terra::ext(pbl.height)[1]
-      if (d_xmin < e_xmin - 5)
-        pbl.height <- terra::rotate(pbl.height)
-      
+      # Only rotate if raster is in lon/lat and needs it
+      if (terra::is.lonlat(pbl.height)) {
+        d_xmin <- min(d$lon)
+        e_xmin <- terra::ext(pbl.height)[1]
+        if (d_xmin < e_xmin - 5)
+          pbl.height <- terra::rotate(pbl.height)
+      }
+      # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {
@@ -523,11 +546,14 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl.) {
-      d_xmin <- min(d$lon)
-      e_xmin <- terra::ext(pbl.height)[1]
-      if (d_xmin < e_xmin - 5)
-        pbl.height <- terra::rotate(pbl.height)
-      
+      # Only rotate if raster is in lon/lat and needs it
+      if (terra::is.lonlat(pbl.height)) {
+        d_xmin <- min(d$lon)
+        e_xmin <- terra::ext(pbl.height)[1]
+        if (d_xmin < e_xmin - 5)
+          pbl.height <- terra::rotate(pbl.height)
+      }
+      # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {
@@ -695,12 +721,15 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl. && !is.null(pbl.height)) {
-      d_xmin <- min(d$lon)
-      e_xmin <- terra::ext(pbl.height)[1]
-      if (d_xmin < e_xmin - 5) {
-        pbl.height <- terra::rotate(pbl.height)
+      # Only rotate if raster is in lon/lat and needs it
+      if (terra::is.lonlat(pbl.height)) {
+        d_xmin <- min(d$lon)
+        e_xmin <- terra::ext(pbl.height)[1]
+        if (d_xmin < e_xmin - 5) {
+          pbl.height <- terra::rotate(pbl.height)
+        }
       }
-      
+      # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {

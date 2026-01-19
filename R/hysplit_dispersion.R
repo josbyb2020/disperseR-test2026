@@ -663,8 +663,13 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   # Execute HYSPLIT binary (paths quoted for space safety)
+
+  # On ARM Macs, wrap x86_64 binaries with Rosetta
+  binary_cmd <- if (os == "mac") .disperseR_rosetta_wrap(binary_path) else shQuote(binary_path)
+  parhplot_cmd <- if (os == "mac") .disperseR_rosetta_wrap(parhplot_path) else shQuote(parhplot_path)
+
   if (os == "mac") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", binary_cmd,
       " >> /dev/null 2>&1)"))
     if (exit_status != 0) {
       stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
@@ -674,7 +679,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "unix") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(binary_path),
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", binary_cmd,
       " >> /dev/null 2>&1)"))
     if (exit_status != 0) {
       stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
@@ -696,7 +701,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
   # Extract the particle positions at every hour
   if (os == "mac") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", parhplot_cmd,
       " -iPARDUMP -a1)"))
     if (exit_status != 0) {
       stop("parhplot execution failed with exit status ", exit_status, ". ",
@@ -706,7 +711,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "unix") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", shQuote(parhplot_path),
+    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", parhplot_cmd,
       " -iPARDUMP -a1)"))
     if (exit_status != 0) {
       stop("parhplot execution failed with exit status ", exit_status, ". ",

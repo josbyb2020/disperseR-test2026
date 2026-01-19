@@ -1,7 +1,30 @@
 .disperseR_cache <- new.env(parent = emptyenv())
 
 .disperseR_cache_get <- function(name, default = NULL) {
+
   get0(name, envir = .disperseR_cache, ifnotfound = default)
+}
+
+# Detect if running on ARM macOS (Apple Silicon)
+.disperseR_is_arm_mac <- function() {
+  Sys.info()[["sysname"]] == "Darwin" && 
+    Sys.info()[["machine"]] %in% c("arm64", "aarch64")
+}
+
+# Wrap x86_64 binary command with arch -x86_64 on ARM Macs
+.disperseR_rosetta_wrap <- function(binary_path) {
+
+  if (.disperseR_is_arm_mac()) {
+    # Check if binary is x86_64
+    file_info <- tryCatch(
+      system2("file", shQuote(binary_path), stdout = TRUE, stderr = TRUE),
+      error = function(e) ""
+    )
+    if (any(grepl("x86_64", file_info, fixed = TRUE))) {
+      return(paste("arch -x86_64", shQuote(binary_path)))
+    }
+  }
+  shQuote(binary_path)
 }
 
 .disperseR_cache_set <- function(name, value) {
