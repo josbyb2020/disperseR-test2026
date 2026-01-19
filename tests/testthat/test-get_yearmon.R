@@ -8,7 +8,7 @@ test_that("get_yearmon returns correct months for single month", {
     end.month = "01"
   )
   
-  expect_equal(result, "20051")
+  expect_equal(result, "200501")
   expect_length(result, 1)
 })
 
@@ -20,7 +20,7 @@ test_that("get_yearmon returns correct sequence for multiple months", {
     end.month = "03"
   )
   
-  expect_equal(result, c("20051", "20052", "20053"))
+  expect_equal(result, c("200501", "200502", "200503"))
   expect_length(result, 3)
 })
 
@@ -32,7 +32,7 @@ test_that("get_yearmon handles year boundaries", {
     end.month = "02"
   )
   
-  expect_equal(result, c("200411", "200412", "20051", "20052"))
+  expect_equal(result, c("200411", "200412", "200501", "200502"))
   expect_length(result, 4)
 })
 
@@ -57,6 +57,6 @@ test_that("get_yearmon handles full year", {
   )
   
   expect_length(result, 12)
-  expect_equal(result[1], "20051")
+  expect_equal(result[1], "200501")
   expect_equal(result[12], "200512")
 })
