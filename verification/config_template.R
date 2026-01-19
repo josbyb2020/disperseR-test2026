@@ -1,0 +1,11 @@
+# Copy this file to config.R and edit values as needed.
+
+VERIFY_BASE_DIR <- file.path(tempdir(), "disperseR_verify")
+VERIFY_DATA_DOWNLOAD <- FALSE
+VERIFY_DOWNLOAD_MET <- FALSE
+VERIFY_RUN_HYSPLIT <- FALSE
+VERIFY_BINARY_PATH <- NULL
+VERIFY_PARHPLOT_PATH <- NULL
+VERIFY_MET_DIR <- NULL
+VERIFY_KEEP_ARTIFACTS <- FALSE
+
