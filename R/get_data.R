@@ -122,6 +122,15 @@ get_data <- function(data,
                      end.year = NULL,
                      end.month = NULL) {
 
+  # Validate data parameter
+
+  valid_data <- c("all", "crosswalk", "zctashapefile", "zctashapefileSF",
+                  "pblheight", "metfiles", "zcta_dataset")
+  if (!data %in% valid_data) {
+    stop("Unknown data type: '", data, "'. Valid options are: ",
+         paste(valid_data, collapse = ", "), call. = FALSE)
+  }
+
   # Store parameters
   startyear <- start.year
   startmonth <- start.month

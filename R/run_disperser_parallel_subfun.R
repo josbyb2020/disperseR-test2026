@@ -28,33 +28,56 @@ get_output_df <- function(model) {
 
 #' Read dispersion CSV outputs from a run directory
 #'
+#' Reads `GIS_part_###_ps.csv` files produced by parhplot and combines them
+#' into a single data.frame. The hour is extracted from each filename (the
+#' numeric suffix), supporting up to 999 hours per run.
+#'
 #' @param archive_folder Directory containing `GIS_part_###_ps.csv` files.
-#' @return A data.frame of particle positions with an `hour` column.
+#' @return A data.frame of particle positions with columns: particle_no, lon,
+#'   lat, height, hour. Returns an empty data.frame with a warning if no
+#'   matching files are found.
 #' @export
 dispersion_read <- function(archive_folder) {
-  dispersion_file_list <-
-    list.files(path = archive_folder,
-      pattern = "^GIS_part_[0-9][0-9][0-9]_ps.csv",
-      full.names = TRUE)
 
-  # Get each CSV file into a single data frame
-  for (i in 1:length(dispersion_file_list)) {
-    if (i == 1) {
-      dispersion <-
-        as.data.frame(mat.or.vec(nr = 0, nc = 5))
-      colnames(dispersion) <-
-        c("particle_no", "lon", "lat",
-          "height", "hour")
-    }
-    disp <-
-      utils::read.csv(dispersion_file_list[i], header = FALSE)
-    colnames(disp) <-
-      c("particle_no", "lon", "lat", "height")
-    disp$hour <- i
-    dispersion <- rbind(dispersion, disp)
+  if (!dir.exists(archive_folder)) {
+    warning("archive_folder does not exist: ", archive_folder, call. = FALSE)
+    return(data.frame(
+      particle_no = integer(0), lon = numeric(0), lat = numeric(0),
+      height = numeric(0), hour = integer(0)
+    ))
   }
 
-  # Return the data frame
+  dispersion_file_list <- list.files(
+    path = archive_folder,
+    pattern = "^GIS_part_[0-9]+_ps\\.csv$",
+    full.names = TRUE
+  )
+
+  if (length(dispersion_file_list) == 0) {
+    warning("No GIS_part_*_ps.csv files found in: ", archive_folder, call. = FALSE)
+    return(data.frame(
+      particle_no = integer(0), lon = numeric(0), lat = numeric(0),
+      height = numeric(0), hour = integer(0)
+    ))
+  }
+
+  # Pre-allocate result list for efficiency
+  result_list <- vector("list", length(dispersion_file_list))
+
+  for (i in seq_along(dispersion_file_list)) {
+    fpath <- dispersion_file_list[i]
+    # Extract hour from filename (e.g., GIS_part_001_ps.csv -> 1)
+    fname <- basename(fpath)
+    hour_str <- sub("^GIS_part_([0-9]+)_ps\\.csv$", "\\1", fname)
+    hour_val <- as.integer(hour_str)
+
+    disp <- utils::read.csv(fpath, header = FALSE)
+    colnames(disp) <- c("particle_no", "lon", "lat", "height")
+    disp$hour <- hour_val
+    result_list[[i]] <- disp
+  }
+
+  dispersion <- do.call(rbind, result_list)
   return(dispersion)
 }
 

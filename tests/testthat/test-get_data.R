@@ -1,6 +1,19 @@
 # Tests for get_data()
 # These tests avoid network calls and focus on validation logic
 
+test_that("get_data rejects unknown data types", {
+  expect_error(
+    disperseR::get_data(data = "invalid_data_type"),
+    "Unknown data type"
+  )
+  
+  expect_error(
+    disperseR::get_data(data = "CROSSWALK"),  # case-sensitive
+
+"Unknown data type"
+  )
+})
+
 test_that("get_data returns crosswalk without network", {
   # crosswalk is bundled with package, no network needed
   result <- disperseR::get_data(data = "crosswalk")
