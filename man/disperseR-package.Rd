@@ -12,8 +12,8 @@ exposure metric, aggregating results to ZIP code level.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/lhenneman/disperseR}
-  \item Report bugs at \url{https://github.com/lhenneman/disperseR/issues}
+  \item \url{https://github.com/josbyb2020/disperseR-test2026}
+  \item Report bugs at \url{https://github.com/josbyb2020/disperseR-test2026/issues}
 }
 
 }

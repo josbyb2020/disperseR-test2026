@@ -35,6 +35,11 @@ Major update migrating from retired spatial packages to modern alternatives.
 - Added `is.na()` guard in `start_day` validation
 - Eliminated `eval(parse())` and global environment probing in `calculate_exposure()`
 - Eliminated `assign()` side effects in `combine_monthly_links()`
+- Fixed `get_yearmon()` to preserve leading zero in month (returns "200501" not "20051")
+- Fixed PBL height download URL (NOAA PSL endpoint changed)
+- Fixed `dispersion_read()` to handle empty folders gracefully and extract hour from filename
+- Added input validation to `get_data()`, `run_disperser_parallel()`, `calculate_exposure()`
+- Fixed `yearmonth` column formatting in `calculate_exposure()` (YYYYMM with zero-padded month)
 
 ## Documentation
 

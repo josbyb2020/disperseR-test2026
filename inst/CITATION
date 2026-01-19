@@ -10,5 +10,5 @@ bibentry(
   ),
   year = "2019",
   note = paste("R package version", meta$Version),
-  url = "https://github.com/lhenneman/disperseR"
+  url = "https://github.com/josbyb2020/disperseR-test2026"
 )

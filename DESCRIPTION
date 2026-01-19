@@ -17,8 +17,8 @@ Description: Runs HYSPLIT many times and calculates the HYSPLIT Average
     modern spatial libraries (sf, terra). HYSPLIT binaries can be provided via
     the optional 'SplitR' package (available from GitHub at
     <https://github.com/rich-iannone/SplitR>) or via explicit binary paths.
-URL: https://github.com/lhenneman/disperseR
-BugReports: https://github.com/lhenneman/disperseR/issues
+URL: https://github.com/josbyb2020/disperseR-test2026
+BugReports: https://github.com/josbyb2020/disperseR-test2026/issues
 License: GPL-3
 LazyData: true
 LazyDataCompression: xz
