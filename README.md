@@ -17,8 +17,7 @@ compatibility with current R.
 
 ## Installation
 
-Not on CRAN yet. Install from GitHub (CRAN instructions will be added
-once released):
+Not on CRAN. Install from GitHub:
 
 ``` r
 install.packages("remotes")
