@@ -230,7 +230,7 @@ get_data <- function(data,
     message("Downloading planetary boundary layer data...")
     directory <- hpbl_dir
     file <- file.path(directory, 'hpbl.mon.mean.nc')
-    url <- 'https://psl.noaa.gov/repository/entry/get/hpbl.mon.mean.nc?entryid=synth%3Ae570c8f9-ec09-4e89-93b4-babd5651e7a9%3AL05BUlIvTW9udGhsaWVzL21vbm9sZXZlbC9ocGJsLm1vbi5tZWFuLm5j'
+    url <- 'https://downloads.psl.noaa.gov/NARR/Monthlies/monolevel/hpbl.mon.mean.nc'
 
     if (!file.exists(file)) {
       message("  Downloading PBL data (this may take a moment)...")
@@ -347,7 +347,7 @@ get_data <- function(data,
   if (data == "pblheight") {
     directory <- hpbl_dir
     file <- file.path(directory, 'hpbl.mon.mean.nc')
-    url <- 'https://psl.noaa.gov/repository/entry/get/hpbl.mon.mean.nc?entryid=synth%3Ae570c8f9-ec09-4e89-93b4-babd5651e7a9%3AL05BUlIvTW9udGhsaWVzL21vbm9sZXZlbC9ocGJsLm1vbi5tZWFuLm5j'
+    url <- 'https://downloads.psl.noaa.gov/NARR/Monthlies/monolevel/hpbl.mon.mean.nc'
   }
 
   # --- Meteorological files ---
