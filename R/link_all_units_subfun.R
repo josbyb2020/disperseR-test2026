@@ -280,6 +280,25 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
                                   return.linked.data. = TRUE) {
   
   unitID <- unit$ID
+
+  ziplink_dir <- .disperseR_cache_get("ziplink_dir")
+  if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
+    stop("ziplink_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    dir.create(ziplink_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    stop("ziplink_dir does not exist and could not be created: ", ziplink_dir, call. = FALSE)
+  }
+
+  hysp_dir <- .disperseR_cache_get("hysp_dir")
+  if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
+    stop("hysp_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(hysp_dir)) {
+    stop("hysp_dir does not exist: ", hysp_dir, call. = FALSE)
+  }
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
@@ -344,6 +363,9 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
     
     d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
+    if (pbl. && is.null(pbl.height)) {
+      stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
+    }
     if (pbl.) {
       d_xmin <- min(d$lon)
       e_xmin <- terra::ext(pbl.height)[1]
@@ -413,6 +435,29 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
                                      return.linked.data. = TRUE) {
   
   unitID <- unit$ID
+
+  if (is.null(counties)) {
+    stop("counties must be provided for county linking.", call. = FALSE)
+  }
+
+  ziplink_dir <- .disperseR_cache_get("ziplink_dir")
+  if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
+    stop("ziplink_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    dir.create(ziplink_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    stop("ziplink_dir does not exist and could not be created: ", ziplink_dir, call. = FALSE)
+  }
+
+  hysp_dir <- .disperseR_cache_get("hysp_dir")
+  if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
+    stop("hysp_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(hysp_dir)) {
+    stop("hysp_dir does not exist: ", hysp_dir, call. = FALSE)
+  }
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
@@ -474,6 +519,9 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
     
     d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
+    if (pbl. && is.null(pbl.height)) {
+      stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
+    }
     if (pbl.) {
       d_xmin <- min(d$lon)
       e_xmin <- terra::ext(pbl.height)[1]
@@ -551,6 +599,34 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
                                  return.linked.data. = TRUE) {
   
   unitID <- unit$ID
+
+  if (is.null(crosswalk.)) {
+    stop("crosswalk. must be provided for ZIP linking.", call. = FALSE)
+  }
+
+  ziplink_dir <- .disperseR_cache_get("ziplink_dir")
+  if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
+    stop("ziplink_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    dir.create(ziplink_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(ziplink_dir)) {
+    stop("ziplink_dir does not exist and could not be created: ", ziplink_dir, call. = FALSE)
+  }
+
+  hysp_dir <- .disperseR_cache_get("hysp_dir")
+  if (is.null(hysp_dir) || !nzchar(hysp_dir)) {
+    stop("hysp_dir is not set. Run create_dirs() first.", call. = FALSE)
+  }
+  if (!dir.exists(hysp_dir)) {
+    stop("hysp_dir does not exist: ", hysp_dir, call. = FALSE)
+  }
+
+  zcta <- .disperseR_cache_get("zcta")
+  if (is.null(zcta)) {
+    stop("zcta is not set. Run get_data(data = \"zctashapefile\") first.", call. = FALSE)
+  }
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
@@ -615,6 +691,9 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
     
     d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
+    if (pbl. && is.null(pbl.height)) {
+      stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
+    }
     if (pbl. && !is.null(pbl.height)) {
       d_xmin <- min(d$lon)
       e_xmin <- terra::ext(pbl.height)[1]

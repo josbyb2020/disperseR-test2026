@@ -105,6 +105,8 @@ link_all_units <- function(units.run,
   if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
     stop("ziplink_dir is not set. Run create_dirs() first or pass ziplink_dir explicitly.", call. = FALSE)
   }
+  .disperseR_cache_set("hysp_dir", hysp_dir)
+  .disperseR_cache_set("ziplink_dir", ziplink_dir)
 
   # Detect OS for parallelization strategy
   is_windows <- .Platform$OS.type == "windows"
@@ -120,6 +122,8 @@ link_all_units <- function(units.run,
     parallel::clusterEvalQ(cl, {
       library(disperseR)
       library(data.table)
+      disperseR:::.disperseR_cache_set("hysp_dir", hysp_dir)
+      disperseR:::.disperseR_cache_set("ziplink_dir", ziplink_dir)
     })
   }
 

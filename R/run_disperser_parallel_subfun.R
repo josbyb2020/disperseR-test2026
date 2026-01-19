@@ -30,7 +30,7 @@ get_output_df <- function(model) {
 #'
 #' Reads `GIS_part_###_ps.csv` files produced by parhplot and combines them
 #' into a single data.frame. The hour is extracted from each filename (the
-#' numeric suffix), supporting up to 999 hours per run.
+#' numeric suffix), supporting any number of hours per run.
 #'
 #' @param archive_folder Directory containing `GIS_part_###_ps.csv` files.
 #' @return A data.frame of particle positions with columns: particle_no, lon,

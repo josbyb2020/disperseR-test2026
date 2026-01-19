@@ -49,7 +49,7 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
     )]
     # Extract year from yearmonth if present
     if ("yearmonth" %in% names(data.linked)) {
-      data.linked[, year := as.integer(gsub('_.*$', '', yearmonth))]
+      data.linked[, year := as.integer(substr(as.character(yearmonth), 1, 4))]
     }
   } else {
     # Convert provided data.linked to data.table

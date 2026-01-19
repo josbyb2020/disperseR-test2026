@@ -34,6 +34,18 @@ get_met_reanalysis <- function(files = NULL,
   if (!grepl("/$", base_url)) {
     base_url <- paste0(base_url, "/")
   }
+
+  if (missing(path_met_files) || is.null(path_met_files) || !nzchar(path_met_files)) {
+    stop("path_met_files must be a valid directory path.", call. = FALSE)
+  }
+  path_met_files <- path.expand(path_met_files)
+  if (!dir.exists(path_met_files)) {
+    dir.create(path_met_files, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(path_met_files)) {
+    stop("path_met_files does not exist and could not be created: ",
+         path_met_files, call. = FALSE)
+  }
   
   # Set a longer timeout for large meteorology files (CRAN recommendation)
   old_timeout <- getOption("timeout")

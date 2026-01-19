@@ -79,6 +79,16 @@ calculate_exposure <- function(year.E,
   if (!inherits(units.mo, "data.frame")) {
     stop("units.mo must be a data.frame or data.table.", call. = FALSE)
   }
+  units.mo <- data.table::as.data.table(units.mo)
+  required_cols <- c("uID", "year", "month", pollutant)
+  missing_cols <- setdiff(required_cols, names(units.mo))
+  if (length(missing_cols) > 0) {
+    stop(
+      "units.mo is missing required columns: ",
+      paste(missing_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
 
   # Load or validate monthly_maps
   if (is.null(monthly_maps)) {
@@ -190,6 +200,8 @@ calculate_exposure <- function(year.E,
             PP_monthly,
             by = 'uID',
             all.y = TRUE)
+    PP.linkage[is.na(N), N := 0]
+    PP.linkage[is.na(pollutant), pollutant := 0]
 
     #  clean house
     rm(list = c('month_mapping_long', 'PP_monthly', 'month_mapping'))
@@ -239,7 +251,7 @@ calculate_exposure <- function(year.E,
       # add month
       PP.linkage[, `:=` (
         Exposure  = pollutant * N,
-        yearmonth = paste0(year.E, i)
+        yearmonth = paste0(year.E, formatC(i, width = 2, flag = "0"))
       )]
 
       # Append running data frame

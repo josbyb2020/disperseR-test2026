@@ -38,6 +38,55 @@ run_disperser_parallel <- function(input.refs = NULL,
   if (is.null(input.refs) || nrow(input.refs) == 0) {
     stop("input.refs must be a non-empty data.table")
   }
+
+  input.refs <- data.table::as.data.table(input.refs)
+  required_cols <- c(
+    "ID", "Latitude", "Longitude", "Height", "start_day", "start_hour",
+    "duration_emiss_hours", "duration_run_hours"
+  )
+  missing_cols <- setdiff(required_cols, names(input.refs))
+  if (length(missing_cols) > 0) {
+    stop(
+      "input.refs is missing required columns: ",
+      paste(missing_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!inherits(input.refs$start_day, "Date")) {
+    start_day <- as.Date(input.refs$start_day)
+    if (anyNA(start_day)) {
+      stop("start_day must be Date or coercible to Date (e.g., '2005-01-02').",
+           call. = FALSE)
+    }
+    input.refs[, start_day := start_day]
+  }
+
+  if (!is.numeric(input.refs$start_hour)) {
+    input.refs[, start_hour := as.integer(as.character(start_hour))]
+    if (anyNA(input.refs$start_hour)) {
+      stop("start_hour must be numeric (0-23).", call. = FALSE)
+    }
+  }
+  if (any(input.refs$start_hour < 0 | input.refs$start_hour > 23)) {
+    stop("start_hour must be between 0 and 23.", call. = FALSE)
+  }
+
+  numeric_cols <- c("Latitude", "Longitude", "Height", "duration_emiss_hours", "duration_run_hours")
+  for (col in numeric_cols) {
+    if (!is.numeric(input.refs[[col]])) {
+      input.refs[, (col) := as.numeric(as.character(get(col)))]
+    }
+    if (anyNA(input.refs[[col]])) {
+      stop(col, " must be numeric and cannot contain NA values.", call. = FALSE)
+    }
+  }
+
+  if (!"year" %in% names(input.refs)) {
+    input.refs[, year := format(start_day, "%Y")]
+  } else {
+    input.refs[, year := ifelse(is.na(year), format(start_day, "%Y"), as.character(year))]
+  }
   
   if (is.null(proc_dir)) {
     stop("proc_dir must be specified")
