@@ -664,9 +664,38 @@ hysplit_dispersion <- function(lat = 49.263,
 
   # Execute HYSPLIT binary (paths quoted for space safety)
 
+  run_dir_cmd <- run_dir
+  binary_path_cmd <- binary_path
+  parhplot_path_cmd <- parhplot_path
+
+  if (os == "win") {
+    run_dir_cmd <- normalizePath(run_dir, winslash = "\\", mustWork = TRUE)
+    binary_path_cmd <- normalizePath(binary_path, winslash = "\\", mustWork = TRUE)
+    parhplot_path_cmd <- normalizePath(parhplot_path, winslash = "\\", mustWork = TRUE)
+
+    if (nchar(run_dir_cmd) > 200) {
+      short_dir <- tryCatch(shortPathName(run_dir_cmd), error = function(e) "")
+      if (nzchar(short_dir)) {
+        run_dir_cmd <- short_dir
+      }
+    }
+    if (nchar(binary_path_cmd) > 200) {
+      short_bin <- tryCatch(shortPathName(binary_path_cmd), error = function(e) "")
+      if (nzchar(short_bin)) {
+        binary_path_cmd <- short_bin
+      }
+    }
+    if (nchar(parhplot_path_cmd) > 200) {
+      short_parh <- tryCatch(shortPathName(parhplot_path_cmd), error = function(e) "")
+      if (nzchar(short_parh)) {
+        parhplot_path_cmd <- short_parh
+      }
+    }
+  }
+
   # On ARM Macs, wrap x86_64 binaries with Rosetta
-  binary_cmd <- if (os == "mac") .disperseR_rosetta_wrap(binary_path) else shQuote(binary_path)
-  parhplot_cmd <- if (os == "mac") .disperseR_rosetta_wrap(parhplot_path) else shQuote(parhplot_path)
+  binary_cmd <- if (os == "mac") .disperseR_rosetta_wrap(binary_path) else shQuote(binary_path_cmd)
+  parhplot_cmd <- if (os == "mac") .disperseR_rosetta_wrap(parhplot_path) else shQuote(parhplot_path_cmd)
 
   if (os == "mac") {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", binary_cmd,
@@ -689,7 +718,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", binary_path, "\""),
+    exit_status <- shell(paste0("cd /d \"", run_dir_cmd, "\" && \"", binary_path_cmd, "\""),
                         intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
     if (exit_status != 0) {
       stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
@@ -721,7 +750,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    exit_status <- shell(paste0("cd /d \"", run_dir, "\" && \"", parhplot_path,
+    exit_status <- shell(paste0("cd /d \"", run_dir_cmd, "\" && \"", parhplot_path_cmd,
       "\" -iPARDUMP -a1"),
       intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
     if (exit_status != 0) {
@@ -737,7 +766,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    shell(paste0("cd /d \"", run_dir, "\" && del /q GIS_part*.att 2>nul"))
+    shell(paste0("cd /d \"", run_dir_cmd, "\" && del /q GIS_part*.att 2>nul"))
   }
 
   # Remove the postscript plot from run_dir
@@ -746,7 +775,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    shell(paste0("cd /d \"", run_dir, "\" && del /q parhplot.ps 2>nul"))
+    shell(paste0("cd /d \"", run_dir_cmd, "\" && del /q parhplot.ps 2>nul"))
   }
   
   # Rename the TXT files as CSV files
@@ -758,20 +787,30 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    temp_file_list <-
-      list.files(path = run_dir,
-        pattern = "*._ps.txt",
-        full.names = TRUE)
+    temp_file_list <- list.files(
+      path = run_dir,
+      pattern = "^GIS_part_[0-9]+_ps\\.txt$",
+      full.names = TRUE,
+      ignore.case = TRUE
+    )
 
-    for (i in 1:length(temp_file_list)) {
-      temp_lines <- readLines(temp_file_list[i])
-      temp_lines <- temp_lines[-(length(temp_lines))]
-      utils::write.table(temp_lines,
-        file = gsub("txt", "csv",
-          temp_file_list[i]),
-        col.names = FALSE,
-        row.names = FALSE,
-        quote = FALSE)
+    if (length(temp_file_list) == 0) {
+      warning("No GIS_part_*_ps.txt files found in: ", run_dir, call. = FALSE)
+    } else {
+      for (i in seq_along(temp_file_list)) {
+        temp_lines <- readLines(temp_file_list[i], warn = FALSE)
+        if (length(temp_lines) > 0) {
+          temp_lines <- temp_lines[-length(temp_lines)]
+        }
+        out_file <- sub("\\.txt$", ".csv", temp_file_list[i], ignore.case = TRUE)
+        utils::write.table(
+          temp_lines,
+          file = out_file,
+          col.names = FALSE,
+          row.names = FALSE,
+          quote = FALSE
+        )
+      }
     }
   }
 

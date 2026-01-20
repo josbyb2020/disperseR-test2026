@@ -71,10 +71,9 @@ if (file.exists("outputs/logs/batch_units.rds")) {
     cat("Total units in analysis:", nrow(units), "\n")
     cat("Total SOx emissions:", sum(units$SOx, na.rm = TRUE), "tons\n")
 
-    # Summary by state
-    state_summary <- aggregate(SOx ~ State, data = units, FUN = sum)
-    state_summary <- state_summary[order(-state_summary$SOx), ]
-    kable(head(state_summary, 10), caption = "Top 10 States by SOx Emissions")
+    # Show top units by SOx (disperseR::units has no State column)
+    top_units <- units[order(-units$SOx), c("ID", "Latitude", "Longitude", "SOx", "Height")]
+    kable(head(top_units, 10), caption = "Top 10 Units by SOx Emissions")
 } else {
     cat("Units data not yet generated. Run 03_batch_run.R first.")
 }

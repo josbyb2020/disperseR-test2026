@@ -91,6 +91,12 @@ run_disperser_parallel <- function(input.refs = NULL,
   if (is.null(proc_dir)) {
     stop("proc_dir must be specified")
   }
+  if (!dir.exists(proc_dir)) {
+    dir.create(proc_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  if (!dir.exists(proc_dir)) {
+    stop("proc_dir does not exist and could not be created: ", proc_dir, call. = FALSE)
+  }
 
   # Resolve directory paths from package cache (set by create_dirs()).
   if (is.null(hysp_dir)) {
@@ -127,6 +133,15 @@ run_disperser_parallel <- function(input.refs = NULL,
       )
       mc.cores <- 1
     }
+  }
+
+  if (is_windows && mc.cores > 1 && inherits(pbl.height, "SpatRaster")) {
+    warning(
+      "Windows parallel runs with terra::SpatRaster are not supported; ",
+      "setting mc.cores = 1.",
+      call. = FALSE
+    )
+    mc.cores <- 1
   }
   
   if (mc.cores == 1 || length(run_sample) == 1) {

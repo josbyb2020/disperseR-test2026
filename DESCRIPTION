@@ -1,7 +1,7 @@
 Package: disperseR
 Type: Package
 Title: Run HYSPLIT Many Times in Parallel, Aggregate to ZIP Code Level
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Lucas", "Henneman", email = "lhenneman@gmail.com", role = c("aut", "cre")),
     person("Christine", "Choirat", role = "aut"),

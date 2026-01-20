@@ -55,10 +55,11 @@ get_met_reanalysis <- function(files = NULL,
   # Internal helper for validated downloads
   .download_met_file <- function(url, destfile) {
     download_ok <- FALSE
+    last_error <- NULL
     
-    result <- tryCatch({
-      if (.Platform$OS.type == "windows" &&
-          requireNamespace("downloader", quietly = TRUE)) {
+    if (.Platform$OS.type == "windows" &&
+        requireNamespace("downloader", quietly = TRUE)) {
+      download_ok <- tryCatch({
         downloader::download(
           url = url,
           destfile = destfile,
@@ -67,21 +68,52 @@ get_met_reanalysis <- function(files = NULL,
           mode = "wb",
           cacheOK = FALSE
         )
-      } else {
-        utils::download.file(
-          url = url,
-          destfile = destfile,
-          method = "auto",
-          quiet = FALSE,
-          mode = "wb",
-          cacheOK = FALSE
-        )
+        TRUE
+      }, error = function(e) {
+        last_error <<- e
+        FALSE
+      })
+    }
+
+    if (!download_ok) {
+      download_methods <- "auto"
+      if (.Platform$OS.type == "windows") {
+        download_methods <- character(0)
+        if (capabilities("libcurl")) {
+          download_methods <- c(download_methods, "libcurl")
+        }
+        download_methods <- c(download_methods, "wininet", "auto")
+        download_methods <- unique(download_methods)
       }
-      download_ok <- TRUE
-    }, error = function(e) {
-      warning("Download failed for ", basename(destfile), ": ", e$message,
+
+      for (method in download_methods) {
+        status <- tryCatch(
+          utils::download.file(
+            url = url,
+            destfile = destfile,
+            method = method,
+            quiet = FALSE,
+            mode = "wb",
+            cacheOK = FALSE
+          ),
+          error = function(e) e
+        )
+        if (inherits(status, "error")) {
+          last_error <- status
+          next
+        }
+        if (is.numeric(status) && status == 0) {
+          download_ok <- TRUE
+          break
+        }
+        last_error <- status
+      }
+    }
+
+    if (!download_ok && !is.null(last_error)) {
+      warning("Download failed for ", basename(destfile), ": ", last_error$message,
               call. = FALSE)
-    })
+    }
     
     # Validate file exists and has content
     if (download_ok && file.exists(destfile)) {

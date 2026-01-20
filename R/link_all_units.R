@@ -3,7 +3,7 @@
 #' @description Links all air parcels to relevant spatial scales (ZIP codes,
 #' counties, or grids) by month for specified units. Reads HYSPLIT output files
 #' produced by run_disperser_parallel() and performs spatial aggregation.
-#' 
+#'
 #' Automatically uses appropriate parallelization based on OS:
 #' mclapply on Unix/macOS, parLapply on Windows.
 #'
@@ -35,7 +35,7 @@
 #' @importFrom parallel detectCores mclapply makeCluster stopCluster clusterExport parLapply clusterEvalQ
 #' @importFrom data.table rbindlist
 link_all_units <- function(units.run,
-                           link.to = 'zips',
+                           link.to = "zips",
                            mc.cores = getOption("disperseR.mc.cores", 2L),
                            year.mons = NULL,
                            start.date = NULL,
@@ -52,22 +52,44 @@ link_all_units <- function(units.run,
                            pbl.trim = NULL,
                            crop.usa = FALSE,
                            return.linked.data = TRUE) {
-
   # Input validation
- if ((is.null(start.date) || is.null(end.date)) && is.null(year.mons)) {
-    stop("Define either a start.date and an end.date OR a year.mons")
+  if ((is.null(start.date) || is.null(end.date)) && is.null(year.mons)) {
+    stop(
+      "ERROR: Time range not specified.\n",
+      "  Provide EITHER:\n",
+      "    - year.mons = get_yearmon(start.year='2005', start.month='01', end.year='2005', end.month='12')\n",
+      "    - OR: start.date='2005-01-01' and end.date='2005-12-31'",
+      call. = FALSE
+    )
   }
-  if (length(link.to) != 1 || !(link.to %in% c('zips', 'counties', 'grids'))) {
-    stop("link.to should be one of 'zips', 'counties', or 'grids'")
+  if (length(link.to) != 1 || !(link.to %in% c("zips", "counties", "grids"))) {
+    stop(
+      "ERROR: 'link.to' must be one of: 'zips', 'counties', 'grids'\n",
+      "  You provided: ", paste(link.to, collapse = ", "),
+      call. = FALSE
+    )
   }
-  if (link.to == 'zips' && is.null(crosswalk.)) {
-    stop("crosswalk. must be provided if link.to == 'zips'")
+  if (link.to == "zips" && is.null(crosswalk.)) {
+    stop(
+      "ERROR: 'crosswalk.' is required when link.to='zips'.\n",
+      "  Get it with: crosswalk <- disperseR::get_data('crosswalk')",
+      call. = FALSE
+    )
   }
-  if (link.to == 'counties' && is.null(counties.)) {
-    stop("counties. must be provided if link.to == 'counties'")
+  if (link.to == "counties" && is.null(counties.)) {
+    stop(
+      "ERROR: 'counties.' is required when link.to='counties'.\n",
+      "  Provide an sf object with county polygons.",
+      call. = FALSE
+    )
   }
   if (pbl_trim && is.null(pbl.height)) {
-    stop("pbl.height must be provided if pbl_trim == TRUE")
+    stop(
+      "ERROR: 'pbl.height' is required when pbl_trim=TRUE.\n",
+      "  Get it with: pbl <- disperseR::get_data('pblheight')\n",
+      "  Or set pbl_trim=FALSE to skip boundary layer trimming.",
+      call. = FALSE
+    )
   }
 
   # Backward-compat: pbl.trim was historically used internally; prefer pbl_trim.
@@ -120,6 +142,14 @@ link_all_units <- function(units.run,
       )
       mc.cores <- 1
     }
+  }
+  if (is_windows && mc.cores > 1 && inherits(pbl.height, "SpatRaster")) {
+    warning(
+      "Windows parallel runs with terra::SpatRaster are not supported; ",
+      "setting mc.cores = 1.",
+      call. = FALSE
+    )
+    mc.cores <- 1
   }
   use_parallel <- mc.cores > 1 && length(year.mons) > 1
 
@@ -234,11 +264,11 @@ link_all_units <- function(units.run,
   # Process units
   units.run <- unique(units.run[, .(uID, ID)])
 
-  if (link.to == 'zips') {
+  if (link.to == "zips") {
     out <- units.run[, zips_link_parallel(.SD), by = seq_len(nrow(units.run))]
-  } else if (link.to == 'counties') {
+  } else if (link.to == "counties") {
     out <- units.run[, counties_link_parallel(.SD), by = seq_len(nrow(units.run))]
-  } else if (link.to == 'grids') {
+  } else if (link.to == "grids") {
     out <- units.run[, grids_link_parallel(.SD), by = seq_len(nrow(units.run))]
   }
 
@@ -246,6 +276,6 @@ link_all_units <- function(units.run,
     out[, comb := paste("month:", month, "unitID:", ID, sep = " ")]
     out[, seq_len := NULL]
   }
-  
+
   return(out)
 }

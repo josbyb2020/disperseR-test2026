@@ -31,7 +31,7 @@ library(ggplot2)
 ```
 
 **For HYSPLIT dispersion runs**, HYSPLIT binaries are required. If the
-`splitr` package (SplitR) is installed, disperseR will use its bundled binaries;
+`splitr` package is installed, disperseR will use its bundled binaries;
 otherwise provide `binary_path` and `parhplot_path` to `hysplit_dispersion()`.
 
 ## Directory Structure

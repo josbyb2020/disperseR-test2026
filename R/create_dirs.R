@@ -41,6 +41,20 @@ create_dirs <- function(location = NULL) {
   if (!dir.exists(location)) {
     stop("location does not exist and could not be created: ", location, call. = FALSE)
   }
+  if (.Platform$OS.type == "windows") {
+    norm_location <- tryCatch(
+      normalizePath(location, winslash = "\\", mustWork = FALSE),
+      error = function(e) location
+    )
+    if (nchar(norm_location) > 180) {
+      warning(
+        "Project path is long and may exceed Windows path limits: ",
+        norm_location,
+        "\nConsider using a shorter path (e.g., C:/disperseR_project).",
+        call. = FALSE
+      )
+    }
+  }
 
   message("Creating project setup")
 

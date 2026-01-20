@@ -14,7 +14,7 @@ replication_default_project_path <- function() {
   if (.Platform$OS.type == "windows") {
     return("C:/disperseR_project")
   }
-  file.path(getwd(), "disperser_project")
+  file.path(getwd(), "disperseR_project")
 }
 
 replication_resolve_project_path <- function() {

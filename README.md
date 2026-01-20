@@ -62,6 +62,10 @@ check_spatial_packages()
 - Parallel runs on Windows use socket clusters. Make sure disperseR is
   installed (not just `devtools::load_all`) or set `mc.cores = 1` for a
   sequential run.
+- For PBL-trimmed runs, Windows socket clusters cannot serialize
+  `terra::SpatRaster` objects; disperseR will fall back to `mc.cores = 1`.
+- If downloads fail behind a proxy, set
+  `options(download.file.method = "wininet")` and retry.
 - If you see `splitr`-related errors, install `splitr` or provide
   `binary_path` and `parhplot_path` explicitly.
 
@@ -150,6 +154,11 @@ Socket clusters on Windows require disperseR to be *installed*, not just
 loaded via `devtools::load_all()`. Install the package or use
 `mc.cores = 1`.
 
+**Windows HYSPLIT runs but no outputs**  
+Ensure `hycs_std.exe` and `parhplot.exe` are not quarantined, and that
+`GIS_part_*_ps.txt` files are created in the run directory. Use a short,
+local path to avoid file system restrictions.
+
 **terra/sf CRS or projection errors**  
 Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
 Homebrew (`brew install gdal geos proj`); on Ubuntu use
@@ -158,6 +167,11 @@ Homebrew (`brew install gdal geos proj`); on Ubuntu use
 **Meteorology file errors (“start point not within data”)**  
 The met file may be incomplete. Re-download with `get_met_reanalysis()`
 or verify the file size matches NOAA’s (~120 MB per month).
+
+**Windows download failures**  
+If downloads fail behind a proxy, try:
+`options(download.file.method = "wininet")` and rerun `get_data()` or
+`get_met_reanalysis()`.
 
 ## Documentation
 

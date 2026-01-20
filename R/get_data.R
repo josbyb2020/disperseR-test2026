@@ -20,9 +20,44 @@ download_file <- function(url, file, dir) {
   download_warnings <- NULL
   result <- tryCatch(
     withCallingHandlers({
-      download_status <- utils::download.file(url = url, destfile = file, mode = "wb")
-      if (download_status != 0) {
-        stop("download.file() returned non-zero exit status: ", download_status)
+      download_methods <- "auto"
+      if (.Platform$OS.type == "windows") {
+        download_methods <- character(0)
+        if (capabilities("libcurl")) {
+          download_methods <- c(download_methods, "libcurl")
+        }
+        download_methods <- c(download_methods, "wininet", "auto")
+        download_methods <- unique(download_methods)
+      }
+
+      download_status <- NULL
+      last_error <- NULL
+      for (method in download_methods) {
+        status <- tryCatch(
+          utils::download.file(
+            url = url,
+            destfile = file,
+            mode = "wb",
+            method = method
+          ),
+          error = function(e) e
+        )
+        if (inherits(status, "error")) {
+          last_error <- status
+          next
+        }
+        if (is.numeric(status) && status == 0) {
+          download_status <- status
+          break
+        }
+        last_error <- status
+      }
+
+      if (is.null(download_status)) {
+        if (inherits(last_error, "error")) {
+          stop("download.file() failed: ", last_error$message)
+        }
+        stop("download.file() returned non-zero exit status: ", last_error)
       }
     },
     warning = function(w) {
