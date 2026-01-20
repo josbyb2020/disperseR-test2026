@@ -135,6 +135,30 @@ sf/terra (GDAL/GEOS/PROJ) must be available on the host system.
 - Use short date ranges for iteration; expand to full periods once stable.
 - Reuse existing outputs with `overwrite = FALSE`.
 
+## Troubleshooting
+
+**"splitr not found" or HYSPLIT binary errors**
+: Install splitr from GitHub: `remotes::install_github("rich-iannone/splitr")`.
+  On Apple Silicon Macs, also install Rosetta: `softwareupdate --install-rosetta`.
+  Alternatively, provide your own binaries via `binary_path` and `parhplot_path`.
+
+**"object not found" after restarting R**
+: disperseR caches directory paths in the session. Run `create_dirs()` at the
+  start of every R session before calling `get_data()` or running dispersion.
+
+**Windows parallel errors ("could not find function")**
+: Socket clusters on Windows require disperseR to be *installed*, not just
+loaded via `devtools::load_all()`. Install the package or use `mc.cores = 1`.
+
+**terra/sf CRS or projection errors**
+: Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
+  Homebrew (`brew install gdal geos proj`); on Ubuntu use `apt install
+  libgdal-dev libgeos-dev libproj-dev`.
+
+**Meteorology file errors ("start point not within data")**
+: The met file may be incomplete. Re-download with `get_met_reanalysis()` or
+  verify the file size matches NOAA's (~120 MB per month).
+
 ## Documentation
 
 - Main vignette: `vignette("Vignette_DisperseR")`

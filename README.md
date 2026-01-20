@@ -17,7 +17,8 @@ compatibility with current R.
 
 ## Installation
 
-Not on CRAN. Install from GitHub:
+Not on CRAN yet. Install from GitHub (CRAN instructions will be added
+once released):
 
 ``` r
 install.packages("remotes")
@@ -25,8 +26,8 @@ remotes::install_github("josbyb2020/disperseR-test2026")
 ```
 
 If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1
-meteorology, install `splitr` from GitHub for bundled binaries, or provide
-your own HYSPLIT binaries via `binary_path` and `parhplot_path`.
+meteorology, install `splitr` from GitHub for bundled binaries, or
+provide your own HYSPLIT binaries via `binary_path` and `parhplot_path`.
 
 Windows users who build vignettes will need Rtools.
 
@@ -56,8 +57,8 @@ check_spatial_packages()
 
 ## Windows notes
 
-- Use a short, explicit project path (example: `C:/disperseR_project`) to
-  avoid Windows path-length limits.
+- Use a short, explicit project path (example: `C:/disperseR_project`)
+  to avoid Windows path-length limits.
 - Parallel runs on Windows use socket clusters. Make sure disperseR is
   installed (not just `devtools::load_all`) or set `mc.cores = 1` for a
   sequential run.
@@ -99,12 +100,12 @@ Use `get_data()` to download most inputs automatically.
 ## Support matrix
 
 | Platform | R | HYSPLIT binaries | Notes |
-|---|---|---|---|
-| macOS (Intel) | >= 4.1 | splitr | Supported; works out of the box |
-| macOS (Apple Silicon) | >= 4.1 | splitr via Rosetta or custom | Install Rosetta or supply `binary_path`/`parhplot_path` |
-| Windows 10/11 | >= 4.1 | splitr | Supported; uses socket clusters |
-| Linux x86_64 | >= 4.1 | splitr | Supported; ensure system libs for sf/terra |
-| Linux ARM/aarch64 | >= 4.1 | Custom | splitr binaries not provided; supply your own |
+|----|----|----|----|
+| macOS (Intel) | \>= 4.1 | splitr | Supported; works out of the box |
+| macOS (Apple Silicon) | \>= 4.1 | splitr via Rosetta or custom | Install Rosetta or supply `binary_path`/`parhplot_path` |
+| Windows 10/11 | \>= 4.1 | splitr | Supported; uses socket clusters |
+| Linux x86_64 | \>= 4.1 | splitr | Supported; ensure system libs for sf/terra |
+| Linux ARM/aarch64 | \>= 4.1 | Custom | splitr binaries not provided; supply your own |
 
 Other OS versions may work but are not guaranteed. System libraries
 required by sf/terra (GDAL/GEOS/PROJ) must be available on the host
@@ -112,11 +113,12 @@ system.
 
 ## Setup checklist (minimize friction)
 
-- Run `create_dirs()` in every new R session before calling `get_data()`.
+- Run `create_dirs()` in every new R session before calling
+  `get_data()`.
 - Use `get_data(data = "all", ...)` to fetch ZCTA, crosswalk, PBL, and
   met data.
-- Install `splitr` for bundled HYSPLIT binaries, or set `binary_path` and
-  `parhplot_path` explicitly.
+- Install `splitr` for bundled HYSPLIT binaries, or set `binary_path`
+  and `parhplot_path` explicitly.
 - Run `check_spatial_packages()` to confirm sf/terra readiness.
 - Run `validate_pipeline()` after a run to summarize outputs and catch
   gaps.
@@ -129,6 +131,33 @@ system.
 - Use short date ranges for iteration; expand to full periods once
   stable.
 - Reuse existing outputs with `overwrite = FALSE`.
+
+## Troubleshooting
+
+**“splitr not found” or HYSPLIT binary errors**  
+Install splitr from GitHub:
+`remotes::install_github("rich-iannone/splitr")`. On Apple Silicon Macs,
+also install Rosetta: `softwareupdate --install-rosetta`. Alternatively,
+provide your own binaries via `binary_path` and `parhplot_path`.
+
+**“object not found” after restarting R**  
+disperseR caches directory paths in the session. Run `create_dirs()` at
+the start of every R session before calling `get_data()` or running
+dispersion.
+
+**Windows parallel errors (“could not find function”)**  
+Socket clusters on Windows require disperseR to be *installed*, not just
+loaded via `devtools::load_all()`. Install the package or use
+`mc.cores = 1`.
+
+**terra/sf CRS or projection errors**  
+Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
+Homebrew (`brew install gdal geos proj`); on Ubuntu use
+`apt install   libgdal-dev libgeos-dev libproj-dev`.
+
+**Meteorology file errors (“start point not within data”)**  
+The met file may be incomplete. Re-download with `get_met_reanalysis()`
+or verify the file size matches NOAA’s (~120 MB per month).
 
 ## Documentation
 
