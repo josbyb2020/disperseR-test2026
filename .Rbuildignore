@@ -12,3 +12,5 @@
 ^cran-comments\.md$
 ^disperseR_.*\.tar\.gz$
 ^verification$
+^replication$
+^disperseR_Fork_Assessment_and_Roadmap\.md$

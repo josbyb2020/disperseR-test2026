@@ -20,6 +20,7 @@
 #' @param rda_file Character. Path to RData file from `combine_monthly_links()`.
 #'   Only used if `monthly_maps` is NULL. Default: NULL.
 #' @param exp_dir Character. Directory to save exposure output. If NULL, uses
+#'   the cached exp_dir from create_dirs() when available, otherwise the
 #'   current working directory.
 #' @param source.agg Character. Source aggregation: 'total', 'facility', or 'unit'.
 #' @param time.agg Character. Time aggregation: 'year' or 'month'.
@@ -134,9 +135,15 @@ calculate_exposure <- function(year.E,
 
   # Create directory to store output files if it does not exist
   if (is.null(exp_dir)) {
-    exp_dir <- file.path(getwd(), 'rdata_hyspdisp')
-    message(paste('No exp_dir provided. Defaulting to', exp_dir))
+    exp_dir <- .disperseR_cache_get("exp_dir")
+    if (!is.null(exp_dir) && nzchar(exp_dir)) {
+      message("Using exp_dir from cache: ", exp_dir)
+    } else {
+      exp_dir <- file.path(getwd(), "rdata_hyspdisp")
+      message("No exp_dir provided. Defaulting to ", exp_dir)
+    }
   }
+  exp_dir <- path.expand(exp_dir)
   dir.create(exp_dir, recursive = TRUE, showWarnings = FALSE)
 
   #initiate exposure data.table

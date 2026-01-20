@@ -17,8 +17,7 @@ verify_step("HYSPLIT: smoke run", {
     return(verify_skip("met_dir does not exist; set VERIFY_MET_DIR"))
   }
 
-  splitr_ok <- requireNamespace("splitr", quietly = TRUE) ||
-    requireNamespace("SplitR", quietly = TRUE)
+  splitr_ok <- requireNamespace("splitr", quietly = TRUE)
   if (is.null(cfg$binary_path) && !splitr_ok) {
     return(verify_skip("No HYSPLIT binaries and splitr not installed"))
   }
@@ -74,4 +73,3 @@ verify_step("HYSPLIT: smoke run", {
 
   invisible(TRUE)
 })
-

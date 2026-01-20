@@ -2,8 +2,7 @@
 # Integration tests are skipped on CRAN and when splitr is not available
 
 splitr_available <- function() {
-  requireNamespace("splitr", quietly = TRUE) ||
-    requireNamespace("SplitR", quietly = TRUE)
+  requireNamespace("splitr", quietly = TRUE)
 }
 
 test_that("hysplit_dispersion requires splitr", {
@@ -65,7 +64,7 @@ test_that("hysplit_dispersion requires splitr", {
       write_disp_CSV = FALSE,
       run_dir = run_dir
     ),
-    "splitr|SplitR"
+    "splitr"
   )
 })
 

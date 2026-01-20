@@ -24,6 +24,7 @@ Major update migrating from retired spatial packages to modern alternatives.
   if SplitR is not available
 - New spatial utility functions in `spatial_utils.R`
 - Package-level cache replaces `.GlobalEnv` side effects for directory paths
+- Added `validate_pipeline()` for quick output summaries and sanity checks
 
 ## Bug Fixes
 
@@ -40,6 +41,7 @@ Major update migrating from retired spatial packages to modern alternatives.
 - Fixed `dispersion_read()` to handle empty folders gracefully and extract hour from filename
 - Added input validation to `get_data()`, `run_disperser_parallel()`, `calculate_exposure()`
 - Fixed `yearmonth` column formatting in `calculate_exposure()` (YYYYMM with zero-padded month)
+- `calculate_exposure()` now uses cached `exp_dir` from `create_dirs()` when available
 
 ## Documentation
 

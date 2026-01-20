@@ -43,6 +43,7 @@ If NULL, attempts to load from `rda_file`.}
 Only used if `monthly_maps` is NULL. Default: NULL.}
 
 \item{exp_dir}{Character. Directory to save exposure output. If NULL, uses
+the cached exp_dir from create_dirs() when available, otherwise the
 current working directory.}
 
 \item{source.agg}{Character. Source aggregation: 'total', 'facility', or 'unit'.}

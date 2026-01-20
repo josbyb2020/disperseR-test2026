@@ -15,8 +15,8 @@ Description: Runs HYSPLIT many times and calculates the HYSPLIT Average
     Dispersion (HyADS) exposure metric. Results can be aggregated to ZIP code
     level to create national estimates of exposure from various sources. Uses
     modern spatial libraries (sf, terra). HYSPLIT binaries can be provided via
-    the optional 'SplitR' package (available from GitHub at
-    <https://github.com/rich-iannone/SplitR>) or via explicit binary paths.
+    the optional 'splitr' package (available from GitHub at
+    <https://github.com/rich-iannone/splitr>) or via explicit binary paths.
 URL: https://github.com/josbyb2020/disperseR-test2026
 BugReports: https://github.com/josbyb2020/disperseR-test2026/issues
 License: GPL-3
@@ -42,6 +42,7 @@ Imports:
     fst,
     grid
 Suggests:
+    splitr,
     ggmap,
     ggrepel,
     knitr,

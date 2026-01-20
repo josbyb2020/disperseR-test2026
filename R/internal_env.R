@@ -36,9 +36,6 @@
   if (requireNamespace("splitr", quietly = TRUE)) {
     return("splitr")
   }
-  if (requireNamespace("SplitR", quietly = TRUE)) {
-    return("SplitR")
-  }
   NULL
 }
 
@@ -46,10 +43,10 @@
   splitr_pkg <- .disperseR_splitr_package()
   if (is.null(splitr_pkg)) {
     if (is.null(feature)) {
-      stop("This feature requires the 'splitr' package (aka 'SplitR').",
+      stop("This feature requires the 'splitr' package.",
            call. = FALSE)
     }
-    stop(feature, " requires the 'splitr' package (aka 'SplitR').",
+    stop(feature, " requires the 'splitr' package.",
          call. = FALSE)
   }
   if (is.null(fn)) {
@@ -60,7 +57,7 @@
     error = function(e) e
   )
   if (inherits(splitr_fun, "error")) {
-    stop("SplitR/splitr does not export '", fn,
+    stop("splitr does not export '", fn,
          "'. Please update splitr.", call. = FALSE)
   }
   splitr_fun
