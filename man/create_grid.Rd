@@ -20,6 +20,6 @@ List with lat and lon vectors
 }
 \description{
 Creates a regular grid of latitude/longitude points.
-This is a local implementation based on SplitR::create_grid.
+This is a local implementation based on splitr::create_grid.
 }
 \keyword{internal}

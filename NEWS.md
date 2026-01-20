@@ -19,12 +19,14 @@ Major update migrating from retired spatial packages to modern alternatives.
 - Robust download validation with file existence and size checks
 - HYSPLIT binary exit status checks with clear error messages
 - Optional `binary_path` and `parhplot_path` support in `hysplit_dispersion()`
-  and `run_model()` for custom HYSPLIT installations without SplitR
-- SplitR is optional: use custom binaries via `binary_path`/`parhplot_path`
-  if SplitR is not available
+  and `run_model()` for custom HYSPLIT installations without splitr
+- splitr is optional: use custom binaries via `binary_path`/`parhplot_path`
+  if splitr is not available
 - New spatial utility functions in `spatial_utils.R`
 - Package-level cache replaces `.GlobalEnv` side effects for directory paths
 - Added `validate_pipeline()` for quick output summaries and sanity checks
+- Windows parallel helpers now warn and fall back to sequential runs when
+  disperseR is not installed (e.g., devtools::load_all sessions)
 
 ## Bug Fixes
 
@@ -47,7 +49,7 @@ Major update migrating from retired spatial packages to modern alternatives.
 
 - Fixed vignette title typo ("DipserseR" -> "DisperseR")
 - Removed outdated package references (ggsn, USAboundaries, tidyverse)
-- Updated SplitR install guidance (now optional with custom binary support)
+- Updated splitr install guidance (now optional with custom binary support)
 - Tightened prose throughout vignettes
 
 ## Internal

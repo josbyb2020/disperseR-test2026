@@ -43,10 +43,12 @@
   splitr_pkg <- .disperseR_splitr_package()
   if (is.null(splitr_pkg)) {
     if (is.null(feature)) {
-      stop("This feature requires the 'splitr' package.",
+      stop("This feature requires the 'splitr' package. ",
+           "Install it with remotes::install_github('rich-iannone/splitr').",
            call. = FALSE)
     }
-    stop(feature, " requires the 'splitr' package.",
+    stop(feature, " requires the 'splitr' package. ",
+         "Install it with remotes::install_github('rich-iannone/splitr').",
          call. = FALSE)
   }
   if (is.null(fn)) {

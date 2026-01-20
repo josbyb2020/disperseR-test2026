@@ -30,9 +30,9 @@ library(sf)
 library(ggplot2)
 ```
 
-**For HYSPLIT dispersion runs**, HYSPLIT binaries are required. If SplitR is
-installed, disperseR will use its bundled binaries; otherwise provide
-`binary_path` and `parhplot_path` to `hysplit_dispersion()`.
+**For HYSPLIT dispersion runs**, HYSPLIT binaries are required. If the
+`splitr` package (SplitR) is installed, disperseR will use its bundled binaries;
+otherwise provide `binary_path` and `parhplot_path` to `hysplit_dispersion()`.
 
 ## Directory Structure
 
@@ -42,6 +42,9 @@ use by disperseR functions. Run this at the start of each session:
 ```{r, purl = FALSE}
 dirs <- disperseR::create_dirs(location = "~/disperseR_project")
 ```
+
+Windows note: use a short path (example `C:/disperseR_project`) to avoid
+path-length limits.
 
 This creates:
 

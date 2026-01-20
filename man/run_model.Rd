@@ -22,11 +22,11 @@ The input model object with results attached:
 }
 \description{
 Executes a HYSPLIT simulation based on model type. Trajectory
-models use SplitR's hysplit_trajectory(); dispersion models use disperseR's
+models use splitr's hysplit_trajectory(); dispersion models use disperseR's
 hysplit_dispersion().
 }
 \details{
-Trajectory models require the SplitR package for HYSPLIT trajectory support.
+Trajectory models require the splitr package for HYSPLIT trajectory support.
 
 Model parameters (lat, lon, height, duration, met_type, etc.) should be
 set using [add_params()] before calling run_model().

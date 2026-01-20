@@ -30,6 +30,12 @@ your own HYSPLIT binaries via `binary_path` and `parhplot_path`.
 
 Windows users who build vignettes will need Rtools.
 
+Optional: install `splitr` (HYSPLIT binaries) from GitHub:
+
+``` r
+remotes::install_github("rich-iannone/splitr")
+```
+
 ## Quick start
 
 ``` r
@@ -47,6 +53,16 @@ get_data(
 
 check_spatial_packages()
 ```
+
+## Windows notes
+
+- Use a short, explicit project path (example: `C:/disperseR_project`) to
+  avoid Windows path-length limits.
+- Parallel runs on Windows use socket clusters. Make sure disperseR is
+  installed (not just `devtools::load_all`) or set `mc.cores = 1` for a
+  sequential run.
+- If you see `splitr`-related errors, install `splitr` or provide
+  `binary_path` and `parhplot_path` explicitly.
 
 ## Project layout
 

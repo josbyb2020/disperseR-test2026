@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_met_reanalysis.R
 \name{get_met_reanalysis}
 \alias{get_met_reanalysis}
-\title{Adapted from SplitR's get_met_reanalysis
+\title{Adapted from splitr's get_met_reanalysis
 Get reanalysis meteorology data files}
 \usage{
 get_met_reanalysis(files = NULL, years = NULL, path_met_files, base_url = NULL)

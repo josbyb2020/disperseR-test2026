@@ -1,7 +1,7 @@
 #' Run HYSPLIT trajectory or dispersion model
 #'
 #' @description Executes a HYSPLIT simulation based on model type. Trajectory
-#' models use SplitR's hysplit_trajectory(); dispersion models use disperseR's
+#' models use splitr's hysplit_trajectory(); dispersion models use disperseR's
 #' hysplit_dispersion().
 #'
 #' @param model A model object created by [create_disp_model()] or similar.
@@ -15,7 +15,7 @@
 #'   - For disp_model: `model$disp_df` contains dispersion data frame
 #'
 #' @details
-#' Trajectory models require the SplitR package for HYSPLIT trajectory support.
+#' Trajectory models require the splitr package for HYSPLIT trajectory support.
 #'
 #' Model parameters (lat, lon, height, duration, met_type, etc.) should be
 #' set using [add_params()] before calling run_model().
@@ -37,7 +37,7 @@
 run_model <- function(model, npart = 2500, run.dir) {
 
   if (inherits(model, "traj_model")) {
-    # Check if SplitR is available for trajectory models
+    # Check if splitr is available for trajectory models
     splitr_traj <- .disperseR_require_splitr(
       feature = "Trajectory models",
       fn = "hysplit_trajectory"

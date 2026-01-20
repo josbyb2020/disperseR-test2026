@@ -1,0 +1,287 @@
+---
+title: "HyADS Exposure Mapping of U.S. Power Plants (2005)"
+subtitle: "Replication + Sensitivity Study"
+author: "Student Name"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: cerulean
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    warning = FALSE,
+    message = FALSE,
+    fig.width = 10,
+    fig.height = 7
+)
+library(disperseR)
+library(ggplot2)
+library(knitr)
+```
+
+# Objective
+
+This report replicates a classic HyADS (HYSPLIT Average Dispersion) exposure study 
+using the disperseR package to estimate population exposure to power plant emissions 
+in the United States for the year 2005.
+
+## Goals
+
+1. Reproduce a published-style HyADS exposure workflow
+2. Validate the full disperseR pipeline from raw data to results
+3. Stress test edge cases and document failure modes
+
+## Study Area
+
+- **Geographic scope**: Continental United States
+- **Time period**: Calendar year 2005
+- **Pollutant**: Sulfur dioxide (SO2) from coal-fired power plants
+- **Exposure metric**: HyADS (population-weighted atmospheric transport contribution)
+
+---
+
+# Methods
+
+## Data Sources
+
+```{r data-provenance, echo=FALSE}
+# Load provenance table if available
+if (file.exists("outputs/tables/data_provenance.csv")) {
+    provenance <- read.csv("outputs/tables/data_provenance.csv")
+    kable(provenance, caption = "Data Sources and Provenance")
+} else {
+    cat("Data provenance table not yet generated. Run 01_data.R first.")
+}
+```
+
+## Power Plant Units
+
+```{r units-summary}
+# Load units data
+if (file.exists("outputs/logs/batch_units.rds")) {
+    units <- readRDS("outputs/logs/batch_units.rds")
+
+    cat("Total units in analysis:", nrow(units), "\n")
+    cat("Total SOx emissions:", sum(units$SOx, na.rm = TRUE), "tons\n")
+
+    # Summary by state
+    state_summary <- aggregate(SOx ~ State, data = units, FUN = sum)
+    state_summary <- state_summary[order(-state_summary$SOx), ]
+    kable(head(state_summary, 10), caption = "Top 10 States by SOx Emissions")
+} else {
+    cat("Units data not yet generated. Run 03_batch_run.R first.")
+}
+```
+
+## Modeling Setup
+
+The disperseR package implements the following workflow:
+
+1. **HYSPLIT Dispersion**: Forward trajectory modeling from each power plant
+2. **Geographic Linking**: Map trajectory endpoints to ZCTAs/counties
+3. **Emissions Weighting**: Apply emissions factors to create HyADS metric
+4. **Aggregation**: Combine across sources and time periods
+
+### Key Parameters
+
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| Trajectory duration | 240 hours | 10-day forward run |
+| Release hours | 0, 6, 12, 18 | 4 runs per day |
+| Met data | NCEP Reanalysis | ~2.5° resolution |
+| PBL trimming | Tested both | Sensitivity analysis |
+
+---
+
+# Results
+
+## Exposure Maps
+
+### Total Population Exposure
+
+```{r exposure-map, eval=FALSE}
+# Placeholder for exposure map
+# When data is available, insert choropleth map here
+# p <- plot_impact_weighted(...)
+# print(p)
+```
+
+*Figure: Population-weighted SO2 exposure from all modeled power plants (2005)*
+
+### Single Source Impact
+
+```{r single-source-map, eval=FALSE}
+# Placeholder for single-source impact map
+# p <- plot_impact_single(...)
+# print(p)
+```
+
+*Figure: Exposure contribution from top-ranked power plant unit*
+
+## Rankings
+
+### Top-Ranked Power Plants
+
+```{r rankings}
+# Load ranking data if available
+if (file.exists("outputs/tables/top10_units_ranked.csv")) {
+    ranked <- read.csv("outputs/tables/top10_units_ranked.csv")
+    kable(ranked, caption = "Top 10 Units by Population-Weighted Exposure")
+} else {
+    cat("Ranking data not yet generated. Run 06_plots.R first.")
+}
+```
+
+### Ranked Units Visualization
+
+```{r ranked-bar-chart, fig.cap="Top 10 Power Plants by Population Exposure"}
+# Display demo figure if available
+if (file.exists("outputs/figures/fig1_units_ranked_demo.png")) {
+    knitr::include_graphics("outputs/figures/fig1_units_ranked_demo.png")
+} else {
+    cat("Figure not yet generated. Run 06_plots.R first.")
+}
+```
+
+## Time Series
+
+```{r time-series, eval=FALSE}
+# Placeholder for monthly time series
+# When monthly exposure data is available:
+# ggplot(monthly_exp, aes(x = yearmonth, y = total_exposure)) +
+#   geom_line() +
+#   labs(title = "Monthly Exposure Variation (2005)")
+```
+
+---
+
+# Sensitivity Analysis
+
+## PBL Trimming Effects
+
+```{r pbl-comparison}
+# Load link results if available
+if (file.exists("outputs/tables/link_results.csv")) {
+    link_results <- read.csv("outputs/tables/link_results.csv")
+    kable(link_results, caption = "Linking Results by Type and PBL Setting")
+} else {
+    cat("Link results not yet generated. Run 04_linking.R first.")
+}
+```
+
+### Interpretation
+
+PBL (Planetary Boundary Layer) trimming affects exposure estimates by:
+
+- Removing concentrations above the boundary layer
+- Making estimates more physically realistic for surface exposure
+- Typically reducing total exposure by 10-30%
+
+## Grid Resolution
+
+| Resolution | Advantages | Disadvantages |
+|------------|------------|---------------|
+| 0.1° | Fine spatial detail | Larger file sizes, slower |
+| 0.25° | Good balance | Standard choice |
+| 0.5° | Fast processing | May miss local hotspots |
+
+## Time Aggregation
+
+```{r agg-comparison}
+if (file.exists("outputs/tables/exposure_results.csv")) {
+    exp_results <- read.csv("outputs/tables/exposure_results.csv")
+    kable(exp_results, caption = "Exposure Calculation Variations")
+} else {
+    cat("Exposure results not yet generated. Run 05_exposure.R first.")
+}
+```
+
+---
+
+# Limitations + Edge-Case Findings
+
+## Known Issues
+
+```{r edge-cases}
+if (file.exists("outputs/tables/edge_case_report.csv")) {
+    edge_cases <- read.csv("outputs/tables/edge_case_report.csv")
+
+    # Summary
+    cat("Total edge cases tested:", nrow(edge_cases), "\n")
+    cat("Passing:", sum(edge_cases$pass_fail == "PASS"), "\n")
+    cat("Needs improvement:", sum(edge_cases$pass_fail == "NEEDS IMPROVEMENT"), "\n")
+
+    # Detailed table
+    kable(edge_cases[, c("test_id", "function_name", "test_description", "pass_fail")],
+        caption = "Edge-Case Test Results"
+    )
+} else {
+    cat("Edge case report not yet generated. Run 07_edge_cases.R first.")
+}
+```
+
+## Limitations
+
+1. **Meteorological data coverage**: NCEP Reanalysis has relatively coarse resolution
+2. **Temporal resolution**: Daily to monthly aggregation may miss short-term peaks
+3. **Source characterization**: Stack parameters simplified; no plume rise model
+4. **Population data**: ZCTA boundaries may not match actual residential patterns
+5. **Chemical transformation**: No atmospheric chemistry (secondary formation)
+
+---
+
+# Reproducibility Checklist
+
+```{r system-info}
+if (file.exists("outputs/logs/system_info.csv")) {
+    sys_info <- read.csv("outputs/logs/system_info.csv")
+    kable(sys_info, caption = "System Information for Reproducibility")
+} else {
+    cat("R Version:", R.version.string, "\n")
+    cat("Platform:", R.version$platform, "\n")
+    cat("Date:", format(Sys.time(), "%Y-%m-%d"), "\n")
+}
+```
+
+## Package Versions
+
+```{r package-versions}
+cat("disperseR:", as.character(packageVersion("disperseR")), "\n")
+cat("sf:", as.character(packageVersion("sf")), "\n")
+cat("terra:", as.character(packageVersion("terra")), "\n")
+cat("data.table:", as.character(packageVersion("data.table")), "\n")
+cat("fst:", as.character(packageVersion("fst")), "\n")
+```
+
+## Script Execution Order
+
+1. `00_setup.R` - Environment setup and directory creation
+2. `01_data.R` - Data acquisition with provenance tracking
+3. `02_single_run.R` - Single dispersion run (educational)
+4. `03_batch_run.R` - Parallel batch processing
+5. `04_linking.R` - Geographic linking to ZCTAs/counties
+6. `05_exposure.R` - HyADS exposure calculation
+7. `06_plots.R` - Ranking and visualization
+8. `07_edge_cases.R` - Error handling tests
+
+---
+
+# Appendix A: Edge-Case Report
+
+```{r edge-appendix, child="outputs/logs/edge_case_appendix.md", eval=file.exists("outputs/logs/edge_case_appendix.md")}
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

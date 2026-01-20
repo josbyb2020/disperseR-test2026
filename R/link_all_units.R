@@ -110,6 +110,17 @@ link_all_units <- function(units.run,
 
   # Detect OS for parallelization strategy
   is_windows <- .Platform$OS.type == "windows"
+  if (is_windows && mc.cores > 1) {
+    pkg_path <- system.file(package = "disperseR")
+    if (!nzchar(pkg_path)) {
+      warning(
+        "Windows parallel runs require disperseR to be installed. ",
+        "Install the package (not just devtools::load_all) or set mc.cores = 1.",
+        call. = FALSE
+      )
+      mc.cores <- 1
+    }
+  }
   use_parallel <- mc.cores > 1 && length(year.mons) > 1
 
   # On Windows, creating a socket cluster is expensive; create once and reuse.

@@ -72,10 +72,10 @@ hysplit_dispersion(
 Supports ~ expansion. Created if it doesn't exist.}
 
 \item{binary_path}{Character. Path to the HYSPLIT hycs_std binary. If NULL,
-uses the binary bundled with SplitR when available.}
+uses the binary bundled with splitr when available.}
 
 \item{parhplot_path}{Character. Path to the HYSPLIT parhplot binary. If NULL,
-uses the binary bundled with SplitR when available.}
+uses the binary bundled with splitr when available.}
 }
 \value{
 If return_disp_df is TRUE, returns a data frame with dispersion results.
@@ -83,11 +83,11 @@ If return_disp_df is TRUE, returns a data frame with dispersion results.
 }
 \description{
 Executes a single HYSPLIT dispersion simulation. This is a
-modified version of SplitR's dispersion function, adapted for disperseR
+modified version of splitr's dispersion function, adapted for disperseR
 workflows.
 }
 \details{
-HYSPLIT binaries are required for dispersion runs. If the SplitR package is
+HYSPLIT binaries are required for dispersion runs. If the splitr package is
 installed, disperseR will use its bundled binaries; otherwise provide
 `binary_path` and `parhplot_path`.
 

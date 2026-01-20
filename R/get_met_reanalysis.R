@@ -1,4 +1,4 @@
-#' Adapted from SplitR's get_met_reanalysis
+#' Adapted from splitr's get_met_reanalysis
 #' Get reanalysis meteorology data files
 #' @description This function downloads reanalysis
 #' meteorology data files from the NOAA server and

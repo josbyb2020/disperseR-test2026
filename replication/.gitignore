@@ -1,0 +1,14 @@
+outputs/**
+!outputs/.gitkeep
+!outputs/figures/.gitkeep
+!outputs/tables/.gitkeep
+!outputs/logs/.gitkeep
+
+disperser_project/**
+
+replication_paper.*
+report*.html
+report*.pdf
+
+.Rhistory
+.Rproj.user

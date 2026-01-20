@@ -115,7 +115,19 @@ run_disperser_parallel <- function(input.refs = NULL,
   run_sample <- seq_len(nrow(input.refs))
   
   # Detect OS and choose parallelization strategy
- is_windows <- .Platform$OS.type == "windows"
+  is_windows <- .Platform$OS.type == "windows"
+
+  if (is_windows && mc.cores > 1) {
+    pkg_path <- system.file(package = "disperseR")
+    if (!nzchar(pkg_path)) {
+      warning(
+        "Windows parallel runs require disperseR to be installed. ",
+        "Install the package (not just devtools::load_all) or set mc.cores = 1.",
+        call. = FALSE
+      )
+      mc.cores <- 1
+    }
+  }
   
   if (mc.cores == 1 || length(run_sample) == 1) {
     # Sequential execution

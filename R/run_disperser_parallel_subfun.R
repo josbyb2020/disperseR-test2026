@@ -432,7 +432,7 @@ add_emissions <- function(model,
 ################# create_grid (local implementation)
 #' Create a grid of lat/lon points
 #' @description Creates a regular grid of latitude/longitude points.
-#' This is a local implementation based on SplitR::create_grid.
+#' This is a local implementation based on splitr::create_grid.
 #' @param lat Center latitude
 #' @param lon Center longitude
 #' @param range Range around center (lat, lon)

@@ -1,7 +1,7 @@
 #' Run HYSPLIT dispersion model
 #'
 #' @description Executes a single HYSPLIT dispersion simulation. This is a
-#' modified version of SplitR's dispersion function, adapted for disperseR
+#' modified version of splitr's dispersion function, adapted for disperseR
 #' workflows.
 #'
 #' @param lat Numeric. Source latitude in decimal degrees. Default 49.263.
@@ -26,15 +26,15 @@
 #' @param run_dir Character. Working directory for HYSPLIT output. Required.
 #'   Supports ~ expansion. Created if it doesn't exist.
 #' @param binary_path Character. Path to the HYSPLIT hycs_std binary. If NULL,
-#'   uses the binary bundled with SplitR when available.
+#'   uses the binary bundled with splitr when available.
 #' @param parhplot_path Character. Path to the HYSPLIT parhplot binary. If NULL,
-#'   uses the binary bundled with SplitR when available.
+#'   uses the binary bundled with splitr when available.
 #'
 #' @return If return_disp_df is TRUE, returns a data frame with dispersion results.
 #'   Otherwise returns invisibly.
 #'
 #' @details
-#' HYSPLIT binaries are required for dispersion runs. If the SplitR package is
+#' HYSPLIT binaries are required for dispersion runs. If the splitr package is
 #' installed, disperseR will use its bundled binaries; otherwise provide
 #' `binary_path` and `parhplot_path`.
 #'
@@ -370,7 +370,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
       if (met_type == "gdas1") {
         splitr_get_met_gdas1 <- .disperseR_require_splitr(
-          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if SplitR is unavailable)",
+          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if splitr is unavailable)",
           fn = "get_met_gdas1"
         )
         splitr_get_met_gdas1(files = files_to_get, path_met_files = paste0(met_dir, "/"))
@@ -405,7 +405,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
       if (met_type == "gdas1") {
         splitr_get_met_gdas1 <- .disperseR_require_splitr(
-          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if SplitR is unavailable)",
+          feature = "GDAS1 meteorology (use met_type = 'reanalysis' if splitr is unavailable)",
           fn = "get_met_gdas1"
         )
         splitr_get_met_gdas1(files = files_to_get, path_met_files = met_dir)
