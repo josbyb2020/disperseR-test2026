@@ -1,3 +1,39 @@
+# disperseR 0.2.1
+
+Windows reliability and error clarity improvements.
+
+## New Features
+
+- Windows path handling: Normalize long paths to 8.3 format to avoid path length limits
+- Download resilience: Method fallback (libcurl → wininet → auto) on Windows; proxy support
+- Error clarity: Enhanced validation messages with actionable guidance (e.g., how to get required data)
+- SpatRaster detection: Warn and auto-fallback to sequential runs when terra::SpatRaster objects 
+  are passed to Windows parallel code (socket clusters cannot serialize them)
+- Config tracking: `last_run_config.rds` stores `duration_run_hours` and source after each 
+  HYSPLIT run; downstream phases auto-detect the correct duration for linking
+
+## Bug Fixes
+
+- Fixed `proc_dir` auto-creation in `run_disperser_parallel()`
+- Fixed Windows shell path escaping in `hysplit_dispersion()` for long paths
+- Fixed GIS file pattern matching (now requires exact `GIS_part_*_ps.txt` format)
+- Fixed `get_met_reanalysis()` error handling on Windows with multiple download methods
+
+## Documentation
+
+- Added comprehensive replication study in `replication/` folder with 8-phase pipeline
+- Created `replication/docs/REFERENCE.md` with API reference, parameter guide, troubleshooting
+- Enhanced README with Windows-specific notes (path limits, parallel warnings, proxy settings)
+- Clarified `monthly_maps` parameter naming in `calculate_exposure()`
+
+## Internal
+
+- Code quality: Fixed quote style consistency in `link_all_units.R`
+- Improved proc_dir validation to handle creation failures
+- Added `shortPathName()` fallback for Windows paths exceeding limits
+
+---
+
 # disperseR 0.2.0
 
 Major update migrating from retired spatial packages to modern alternatives.

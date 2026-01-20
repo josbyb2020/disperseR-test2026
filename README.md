@@ -1,13 +1,17 @@
-disperseR
-================
+---
+title: "disperseR"
+output: github_document
+---
+
+
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# disperseR 0.2.0
+# disperseR 0.2.1
 
-Run HYSPLIT many times in parallel and aggregate exposure to ZIP code
-level. This fork modernizes the spatial stack (sf/terra) and keeps
-compatibility with current R.
+Run HYSPLIT many times in parallel and aggregate exposure to ZIP code level.
+This fork modernizes the spatial stack (sf/terra) and keeps compatibility with
+current R.
 
 ## Highlights
 
@@ -17,27 +21,29 @@ compatibility with current R.
 
 ## Installation
 
-Not on CRAN yet. Install from GitHub (CRAN instructions will be added
-once released):
+Not on CRAN yet. Install from GitHub (CRAN instructions will be added once released):
+
 
 ``` r
 install.packages("remotes")
 remotes::install_github("josbyb2020/disperseR-test2026")
 ```
 
-If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1
-meteorology, install `splitr` from GitHub for bundled binaries, or
-provide your own HYSPLIT binaries via `binary_path` and `parhplot_path`.
+If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1 meteorology,
+install `splitr` from GitHub for bundled binaries, or provide your own HYSPLIT
+binaries via `binary_path` and `parhplot_path`.
 
 Windows users who build vignettes will need Rtools.
 
 Optional: install `splitr` (HYSPLIT binaries) from GitHub:
+
 
 ``` r
 remotes::install_github("rich-iannone/splitr")
 ```
 
 ## Quick start
+
 
 ``` r
 library(disperseR)
@@ -57,15 +63,10 @@ check_spatial_packages()
 
 ## Windows notes
 
-- Use a short, explicit project path (example: `C:/disperseR_project`)
-  to avoid Windows path-length limits.
-- Parallel runs on Windows use socket clusters. Make sure disperseR is
-  installed (not just `devtools::load_all`) or set `mc.cores = 1` for a
-  sequential run.
-- For PBL-trimmed runs, Windows socket clusters cannot serialize
-  `terra::SpatRaster` objects; disperseR will fall back to `mc.cores = 1`.
-- If downloads fail behind a proxy, set
-  `options(download.file.method = "wininet")` and retry.
+- Use a short, explicit project path (example: `C:/disperseR_project`) to avoid
+  Windows path-length limits.
+- Parallel runs on Windows use socket clusters. Make sure disperseR is installed
+  (not just `devtools::load_all`) or set `mc.cores = 1` for a sequential run.
 - If you see `splitr`-related errors, install `splitr` or provide
   `binary_path` and `parhplot_path` explicitly.
 
@@ -95,101 +96,83 @@ Use `get_data()` to download most inputs automatically.
 - `create_dirs()` defaults to a session temp directory (CRAN-safe). For
   persistent projects, pass an explicit path (especially on Windows or
   network drives).
-- HYSPLIT binaries are required for dispersion runs. If `splitr` is
-  installed, disperseR will use its bundled binaries; otherwise provide
-  `binary_path` and `parhplot_path` to `hysplit_dispersion()`.
-- Windows uses socket clusters (`parLapply`). Set `mc.cores` to control
-  parallelism.
+- HYSPLIT binaries are required for dispersion runs. If `splitr` is installed,
+  disperseR will use its bundled binaries; otherwise provide `binary_path` and
+  `parhplot_path` to `hysplit_dispersion()`.
+- Windows uses socket clusters (`parLapply`). Set `mc.cores` to control parallelism.
 
 ## Support matrix
 
 | Platform | R | HYSPLIT binaries | Notes |
-|----|----|----|----|
-| macOS (Intel) | \>= 4.1 | splitr | Supported; works out of the box |
-| macOS (Apple Silicon) | \>= 4.1 | splitr via Rosetta or custom | Install Rosetta or supply `binary_path`/`parhplot_path` |
-| Windows 10/11 | \>= 4.1 | splitr | Supported; uses socket clusters |
-| Linux x86_64 | \>= 4.1 | splitr | Supported; ensure system libs for sf/terra |
-| Linux ARM/aarch64 | \>= 4.1 | Custom | splitr binaries not provided; supply your own |
+|---|---|---|---|
+| macOS (Intel) | >= 4.1 | splitr | Supported; works out of the box |
+| macOS (Apple Silicon) | >= 4.1 | splitr via Rosetta or custom | Install Rosetta or supply `binary_path`/`parhplot_path` |
+| Windows 10/11 | >= 4.1 | splitr | Supported; uses socket clusters |
+| Linux x86_64 | >= 4.1 | splitr | Supported; ensure system libs for sf/terra |
+| Linux ARM/aarch64 | >= 4.1 | Custom | splitr binaries not provided; supply your own |
 
-Other OS versions may work but are not guaranteed. System libraries
-required by sf/terra (GDAL/GEOS/PROJ) must be available on the host
-system.
+Other OS versions may work but are not guaranteed. System libraries required by
+sf/terra (GDAL/GEOS/PROJ) must be available on the host system.
 
 ## Setup checklist (minimize friction)
 
-- Run `create_dirs()` in every new R session before calling
-  `get_data()`.
-- Use `get_data(data = "all", ...)` to fetch ZCTA, crosswalk, PBL, and
-  met data.
-- Install `splitr` for bundled HYSPLIT binaries, or set `binary_path`
-  and `parhplot_path` explicitly.
+- Run `create_dirs()` in every new R session before calling `get_data()`.
+- Use `get_data(data = "all", ...)` to fetch ZCTA, crosswalk, PBL, and met data.
+- Install `splitr` for bundled HYSPLIT binaries, or set `binary_path` and
+  `parhplot_path` explicitly.
 - Run `check_spatial_packages()` to confirm sf/terra readiness.
-- Run `validate_pipeline()` after a run to summarize outputs and catch
-  gaps.
+- Run `validate_pipeline()` after a run to summarize outputs and catch gaps.
 
 ## Performance tips
 
 - Keep `mc.cores` low on laptops; increase on servers via
   `options(disperseR.mc.cores = ...)`.
 - Store project data on a local SSD to reduce I/O overhead.
-- Use short date ranges for iteration; expand to full periods once
-  stable.
+- Use short date ranges for iteration; expand to full periods once stable.
 - Reuse existing outputs with `overwrite = FALSE`.
 
 ## Troubleshooting
 
-**“splitr not found” or HYSPLIT binary errors**  
-Install splitr from GitHub:
-`remotes::install_github("rich-iannone/splitr")`. On Apple Silicon Macs,
-also install Rosetta: `softwareupdate --install-rosetta`. Alternatively,
-provide your own binaries via `binary_path` and `parhplot_path`.
+**"splitr not found" or HYSPLIT binary errors**
+: Install splitr from GitHub: `remotes::install_github("rich-iannone/splitr")`.
+  On Apple Silicon Macs, also install Rosetta: `softwareupdate --install-rosetta`.
+  Alternatively, provide your own binaries via `binary_path` and `parhplot_path`.
 
-**“object not found” after restarting R**  
-disperseR caches directory paths in the session. Run `create_dirs()` at
-the start of every R session before calling `get_data()` or running
-dispersion.
+**"object not found" after restarting R**
+: disperseR caches directory paths in the session. Run `create_dirs()` at the
+  start of every R session before calling `get_data()` or running dispersion.
 
-**Windows parallel errors (“could not find function”)**  
-Socket clusters on Windows require disperseR to be *installed*, not just
-loaded via `devtools::load_all()`. Install the package or use
-`mc.cores = 1`.
+**Windows parallel errors ("could not find function")**
+: Socket clusters on Windows require disperseR to be *installed*, not just
+loaded via `devtools::load_all()`. Install the package or use `mc.cores = 1`.
 
-**Windows HYSPLIT runs but no outputs**  
-Ensure `hycs_std.exe` and `parhplot.exe` are not quarantined, and that
-`GIS_part_*_ps.txt` files are created in the run directory. Use a short,
-local path to avoid file system restrictions.
+**terra/sf CRS or projection errors**
+: Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
+  Homebrew (`brew install gdal geos proj`); on Ubuntu use `apt install
+  libgdal-dev libgeos-dev libproj-dev`.
 
-**terra/sf CRS or projection errors**  
-Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
-Homebrew (`brew install gdal geos proj`); on Ubuntu use
-`apt install   libgdal-dev libgeos-dev libproj-dev`.
-
-**Meteorology file errors (“start point not within data”)**  
-The met file may be incomplete. Re-download with `get_met_reanalysis()`
-or verify the file size matches NOAA’s (~120 MB per month).
-
-**Windows download failures**  
-If downloads fail behind a proxy, try:
-`options(download.file.method = "wininet")` and rerun `get_data()` or
-`get_met_reanalysis()`.
+**Meteorology file errors ("start point not within data")**
+: The met file may be incomplete. Re-download with `get_met_reanalysis()` or
+  verify the file size matches NOAA's (~120 MB per month).
 
 ## Documentation
 
 - Main vignette: `vignette("Vignette_DisperseR")`
 - Migration guide: `?migration_guide`
-- Additional vignettes in `vignettes/` (render with
-  `rmarkdown::render()`)
+- Additional vignettes in `vignettes/` (render with `rmarkdown::render()`)
 
 ## System requirements
 
-- R \>= 4.1.0
-- sf \>= 1.0-0
-- terra \>= 1.7-0
+- R >= 4.1.0
+- sf >= 1.0-0
+- terra >= 1.7-0
 - Network access for meteorology downloads
 
 ## Citation
 
-    Henneman, L., Choirat, C., & Garbulinska, M. (2019). disperseR:
-    An R package for HYSPLIT dispersion modeling and ZIP code-level
-    exposure assessment. R package version 0.2.0.
-    https://github.com/josbyb2020/disperseR-test2026
+```
+Henneman, L., Choirat, C., & Garbulinska, M. (2019). disperseR:
+An R package for HYSPLIT dispersion modeling and ZIP code-level
+exposure assessment. R package version 0.2.0.
+https://github.com/josbyb2020/disperseR-test2026
+```
