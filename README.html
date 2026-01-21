@@ -604,203 +604,200 @@ padding-top: 0px;
 <h1 id="disperser">disperseR</h1>
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<h1 id="disperser-020">disperseR 0.2.0</h1>
+<h1 id="disperser-021">disperseR 0.2.1</h1>
 <p>Run HYSPLIT many times in parallel and aggregate exposure to ZIP code
-level. This fork modernizes the spatial stack (sf/terra) and keeps
-compatibility with current R.</p>
-<h2 id="highlights">Highlights</h2>
+level.</p>
+<h2 id="what-is-this">What is this?</h2>
+<p>disperseR implements the HyADS (HYSPLIT Average Dispersion)
+methodology for estimating population exposure to air pollution from
+point sources (like power plants). It runs the HYSPLIT atmospheric
+dispersion model, links trajectories to geographic areas, and calculates
+exposure metrics.</p>
+<h2 id="first-time-setup-5-10-minutes">First-time setup (5-10
+minutes)</h2>
+<h3 id="step-1-install-r-packages">Step 1: Install R packages</h3>
+<p>Open R or RStudio and run:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Install disperseR from GitHub</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;remotes&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;josbyb2020/disperseR-test2026&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># Install splitr (provides HYSPLIT binaries)</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;rich-iannone/splitr&quot;</span>)</span></code></pre></div>
+<h3 id="step-2-platform-specific-setup">Step 2: Platform-specific
+setup</h3>
+<p><strong>Check your platform first:</strong></p>
 <ul>
-<li>Modern spatial stack (sf, terra) and cleaned dependencies</li>
-<li>Parallel execution with OS-aware strategy</li>
-<li>Built-in helpers for data download, linking, and exposure
-metrics</li>
+<li><strong>Windows</strong>: No extra steps needed.</li>
+<li><strong>macOS Intel</strong> (pre-2020 Macs): No extra steps
+needed.</li>
+<li><strong>macOS Apple Silicon</strong> (M1/M2/M3/M4 chips, 2020+): See
+below.</li>
+<li><strong>Linux</strong>: Install GDAL/GEOS/PROJ (see below).</li>
 </ul>
-<h2 id="installation">Installation</h2>
-<p>Not on CRAN yet. Install from GitHub (CRAN instructions will be added
-once released):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;remotes&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;josbyb2020/disperseR-test2026&quot;</span>)</span></code></pre></div>
-<p>If you plan to run HYSPLIT (dispersion or trajectories) or use GDAS1
-meteorology, install <code>splitr</code> from GitHub for bundled
-binaries, or provide your own HYSPLIT binaries via
-<code>binary_path</code> and <code>parhplot_path</code>.</p>
-<p>Windows users who build vignettes will need Rtools.</p>
-<p>Optional: install <code>splitr</code> (HYSPLIT binaries) from
-GitHub:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;rich-iannone/splitr&quot;</span>)</span></code></pre></div>
-<h2 id="quick-start">Quick start</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(disperseR)</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>dirs <span class="ot">&lt;-</span> <span class="fu">create_dirs</span>(<span class="at">location =</span> <span class="st">&quot;~/disperseR_project&quot;</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">get_data</span>(</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">data =</span> <span class="st">&quot;all&quot;</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">start.year =</span> <span class="st">&quot;2005&quot;</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">start.month =</span> <span class="st">&quot;01&quot;</span>,</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">end.year =</span> <span class="st">&quot;2005&quot;</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">end.month =</span> <span class="st">&quot;12&quot;</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>)</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">check_spatial_packages</span>()</span></code></pre></div>
-<h2 id="windows-notes">Windows notes</h2>
+<h4 id="macos-apple-silicon">macOS Apple Silicon</h4>
+<p>The HYSPLIT binaries in splitr are compiled for Intel. Install
+Rosetta to run them:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">softwareupdate</span> <span class="at">--install-rosetta</span></span></code></pre></div>
+<h4 id="linux">Linux</h4>
+<p>Install system libraries for sf and terra:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Ubuntu/Debian</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">sudo</span> apt install libgdal-dev libgeos-dev libproj-dev</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Fedora/RHEL</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">sudo</span> dnf install gdal-devel geos-devel proj-devel</span></code></pre></div>
+<h3 id="step-3-create-a-project-and-download-data">Step 3: Create a
+project and download data</h3>
+<p>Back in R:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(disperseR)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># Create project directories (do this at the start of EVERY R session)</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>dirs <span class="ot">&lt;-</span> <span class="fu">create_dirs</span>(<span class="at">location =</span> <span class="st">&quot;~/disperseR_project&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Download all required data for 2005</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co"># This downloads ~500MB on first run, so it takes a few minutes</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">get_data</span>(</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">data =</span> <span class="st">&quot;all&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">start.year =</span> <span class="st">&quot;2005&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">start.month =</span> <span class="st">&quot;01&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">end.year =</span> <span class="st">&quot;2005&quot;</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">end.month =</span> <span class="st">&quot;12&quot;</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co"># Verify everything is ready</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="fu">check_spatial_packages</span>()</span></code></pre></div>
+<p><strong>Windows users:</strong> Use a short path like
+<code>C:/disperseR_project</code> to avoid Windows path length
+limits.</p>
+<h2 id="quick-example">Quick example</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(disperseR)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># 1. Initialize (required every session)</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>dirs <span class="ot">&lt;-</span> <span class="fu">create_dirs</span>(<span class="st">&quot;~/disperseR_project&quot;</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># 2. Load units data and select top emitter</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>units_dt <span class="ot">&lt;-</span> <span class="fu">data.table</span>(disperseR<span class="sc">::</span>units)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>test_unit <span class="ot">&lt;-</span> units_dt[year <span class="sc">==</span> <span class="dv">2005</span>][<span class="fu">order</span>(<span class="sc">-</span>SOx)][<span class="dv">1</span>]</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># 3. Define what to run</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>input_refs <span class="ot">&lt;-</span> <span class="fu">define_inputs</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">units =</span> test_unit,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">startday =</span> <span class="st">&quot;2005-01-15&quot;</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">endday =</span> <span class="st">&quot;2005-01-15&quot;</span>,</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  <span class="at">start.hours =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">6</span>, <span class="dv">12</span>, <span class="dv">18</span>),</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>  <span class="at">duration =</span> <span class="dv">120</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co"># 4. Run HYSPLIT dispersion</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>pbl <span class="ot">&lt;-</span> <span class="fu">get_data</span>(<span class="st">&quot;pblheight&quot;</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="fu">run_disperser_parallel</span>(</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>  <span class="at">input.refs =</span> input_refs,</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  <span class="at">pbl.height =</span> pbl,</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;so2&quot;</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>  <span class="at">mc.cores =</span> <span class="dv">1</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>)</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co"># 5. Check outputs</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="fu">validate_pipeline</span>()</span></code></pre></div>
+<h2 id="common-issues">Common issues</h2>
+<h3 id="splitr-not-found-or-hysplit-errors">“splitr not found” or
+HYSPLIT errors</h3>
+<p>Install splitr:
+<code>remotes::install_github(&quot;rich-iannone/splitr&quot;)</code></p>
+<p>On Apple Silicon Macs, also install Rosetta (see Step 2 above).</p>
+<h3 id="object-not-found-after-restarting-r">“object not found” after
+restarting R</h3>
+<p>Run <code>create_dirs()</code> at the start of every R session.
+disperseR caches paths in memory, so they’re lost when R restarts.</p>
+<h3 id="windows-could-not-find-function-in-parallel-runs">Windows:
+“could not find function” in parallel runs</h3>
+<p>disperseR must be <em>installed</em> (not just loaded via
+<code>devtools::load_all</code>). Either install it properly or use
+<code>mc.cores = 1</code>.</p>
+<h3 id="download-failures">Download failures</h3>
+<p>If downloads fail (especially on Windows behind a proxy), try:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">options</span>(<span class="at">download.file.method =</span> <span class="st">&quot;wininet&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># Then retry get_data() or get_met_reanalysis()</span></span></code></pre></div>
+<h3 id="windows-runs-fail-mid-batch-or-hysplit-not-found">Windows: runs
+fail mid-batch or HYSPLIT “not found”</h3>
+<p>Windows Defender or corporate antivirus may flag rapid HYSPLIT
+execution as suspicious (hundreds of .exe launches from temp
+directories). Solutions:</p>
+<ol style="list-style-type: decimal">
+<li>Add the HYSPLIT binary folder to your antivirus exclusion list</li>
+<li>Reduce <code>mc.cores</code> to slow down execution</li>
+<li>Run <code>cleanup_hysplit_zombies()</code> to kill orphaned
+processes from crashed runs</li>
+</ol>
+<h3 id="crs-or-projection-errors">CRS or projection errors</h3>
+<p>Install system libraries for sf/terra: - macOS:
+<code>brew install gdal geos proj</code> - Ubuntu:
+<code>sudo apt install libgdal-dev libgeos-dev libproj-dev</code></p>
+<h2 id="project-structure">Project structure</h2>
+<p>After running <code>create_dirs()</code> and <code>get_data()</code>,
+your project looks like:</p>
+<pre><code>disperseR_project/
+  main/
+    input/
+      zcta_500k/     # ZCTA shapefile
+      hpbl/          # Boundary layer height data
+      meteo/         # Meteorology files (~120MB each)
+    output/
+      hysplit/       # Dispersion outputs (.fst files)
+      ziplinks/      # Linked ZIP code data
+      rdata/         # Combined monthly links
+      exp/           # Exposure tables</code></pre>
+<h2 id="learning-more">Learning more</h2>
 <ul>
-<li>Use a short, explicit project path (example:
-<code>C:/disperseR_project</code>) to avoid Windows path-length
-limits.</li>
-<li>Parallel runs on Windows use socket clusters. Make sure disperseR is
-installed (not just <code>devtools::load_all</code>) or set
-<code>mc.cores = 1</code> for a sequential run.</li>
-<li>If you see <code>splitr</code>-related errors, install
-<code>splitr</code> or provide <code>binary_path</code> and
-<code>parhplot_path</code> explicitly.</li>
+<li><strong>Main tutorial</strong>:
+<code>vignette(&quot;Vignette_DisperseR&quot;)</code></li>
+<li><strong>Function help</strong>:
+<code>?run_disperser_parallel</code>, <code>?link_all_units</code>,
+<code>?calculate_exposure</code></li>
+<li><strong>Replication study</strong>: See the
+<code>replication/</code> folder for a complete worked example</li>
 </ul>
-<h2 id="project-layout">Project layout</h2>
-<ul>
-<li><code>main/input/zcta_500k</code>: ZCTA shapefile</li>
-<li><code>main/input/hpbl</code>: PBL height data</li>
-<li><code>main/input/meteo</code>: reanalysis meteorology files</li>
-<li><code>main/output/hysplit</code>: dispersion outputs</li>
-<li><code>main/output/ziplinks</code>: linked ZIP code outputs</li>
-<li><code>main/output/rdata</code>: HyADS matrices</li>
-<li><code>main/output/exp</code>: exposure tables</li>
-<li><code>main/output/graph</code>: plots</li>
-</ul>
-<h2 id="data-requirements">Data requirements</h2>
-<ul>
-<li>ZCTA shapefile</li>
-<li>ZCTA to ZIP crosswalk (included)</li>
-<li>NOAA reanalysis meteorology files</li>
-<li>Planetary boundary layer height data</li>
-<li>Units data (included for 1995-2017)</li>
-</ul>
-<p>Use <code>get_data()</code> to download most inputs
-automatically.</p>
-<h2 id="cross-platform-notes">Cross-platform notes</h2>
-<ul>
-<li><code>create_dirs()</code> defaults to a session temp directory
-(CRAN-safe). For persistent projects, pass an explicit path (especially
-on Windows or network drives).</li>
-<li>HYSPLIT binaries are required for dispersion runs. If
-<code>splitr</code> is installed, disperseR will use its bundled
-binaries; otherwise provide <code>binary_path</code> and
-<code>parhplot_path</code> to <code>hysplit_dispersion()</code>.</li>
-<li>Windows uses socket clusters (<code>parLapply</code>). Set
-<code>mc.cores</code> to control parallelism.</li>
-</ul>
-<h2 id="support-matrix">Support matrix</h2>
+<h2 id="platform-support">Platform support</h2>
 <table>
 <thead>
 <tr>
 <th>Platform</th>
-<th>R</th>
-<th>HYSPLIT binaries</th>
+<th>Status</th>
 <th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>macOS (Intel)</td>
-<td>&gt;= 4.1</td>
-<td>splitr</td>
-<td>Supported; works out of the box</td>
-</tr>
-<tr>
-<td>macOS (Apple Silicon)</td>
-<td>&gt;= 4.1</td>
-<td>splitr via Rosetta or custom</td>
-<td>Install Rosetta or supply
-<code>binary_path</code>/<code>parhplot_path</code></td>
-</tr>
-<tr>
 <td>Windows 10/11</td>
-<td>&gt;= 4.1</td>
-<td>splitr</td>
-<td>Supported; uses socket clusters</td>
+<td>Supported</td>
+<td>Use short paths; parallel uses socket clusters</td>
+</tr>
+<tr>
+<td>macOS Intel</td>
+<td>Supported</td>
+<td>Works out of the box</td>
+</tr>
+<tr>
+<td>macOS Apple Silicon</td>
+<td>Supported</td>
+<td>Requires Rosetta (see setup)</td>
 </tr>
 <tr>
 <td>Linux x86_64</td>
-<td>&gt;= 4.1</td>
-<td>splitr</td>
-<td>Supported; ensure system libs for sf/terra</td>
+<td>Supported</td>
+<td>Install GDAL/GEOS/PROJ</td>
 </tr>
 <tr>
-<td>Linux ARM/aarch64</td>
-<td>&gt;= 4.1</td>
-<td>Custom</td>
-<td>splitr binaries not provided; supply your own</td>
+<td>Linux ARM</td>
+<td>Partial</td>
+<td>Need to supply your own HYSPLIT binaries</td>
 </tr>
 </tbody>
 </table>
-<p>Other OS versions may work but are not guaranteed. System libraries
-required by sf/terra (GDAL/GEOS/PROJ) must be available on the host
-system.</p>
-<h2 id="setup-checklist-minimize-friction">Setup checklist (minimize
-friction)</h2>
-<ul>
-<li>Run <code>create_dirs()</code> in every new R session before calling
-<code>get_data()</code>.</li>
-<li>Use <code>get_data(data = &quot;all&quot;, ...)</code> to fetch ZCTA,
-crosswalk, PBL, and met data.</li>
-<li>Install <code>splitr</code> for bundled HYSPLIT binaries, or set
-<code>binary_path</code> and <code>parhplot_path</code> explicitly.</li>
-<li>Run <code>check_spatial_packages()</code> to confirm sf/terra
-readiness.</li>
-<li>Run <code>validate_pipeline()</code> after a run to summarize
-outputs and catch gaps.</li>
-</ul>
-<h2 id="performance-tips">Performance tips</h2>
-<ul>
-<li>Keep <code>mc.cores</code> low on laptops; increase on servers via
-<code>options(disperseR.mc.cores = ...)</code>.</li>
-<li>Store project data on a local SSD to reduce I/O overhead.</li>
-<li>Use short date ranges for iteration; expand to full periods once
-stable.</li>
-<li>Reuse existing outputs with <code>overwrite = FALSE</code>.</li>
-</ul>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<p><strong>“splitr not found” or HYSPLIT binary errors</strong><br />
-Install splitr from GitHub:
-<code>remotes::install_github(&quot;rich-iannone/splitr&quot;)</code>. On Apple
-Silicon Macs, also install Rosetta:
-<code>softwareupdate --install-rosetta</code>. Alternatively, provide
-your own binaries via <code>binary_path</code> and
-<code>parhplot_path</code>.</p>
-<p><strong>“object not found” after restarting R</strong><br />
-disperseR caches directory paths in the session. Run
-<code>create_dirs()</code> at the start of every R session before
-calling <code>get_data()</code> or running dispersion.</p>
-<p><strong>Windows parallel errors (“could not find
-function”)</strong><br />
-Socket clusters on Windows require disperseR to be <em>installed</em>,
-not just loaded via <code>devtools::load_all()</code>. Install the
-package or use <code>mc.cores = 1</code>.</p>
-<p><strong>terra/sf CRS or projection errors</strong><br />
-Ensure GDAL, GEOS, and PROJ system libraries are installed. On macOS use
-Homebrew (<code>brew install gdal geos proj</code>); on Ubuntu use
-<code>apt install   libgdal-dev libgeos-dev libproj-dev</code>.</p>
-<p><strong>Meteorology file errors (“start point not within
-data”)</strong><br />
-The met file may be incomplete. Re-download with
-<code>get_met_reanalysis()</code> or verify the file size matches NOAA’s
-(~120 MB per month).</p>
-<h2 id="documentation">Documentation</h2>
-<ul>
-<li>Main vignette: <code>vignette(&quot;Vignette_DisperseR&quot;)</code></li>
-<li>Migration guide: <code>?migration_guide</code></li>
-<li>Additional vignettes in <code>vignettes/</code> (render with
-<code>rmarkdown::render()</code>)</li>
-</ul>
-<h2 id="system-requirements">System requirements</h2>
-<ul>
-<li>R &gt;= 4.1.0</li>
-<li>sf &gt;= 1.0-0</li>
-<li>terra &gt;= 1.7-0</li>
-<li>Network access for meteorology downloads</li>
-</ul>
 <h2 id="citation">Citation</h2>
 <pre><code>Henneman, L., Choirat, C., &amp; Garbulinska, M. (2019). disperseR:
 An R package for HYSPLIT dispersion modeling and ZIP code-level
-exposure assessment. R package version 0.2.0.
+exposure assessment. R package version 0.2.1.
 https://github.com/josbyb2020/disperseR-test2026</code></pre>
 
 </body>

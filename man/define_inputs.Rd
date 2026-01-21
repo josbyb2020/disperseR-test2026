@@ -13,22 +13,48 @@ define_inputs(
 )
 }
 \arguments{
-\item{units}{Data.frame or data.table of units with `ID` and `year` columns.}
+\item{units}{Data.frame or data.table containing power plant units. Must have
+columns: `ID` (character, unit identifier) and `year` (numeric, emission year).
+Typically from `data("units", package = "disperseR")`.}
 
-\item{startday}{Start day in "YYYY-MM-DD" format.}
+\item{startday}{Character string: start date in "YYYY-MM-DD" format (e.g., "2005-01-15").}
 
-\item{endday}{End day in "YYYY-MM-DD" format.}
+\item{endday}{Character string: end date in "YYYY-MM-DD" format (e.g., "2005-01-31").}
 
-\item{start.hours}{Integer vector of start hours (0-23). Defaults to
-`c(0, 6, 12, 18)`.}
+\item{start.hours}{Integer vector: hours of day (0-23) when emissions start.
+Default is `c(0, 6, 12, 18)` for 6-hourly runs.}
 
-\item{duration}{Duration in hours for each run (default 240).}
+\item{duration}{Integer: forward tracking duration in hours. Default 240 (10 days).
+Common values: 120 (5 days), 240 (10 days).}
 }
 \value{
-A data.table of run parameters for `run_disperser_parallel()`.
+Data.table with one row per run, containing all unit metadata plus:
+  - `start_day`: Date of emission start
+  - `start_hour`: Hour of emission start (0-23)
+  - `duration_emiss_hours`: Emission duration (always 1)
+  - `duration_run_hours`: Forward tracking duration
 }
 \description{
-Builds a run table by combining unit metadata with start
-dates/hours and run durations. The result is suitable for
+Creates a run configuration table by combining unit metadata with
+emission dates, hours, and durations. The output is ready for
 `run_disperser_parallel()`.
+}
+\examples{
+\dontrun{
+# Load power plant units
+data("units", package = "disperseR")
+
+# Select top 2 emitters in 2005
+top_units <- units[year == 2005][order(-SOx)][1:2]
+
+# Create run configurations for January 2005
+inputs <- define_inputs(
+  units = top_units,
+  startday = "2005-01-01",
+  endday = "2005-01-31",
+  start.hours = c(0, 12), # Runs at midnight and noon
+  duration = 120 # 5-day forward tracking
+)
+}
+
 }

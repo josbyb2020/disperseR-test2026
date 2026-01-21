@@ -149,6 +149,17 @@ options(download.file.method = "wininet")
 # Then retry get_data() or get_met_reanalysis()
 ```
 
+### Windows: runs fail mid-batch or HYSPLIT “not found”
+
+Windows Defender or corporate antivirus may flag rapid HYSPLIT execution
+as suspicious (hundreds of .exe launches from temp directories).
+Solutions:
+
+1.  Add the HYSPLIT binary folder to your antivirus exclusion list
+2.  Reduce `mc.cores` to slow down execution
+3.  Run `cleanup_hysplit_zombies()` to kill orphaned processes from
+    crashed runs
+
 ### CRS or projection errors
 
 Install system libraries for sf/terra: - macOS:

@@ -11,6 +11,10 @@ Windows reliability and error clarity improvements.
   are passed to Windows parallel code (socket clusters cannot serialize them)
 - Config tracking: `last_run_config.rds` stores `duration_run_hours` and source after each 
   HYSPLIT run; downstream phases auto-detect the correct duration for linking
+- Zombie process cleanup: `cleanup_hysplit_zombies()` kills orphaned HYSPLIT processes that may 
+  hold file locks after crashed runs (called automatically before batch runs on Windows)
+- AV/EDR warning: Alerts users when batch size may trigger antivirus heuristics
+- File read retry: Internal `safe_file_read()` handles Windows file locking delays
 
 ## Bug Fixes
 

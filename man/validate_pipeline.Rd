@@ -14,14 +14,13 @@ validate_pipeline(
 )
 }
 \arguments{
-\item{dirs}{Optional list returned by \code{create_dirs()}.}
+\item{dirs}{Optional list returned by `create_dirs()`.}
 
-\item{hysp_dir}{Directory containing \code{hyspdisp_*.fst} outputs.}
+\item{hysp_dir}{Directory containing `hyspdisp_*.fst` outputs.}
 
-\item{ziplink_dir}{Directory containing \code{ziplinks_*.fst} outputs.}
+\item{ziplink_dir}{Directory containing `ziplinks_*.fst` outputs.}
 
-\item{exp_dir}{Directory containing exposure outputs (e.g.,
-\code{zips_exposures_*}).}
+\item{exp_dir}{Directory containing exposure outputs (e.g., `zips_exposures_*`).}
 
 \item{compute_unique_zips}{Logical. If TRUE, reads ZIP link files and returns
 a unique ZIP count. Set FALSE to avoid reading large files.}

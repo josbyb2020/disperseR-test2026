@@ -122,6 +122,13 @@ run_disperser_parallel <- function(input.refs = NULL,
   
   # Detect OS and choose parallelization strategy
   is_windows <- .Platform$OS.type == "windows"
+  
+
+  # Windows: cleanup orphaned HYSPLIT processes and warn about AV
+  if (is_windows) {
+    cleanup_hysplit_zombies(verbose = FALSE)
+    warn_av_interference(length(run_sample))
+  }
 
   if (is_windows && mc.cores > 1) {
     pkg_path <- system.file(package = "disperseR")
