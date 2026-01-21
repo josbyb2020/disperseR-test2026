@@ -35,6 +35,11 @@ jobs:
             github::rich-iannone/splitr
           needs: check
 
+      - name: Install disperseR from checkout
+        run: |
+          remotes::install_local(".", dependencies = FALSE, force = TRUE)
+        shell: Rscript {0}
+
       - name: Test disperseR
         run: |
           cat("=== disperseR Cross-Platform Test ===\n")
