@@ -735,14 +735,19 @@ processes from crashed runs</li>
 <code>sudo apt install libgdal-dev libgeos-dev libproj-dev</code></p>
 <h3 id="linux-libgfortranso3-not-found">Linux: libgfortran.so.3 not
 found</h3>
-<p>The HYSPLIT binaries in splitr require an older Fortran runtime. On
-newer Linux distros (Ubuntu 22.04+), install the compatibility
-library:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">sudo</span> apt install libgfortran5</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># If that doesn&#39;t work, you may need to compile HYSPLIT from source</span></span></code></pre></div>
-<p>Alternatively, download and compile HYSPLIT from <a href="https://www.ready.noaa.gov/HYSPLIT.php">NOAA ARL</a> and provide
+<p>The HYSPLIT binaries bundled in splitr were compiled against an older
+Fortran runtime (libgfortran.so.3). Modern Linux distros (Ubuntu 22.04+)
+only ship libgfortran.so.5, which is not ABI-compatible.</p>
+<p><strong>Solutions:</strong></p>
+<ol style="list-style-type: decimal">
+<li>Download and compile HYSPLIT from source at <a href="https://www.ready.noaa.gov/HYSPLIT.php">NOAA ARL</a>, then provide
 <code>binary_path</code> and <code>parhplot_path</code> to bypass
-splitr.</p>
+splitr</li>
+<li>Use a Docker container with an older distro</li>
+<li>Check if your distro has a <code>libgfortran3</code> or
+<code>compat-libgfortran</code> package</li>
+</ol>
+<p>This is a splitr issue, not a disperseR issue.</p>
 <h2 id="project-structure">Project structure</h2>
 <p>After running <code>create_dirs()</code> and <code>get_data()</code>,
 your project looks like:</p>

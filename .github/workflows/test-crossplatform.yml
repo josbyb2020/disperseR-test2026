@@ -1,0 +1,91 @@
+name: Test disperseR Cross-Platform
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        r-version: ['4.3']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up R ${{ matrix.r-version }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev \
+            libgdal-dev libgeos-dev libproj-dev libudunits2-dev libnetcdf-dev
+
+      - name: Install R dependencies
+        run: |
+          install.packages(c("remotes", "data.table", "sf", "terra", "fst", "ggplot2"))
+          remotes::install_github("rich-iannone/splitr")
+        shell: Rscript {0}
+
+      - name: Install disperseR from local
+        run: |
+          remotes::install_local(".", dependencies = FALSE)
+        shell: Rscript {0}
+
+      - name: Test disperseR
+        run: |
+          cat("=== disperseR Cross-Platform Test ===\n")
+          cat("OS:", Sys.info()["sysname"], "\n")
+          cat("R:", R.version.string, "\n\n")
+
+          library(disperseR)
+          library(splitr)
+          library(data.table)
+
+          # Test 1: create_dirs
+          cat("1. create_dirs()... ")
+          dirs <- create_dirs(tempdir())
+          cat("OK\n")
+
+          # Test 2: units data
+          cat("2. units dataset... ")
+          data("units", package = "disperseR")
+          cat(nrow(units), "units\n")
+
+          # Test 3: define_inputs
+          cat("3. define_inputs()... ")
+          test_unit <- as.data.table(units)[year == 2005][order(-SOx)][1]
+          inputs <- define_inputs(
+            units = test_unit,
+            startday = "2005-01-15",
+            endday = "2005-01-15",
+            start.hours = 12,
+            duration = 24
+          )
+          cat(nrow(inputs), "refs\n")
+
+          # Test 4: HYSPLIT binary check
+          cat("4. HYSPLIT binary... ")
+          bin_path <- system.file(package = "splitr")
+          if (Sys.info()["sysname"] == "Windows") {
+            hycs <- file.path(bin_path, "win", "hycs_std.exe")
+          } else if (Sys.info()["sysname"] == "Darwin") {
+            hycs <- file.path(bin_path, "osx", "hycs_std")
+          } else {
+            hycs <- file.path(bin_path, "linux-amd64", "hycs_std")
+          }
+          if (file.exists(hycs)) cat("FOUND\n") else cat("NOT FOUND\n")
+
+          cat("\n=== SUCCESS ===\n")
+          cat("disperseR v", as.character(packageVersion("disperseR")), " works on ", Sys.info()["sysname"], "\n", sep="")
+        shell: Rscript {0}
