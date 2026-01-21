@@ -168,17 +168,20 @@ Install system libraries for sf/terra: - macOS:
 
 ### Linux: libgfortran.so.3 not found
 
-The HYSPLIT binaries in splitr require an older Fortran runtime. On
-newer Linux distros (Ubuntu 22.04+), install the compatibility library:
+The HYSPLIT binaries bundled in splitr were compiled against an older
+Fortran runtime (libgfortran.so.3). Modern Linux distros (Ubuntu 22.04+)
+only ship libgfortran.so.5, which is not ABI-compatible.
 
-``` bash
-sudo apt install libgfortran5
-# If that doesn't work, you may need to compile HYSPLIT from source
-```
+**Solutions:**
 
-Alternatively, download and compile HYSPLIT from [NOAA
-ARL](https://www.ready.noaa.gov/HYSPLIT.php) and provide `binary_path`
-and `parhplot_path` to bypass splitr.
+1.  Download and compile HYSPLIT from source at [NOAA
+    ARL](https://www.ready.noaa.gov/HYSPLIT.php), then provide
+    `binary_path` and `parhplot_path` to bypass splitr
+2.  Use a Docker container with an older distro
+3.  Check if your distro has a `libgfortran3` or `compat-libgfortran`
+    package
+
+This is a splitr issue, not a disperseR issue.
 
 ## Project structure
 
