@@ -40,50 +40,184 @@ jobs:
           remotes::install_local(".", dependencies = FALSE, force = TRUE)
         shell: Rscript {0}
 
-      - name: Test disperseR
+      - name: Test disperseR core functions
         run: |
           cat("=== disperseR Cross-Platform Test ===\n")
           cat("OS:", Sys.info()["sysname"], "\n")
           cat("R:", R.version.string, "\n\n")
-
+          
           library(disperseR)
-          library(splitr)
           library(data.table)
-
-          # Test 1: create_dirs
-          cat("1. create_dirs()... ")
-          dirs <- create_dirs(tempdir())
-          cat("OK\n")
-
-          # Test 2: units data
-          cat("2. units dataset... ")
-          data("units", package = "disperseR")
-          cat(nrow(units), "units\n")
-
-          # Test 3: define_inputs
-          cat("3. define_inputs()... ")
-          test_unit <- as.data.table(units)[year == 2005][order(-SOx)][1]
-          inputs <- define_inputs(
-            units = test_unit,
-            startday = "2005-01-15",
-            endday = "2005-01-15",
-            start.hours = 12,
-            duration = 24
-          )
-          cat(nrow(inputs), "refs\n")
-
-          # Test 4: HYSPLIT binary check
-          cat("4. HYSPLIT binary... ")
-          bin_path <- system.file(package = "splitr")
-          if (Sys.info()["sysname"] == "Windows") {
-            hycs <- file.path(bin_path, "win", "hycs_std.exe")
-          } else if (Sys.info()["sysname"] == "Darwin") {
-            hycs <- file.path(bin_path, "osx", "hycs_std")
-          } else {
-            hycs <- file.path(bin_path, "linux-amd64", "hycs_std")
+          
+          passed <- 0
+          failed <- 0
+          
+          # Helper to run tests
+          test <- function(name, expr) {
+            cat(sprintf("%-50s", paste0(name, "...")))
+            result <- tryCatch({
+              force(expr)
+              cat("PASS\n")
+              TRUE
+            }, error = function(e) {
+              cat("FAIL:", conditionMessage(e), "\n")
+              FALSE
+            })
+            if (result) passed <<- passed + 1 else failed <<- failed + 1
+            invisible(result)
           }
-          if (file.exists(hycs)) cat("FOUND\n") else cat("NOT FOUND\n")
-
-          cat("\n=== SUCCESS ===\n")
-          cat("disperseR v", as.character(packageVersion("disperseR")), " works on ", Sys.info()["sysname"], "\n", sep="")
+          
+          # ===========================================
+          # TEST 1: create_dirs
+          # ===========================================
+          test("create_dirs() creates structure", {
+            dirs <- create_dirs(tempdir())
+            stopifnot(dir.exists(file.path(tempdir(), "main")))
+          })
+          
+          # ===========================================
+          # TEST 2: Units data loading
+          # ===========================================
+          test("units dataset loads", {
+            data("units", package = "disperseR")
+            stopifnot(nrow(units) > 1000)
+            stopifnot("SOx" %in% names(units))
+          })
+          
+          # ===========================================
+          # TEST 3: define_inputs validation
+          # ===========================================
+          test("define_inputs() creates refs", {
+            test_unit <- as.data.table(disperseR::units)[year == 2005][order(-SOx)][1]
+            inputs <- define_inputs(
+              units = test_unit,
+              startday = "2005-01-15",
+              endday = "2005-01-15",
+              start.hours = c(0, 6, 12, 18),
+              duration = 24
+            )
+            stopifnot(nrow(inputs) == 4)
+            stopifnot(all(c("Latitude", "Longitude", "start_day") %in% names(inputs)))
+          })
+          
+          # ===========================================
+          # TEST 4: run_disperser_parallel input validation
+          # ===========================================
+          test("run_disperser_parallel() validates input.refs", {
+            err <- tryCatch({
+              run_disperser_parallel(input.refs = NULL)
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("non-empty", err, ignore.case = TRUE))
+          })
+          
+          test("run_disperser_parallel() validates missing columns", {
+            bad_refs <- data.table(ID = "test", Latitude = 40)
+            err <- tryCatch({
+              run_disperser_parallel(input.refs = bad_refs, proc_dir = tempdir())
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("missing required columns", err, ignore.case = TRUE))
+          })
+          
+          # ===========================================
+          # TEST 5: hysplit_dispersion input validation  
+          # ===========================================
+          test("hysplit_dispersion() requires run_dir", {
+            err <- tryCatch({
+              hysplit_dispersion(lat = 40, lon = -75)
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("run_dir", err, ignore.case = TRUE))
+          })
+          
+          test("hysplit_dispersion() validates start_day format", {
+            err <- tryCatch({
+              hysplit_dispersion(
+                lat = 40, lon = -75, 
+                start_day = "invalid-date",
+                run_dir = tempdir()
+              )
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(!is.null(err))
+          })
+          
+          # ===========================================
+          # TEST 6: link_all_units input validation
+          # ===========================================
+          test("link_all_units() requires time range", {
+            err <- tryCatch({
+              link_all_units(link.to = "zips")
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("time range|start.date|year.mons", err, ignore.case = TRUE))
+          })
+          
+          test("link_all_units() validates link.to", {
+            err <- tryCatch({
+              link_all_units(
+                link.to = "invalid",
+                start.date = "2005-01-01",
+                end.date = "2005-01-31"
+              )
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("zips|counties|grids", err, ignore.case = TRUE))
+          })
+          
+          # ===========================================
+          # TEST 7: Windows-specific utilities
+          # ===========================================
+          test("cleanup_hysplit_zombies() runs without error", {
+            cleanup_hysplit_zombies(verbose = FALSE)
+            TRUE
+          })
+          
+          # ===========================================
+          # TEST 8: Path handling (critical for Windows)
+          # ===========================================
+          test("Path with spaces handled", {
+            test_path <- file.path(tempdir(), "path with spaces", "subdir")
+            dir.create(test_path, recursive = TRUE, showWarnings = FALSE)
+            stopifnot(dir.exists(test_path))
+            unlink(dirname(test_path), recursive = TRUE)
+          })
+          
+          # ===========================================
+          # TEST 9: check_spatial_packages
+          # ===========================================
+          test("check_spatial_packages() runs", {
+            result <- check_spatial_packages()
+            stopifnot(is.list(result) || is.null(result) || isTRUE(result))
+          })
+          
+          # ===========================================
+          # TEST 10: HYSPLIT binary detection
+          # ===========================================
+          test("splitr HYSPLIT binary exists", {
+            bin_path <- system.file(package = "splitr")
+            if (Sys.info()["sysname"] == "Windows") {
+              hycs <- file.path(bin_path, "win", "hycs_std.exe")
+            } else if (Sys.info()["sysname"] == "Darwin") {
+              hycs <- file.path(bin_path, "osx", "hycs_std")
+            } else {
+              hycs <- file.path(bin_path, "linux-amd64", "hycs_std")
+            }
+            stopifnot(file.exists(hycs))
+          })
+          
+          # ===========================================
+          # SUMMARY
+          # ===========================================
+          cat("\n===========================================\n")
+          cat(sprintf("PASSED: %d  FAILED: %d\n", passed, failed))
+          cat("===========================================\n")
+          
+          if (failed > 0) {
+            stop(sprintf("%d test(s) failed", failed))
+          }
+          
+          cat("\ndisperseR v", as.character(packageVersion("disperseR")), 
+              " works on ", Sys.info()["sysname"], "\n", sep = "")
         shell: Rscript {0}
