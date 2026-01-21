@@ -24,23 +24,16 @@ jobs:
         with:
           r-version: ${{ matrix.r-version }}
 
-      - name: Install system dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev \
-            libgdal-dev libgeos-dev libproj-dev libudunits2-dev libnetcdf-dev
+      - name: Set up Pandoc
+        uses: r-lib/actions/setup-pandoc@v2
 
       - name: Install R dependencies
-        run: |
-          install.packages(c("remotes", "data.table", "sf", "terra", "fst", "ggplot2"))
-          remotes::install_github("rich-iannone/splitr")
-        shell: Rscript {0}
-
-      - name: Install disperseR from local
-        run: |
-          remotes::install_local(".", dependencies = FALSE)
-        shell: Rscript {0}
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::remotes
+            github::rich-iannone/splitr
+          needs: check
 
       - name: Test disperseR
         run: |
