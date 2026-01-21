@@ -39,24 +39,14 @@ remotes::install_github("rich-iannone/splitr")
 - **macOS Apple Silicon** (M1/M2/M3/M4 chips, 2020+): See below.
 - **Linux**: Install GDAL/GEOS/PROJ (see below).
 
-#### macOS Apple Silicon (M1/M2/M3/M4)
+#### macOS Apple Silicon
 
-The HYSPLIT binaries in splitr are compiled for Intel. Apple Silicon
-Macs need Rosetta to translate them.
-
-1.  Open **Terminal** (not R). Find it in Applications \> Utilities \>
-    Terminal.
-2.  Run this command:
+The HYSPLIT binaries in splitr are compiled for Intel. Install Rosetta
+to run them:
 
 ``` bash
 softwareupdate --install-rosetta
 ```
-
-3.  Follow the prompts to accept the license. That’s it - disperseR
-    handles the rest automatically.
-
-**How do I know if I have Apple Silicon?** Click the Apple menu \> About
-This Mac. If it says “Chip: Apple M1/M2/M3/M4”, you have Apple Silicon.
 
 #### Linux
 
