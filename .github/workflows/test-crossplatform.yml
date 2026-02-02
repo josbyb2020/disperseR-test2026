@@ -23,6 +23,7 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.r-version }}
+          use-public-rspm: true
 
       - name: Set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
@@ -147,19 +148,33 @@ jobs:
           # TEST 6: link_all_units input validation
           # ===========================================
           test("link_all_units() requires time range", {
+            dummy_units <- data.table::data.table(
+              ID = "test",
+              uID = "test_u",
+              Latitude = 40,
+              Longitude = -80,
+              year = 2005
+            )
             err <- tryCatch({
-              link_all_units(link.to = "zips")
+              link_all_units(units.run = dummy_units, link.to = "zips")
               NULL
             }, error = function(e) conditionMessage(e))
             stopifnot(grepl("time range|start.date|year.mons", err, ignore.case = TRUE))
           })
           
           test("link_all_units() validates link.to", {
+            dummy_units <- data.table::data.table(
+              ID = "test",
+              uID = "test_u",
+              Latitude = 40,
+              Longitude = -80,
+              year = 2005
+            )
             err <- tryCatch({
               link_all_units(
+                units.run = dummy_units,
                 link.to = "invalid",
-                start.date = "2005-01-01",
-                end.date = "2005-01-31"
+                year.mons = "200501"
               )
               NULL
             }, error = function(e) conditionMessage(e))
