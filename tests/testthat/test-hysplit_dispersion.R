@@ -70,7 +70,6 @@ test_that("hysplit_dispersion requires splitr", {
 
 test_that("hysplit_dispersion validates run_dir", {
   skip_on_cran()
-  skip_if(!splitr_available(), "splitr not installed")
   
   expect_error(
     disperseR::hysplit_dispersion(run_dir = NULL),
@@ -85,7 +84,6 @@ test_that("hysplit_dispersion validates run_dir", {
 
 test_that("hysplit_dispersion validates start_day format", {
   skip_on_cran()
-  skip_if(!splitr_available(), "splitr not installed")
   
   temp_dir <- file.path(tempdir(), "hysplit_test")
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
@@ -111,7 +109,6 @@ test_that("hysplit_dispersion validates start_day format", {
 
 test_that("hysplit_dispersion accepts Date objects", {
   skip_on_cran()
-  skip_if(!splitr_available(), "splitr not installed")
   
   temp_dir <- file.path(tempdir(), "hysplit_test2")
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
@@ -130,4 +127,29 @@ test_that("hysplit_dispersion accepts Date objects", {
   if (inherits(result, "error")) {
     expect_false(grepl("YYYY-MM-DD", result$message))
   }
+})
+
+test_that("hysplit_dispersion validates start_hour", {
+  skip_on_cran()
+  
+  temp_dir <- file.path(tempdir(), "hysplit_test_hour")
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
+  
+  expect_error(
+    disperseR::hysplit_dispersion(
+      start_day = "2005-06-15",
+      start_hour = c(0, 6),
+      run_dir = temp_dir
+    ),
+    "start_hour"
+  )
+  
+  expect_error(
+    disperseR::hysplit_dispersion(
+      start_day = "2005-06-15",
+      start_hour = 24,
+      run_dir = temp_dir
+    ),
+    "start_hour"
+  )
 })

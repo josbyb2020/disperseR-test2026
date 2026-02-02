@@ -115,6 +115,19 @@ hysplit_dispersion <- function(lat = 49.263,
       call. = FALSE
     )
   }
+
+  # Validate start_hour
+  if (length(start_hour) != 1 || is.na(start_hour)) {
+    stop("start_hour must be a single hour value between 0 and 23.", call. = FALSE)
+  }
+  if (!is.numeric(start_hour)) {
+    start_hour <- suppressWarnings(as.integer(as.character(start_hour)))
+  }
+  if (!is.numeric(start_hour) || is.na(start_hour) || start_hour < 0 || start_hour > 23) {
+    stop("start_hour must be a single hour value between 0 and 23.", call. = FALSE)
+  }
+  # HYSPLIT CONTROL expects a zero-padded hour field
+  start_hour <- formatC(as.integer(start_hour), width = 2, format = "d", flag = "0")
   
   run_type <- "day"
   run_day <- start_day
@@ -145,7 +158,8 @@ hysplit_dispersion <- function(lat = 49.263,
   run_day <- as.POSIXct(run_day, origin = "1970-01-01", tz = "UTC")
 
   # Define starting time parameters
-  start_year_GMT <- substr(as.character(year(run_day)), 3, 4)
+  start_year_full <- format(run_day, "%Y")
+  start_year_GMT <- format(run_day, "%y")
 
   start_month_GMT <- formatC(as.numeric(month(run_day)),
     width = 2, format = "d", flag = "0")
@@ -153,20 +167,17 @@ hysplit_dispersion <- function(lat = 49.263,
   start_day_GMT <- formatC(as.numeric(lubridate::day(run_day)),
     width = 2, format = "d", flag = "0")
 
-  # Format `start_hour` if given as a numeric value
-  if (is.numeric(start_hour)) {
-    start_hour <- formatC(sort(start_hour), width = 2, flag = 0)
-  }
-
   # Determine the start time of the model run
   start_time_GMT <-
-    lubridate::ymd_hms(paste0(ifelse(start_year_GMT > 50,
-      paste0("19",
-        start_year_GMT),
-      start_year_GMT), "-",
-      start_month_GMT, "-",
-      start_day_GMT, " ",
-      start_hour, ":00:00"))
+    lubridate::ymd_hms(
+      paste0(
+        start_year_full, "-",
+        start_month_GMT, "-",
+        start_day_GMT, " ",
+        start_hour, ":00:00"
+      ),
+      tz = "UTC"
+    )
 
   # Determine the end time of the model run
   end_time_GMT <- as.POSIXct(ifelse(direction == "backward",
@@ -176,10 +187,7 @@ hysplit_dispersion <- function(lat = 49.263,
     tz = "UTC")
 
   # Determine whether the start year is a leap year
-  leap_year <- lubridate::leap_year(lubridate::ymd(paste0(start_year_GMT,
-    "-",
-    start_month_GMT, "-",
-    start_day_GMT)))
+  leap_year <- lubridate::leap_year(start_time_GMT)
 
   # Determine whether the beginning and end of the
   # current run crosses over a calendar year
@@ -591,23 +599,25 @@ hysplit_dispersion <- function(lat = 49.263,
 
 
   # Write species blocks to 'CONTROL'
-  for (i in 1:nrow(species)) {
-    cat(c(nrow(species), "\n",
-      paste(species[1, 2],
-        species[1, 3],
-        species[1, 4]), "\n",
-      paste(species[1, 5],
-        species[1, 6],
-        species[1, 7],
-        species[1, 8],
-        species[1, 9]), "\n",
-      paste(species[1, 10],
-        species[1, 11],
-        species[1, 12]), "\n",
-      species[1, 13], "\n",
-      species[1, 14]), "\n",
+  cat(nrow(species), "\n",
       file = paste0(run_dir, "/", "CONTROL"),
       sep = "", append = TRUE)
+  for (i in seq_len(nrow(species))) {
+    cat(
+      paste(species[i, 2], species[i, 3], species[i, 4]),
+      "\n",
+      paste(species[i, 5], species[i, 6], species[i, 7], species[i, 8], species[i, 9]),
+      "\n",
+      paste(species[i, 10], species[i, 11], species[i, 12]),
+      "\n",
+      species[i, 13],
+      "\n",
+      species[i, 14],
+      "\n",
+      file = paste0(run_dir, "/", "CONTROL"),
+      sep = "",
+      append = TRUE
+    )
   }
 
   # CONTROL file is now complete and in the
@@ -667,6 +677,7 @@ hysplit_dispersion <- function(lat = 49.263,
   run_dir_cmd <- run_dir
   binary_path_cmd <- binary_path
   parhplot_path_cmd <- parhplot_path
+  run_dir_effective <- run_dir
 
   if (os == "win") {
     run_dir_cmd <- normalizePath(run_dir, winslash = "\\", mustWork = TRUE)
@@ -691,6 +702,13 @@ hysplit_dispersion <- function(lat = 49.263,
         parhplot_path_cmd <- short_parh
       }
     }
+
+    run_dir_effective <- run_dir_cmd
+
+    # Run executables from the run directory (Windows binaries expect local CONTROL/SETUP files)
+    old_wd <- getwd()
+    setwd(run_dir_effective)
+    on.exit(setwd(old_wd), add = TRUE)
   }
 
   # On ARM Macs, wrap x86_64 binaries with Rosetta
@@ -718,8 +736,7 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    exit_status <- shell(paste0("cd /d \"", run_dir_cmd, "\" && \"", binary_path_cmd, "\""),
-                        intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    exit_status <- system2(binary_path_cmd, stdout = FALSE, stderr = FALSE)
     if (exit_status != 0) {
       stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
            "Check CONTROL file and run_dir '", run_dir, "' for errors.",
@@ -750,9 +767,8 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   if (os == "win") {
-    exit_status <- shell(paste0("cd /d \"", run_dir_cmd, "\" && \"", parhplot_path_cmd,
-      "\" -iPARDUMP -a1"),
-      intern = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    exit_status <- system2(parhplot_path_cmd, args = c("-iPARDUMP", "-a1"),
+                           stdout = FALSE, stderr = FALSE)
     if (exit_status != 0) {
       stop("parhplot execution failed with exit status ", exit_status, ". ",
            "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
@@ -761,22 +777,16 @@ hysplit_dispersion <- function(lat = 49.263,
   }
 
   # Remove the .att files from run_dir
-  if (os %in% c("mac", "unix")) {
-    system(paste0("(cd ", shQuote(run_dir), " && rm -f GIS_part*.att)"))
-  }
-
-  if (os == "win") {
-    shell(paste0("cd /d \"", run_dir_cmd, "\" && del /q GIS_part*.att 2>nul"))
+  att_files <- list.files(run_dir_effective,
+                          pattern = "^GIS_part.*\\.att$",
+                          full.names = TRUE,
+                          ignore.case = TRUE)
+  if (length(att_files) > 0) {
+    unlink(att_files, force = TRUE)
   }
 
   # Remove the postscript plot from run_dir
-  if (os %in% c("mac", "unix")) {
-    system(paste0("(cd ", shQuote(run_dir), " && rm -f parhplot.ps)"))
-  }
-
-  if (os == "win") {
-    shell(paste0("cd /d \"", run_dir_cmd, "\" && del /q parhplot.ps 2>nul"))
-  }
+  unlink(file.path(run_dir_effective, "parhplot.ps"), force = TRUE)
   
   # Rename the TXT files as CSV files
   if (os %in% c("mac", "unix")) {
@@ -788,7 +798,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
   if (os == "win") {
     temp_file_list <- list.files(
-      path = run_dir,
+      path = run_dir_effective,
       pattern = "^GIS_part_[0-9]+_ps\\.txt$",
       full.names = TRUE,
       ignore.case = TRUE
