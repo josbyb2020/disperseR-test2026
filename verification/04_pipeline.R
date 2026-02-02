@@ -82,7 +82,7 @@ verify_step("Pipeline: run -> link -> combine -> exposure", {
     uID = "unit_test",
     year = 2005,
     month = 1,
-    `SO2..tons.` = 1
+    `SO2.tons` = 1
   )
   exp <- disperseR::calculate_exposure(
     year.E = 2005,

@@ -9,7 +9,8 @@
 #' @param link.to Character. Spatial scale: 'zips', 'counties', or 'grids'.
 #'   Must match the original input to `link_all_units()`.
 #' @param pollutant Character. Column name in `units.mo` for emissions weighting.
-#'   Default: 'SO2..tons.'.
+#'   Default: 'SO2.tons'. (For backward compatibility, the legacy column name
+#'   'SO2..tons.' is accepted when present.)
 #' @param units.mo Data.frame or data.table with monthly unit emissions data.
 #'   Must contain columns: uID, year, month, and the pollutant column.
 #'   If NULL, attempts to use `PP.units.monthly1995_2017` from the disperseR
@@ -38,7 +39,7 @@
 calculate_exposure <- function(year.E,
                                year.D,
                                link.to = 'zips',
-                               pollutant = 'SO2..tons.',
+                               pollutant = 'SO2.tons',
                                units.mo = NULL,
                                monthly_maps = NULL,
                                rda_file = NULL,
@@ -81,6 +82,22 @@ calculate_exposure <- function(year.E,
     stop("units.mo must be a data.frame or data.table.", call. = FALSE)
   }
   units.mo <- data.table::as.data.table(units.mo)
+
+  pollutant <- as.character(pollutant)
+  if (length(pollutant) != 1 || is.na(pollutant) || !nzchar(pollutant)) {
+    stop("pollutant must be a single, non-empty string.", call. = FALSE)
+  }
+  if (!pollutant %in% names(units.mo)) {
+    legacy_map <- list("SO2..tons." = "SO2.tons", "SO2.tons" = "SO2..tons.")
+    alt <- legacy_map[[pollutant]]
+    if (!is.null(alt) && alt %in% names(units.mo)) {
+      warning(
+        "pollutant column '", pollutant, "' not found in units.mo; using '", alt, "' instead.",
+        call. = FALSE
+      )
+      pollutant <- alt
+    }
+  }
   required_cols <- c("uID", "year", "month", pollutant)
   missing_cols <- setdiff(required_cols, names(units.mo))
   if (length(missing_cols) > 0) {

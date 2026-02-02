@@ -8,7 +8,7 @@ calculate_exposure(
   year.E,
   year.D,
   link.to = "zips",
-  pollutant = "SO2..tons.",
+  pollutant = "SO2.tons",
   units.mo = NULL,
   monthly_maps = NULL,
   rda_file = NULL,
@@ -28,7 +28,8 @@ calculate_exposure(
 Must match the original input to `link_all_units()`.}
 
 \item{pollutant}{Character. Column name in `units.mo` for emissions weighting.
-Default: 'SO2..tons.'.}
+Default: 'SO2.tons'. (For backward compatibility, the legacy column name
+'SO2..tons.' is accepted when present.)}
 
 \item{units.mo}{Data.frame or data.table with monthly unit emissions data.
 Must contain columns: uID, year, month, and the pollutant column.

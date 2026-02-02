@@ -6,7 +6,7 @@ mock_units_mo <- data.table::data.table(
   uID = "unit1",
   year = 2005,
   month = 1,
-  `SO2..tons.` = 100
+  `SO2.tons` = 100
 )
 
 test_that("calculate_exposure validates source.agg", {
@@ -128,4 +128,26 @@ test_that("calculate_exposure accepts valid time.agg values without validation e
       )
     }
   }
+})
+
+test_that("calculate_exposure maps legacy SO2..tons. to SO2.tons when needed", {
+  skip_on_cran()
+
+  mock_units <- data.table::data.table(
+    uID = "unit1",
+    year = 2005,
+    month = 1,
+    `SO2.tons` = 100
+  )
+
+  expect_error(
+    disperseR::calculate_exposure(
+      year.E = 2005,
+      year.D = 2005,
+      pollutant = "SO2..tons.",
+      monthly_maps = list(),
+      units.mo = mock_units
+    ),
+    "monthly_maps is empty"
+  )
 })

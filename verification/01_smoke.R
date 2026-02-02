@@ -50,7 +50,7 @@ verify_step("Smoke: core utils", {
   verify_expect(inherits(model, "disp_model"), "create_disp_model() did not return disp_model")
 
   mock_maps <- list("MAP1.2005" = data.table::data.table(ZIP = "12345", u1 = 1))
-  mock_units <- data.table::data.table(uID = "u1", year = 2005, month = 1, `SO2..tons.` = 10)
+  mock_units <- data.table::data.table(uID = "u1", year = 2005, month = 1, `SO2.tons` = 10)
   exp_dir <- file.path(verify_state$config$base_dir, "exp_smoke")
   dir.create(exp_dir, recursive = TRUE, showWarnings = FALSE)
   out <- disperseR::calculate_exposure(2005, 2005, monthly_maps = mock_maps,
