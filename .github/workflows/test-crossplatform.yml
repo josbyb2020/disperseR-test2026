@@ -31,10 +31,10 @@ jobs:
       - name: Install R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          dependencies: '"hard"'
           extra-packages: |
             any::remotes
             github::rich-iannone/splitr
-          needs: check
 
       - name: Install disperseR from checkout
         run: |
