@@ -286,7 +286,7 @@ calculate_exposure <- function(year.E,
         monthly.filelist[i] <- file.mo
       }
       #re-initiate ZIP exposure data.table
-      exposures <-  data.frame()
+      exposures <- data.table::data.table()
     }
 
   }

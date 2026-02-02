@@ -74,7 +74,9 @@ link_to <- function(d,
     pbl_layer <- subset_nc_date(hpbl_brick = rasterin, vardate = d$Pdate[1])
     pbl_layer_proj <- terra::project(pbl_layer, r)
     pbls <- pbl_layer_proj[as.numeric(names(tab))]
-    r[as.numeric(names(tab))] <- as.numeric(tab) / as.numeric(pbls[, 1])
+    denom <- suppressWarnings(as.numeric(pbls[, 1]))
+    denom[!is.finite(denom) | denom <= 0] <- NA_real_
+    r[as.numeric(names(tab))] <- as.numeric(tab) / denom
   } else {
     r[as.numeric(names(tab))] <- as.numeric(tab)
   }
@@ -82,6 +84,19 @@ link_to <- function(d,
   # Trim to data extent (only if there's actual data)
   if (all(is.na(terra::values(r)))) {
     warning("No valid parcel-to-cell mappings found for linking. Returning empty result.")
+    if (link.to == "grids") {
+      return(data.table::data.table(x = numeric(0), y = numeric(0), N = numeric(0)))
+    }
+    if (link.to == "counties") {
+      return(data.table::data.table(
+        statefp = character(0),
+        countyfp = character(0),
+        state_name = character(0),
+        name = character(0),
+        geoid = character(0),
+        N = numeric(0)
+      ))
+    }
     return(data.table::data.table(ZIP = character(0), N = numeric(0)))
   }
   r2 <- tryCatch(
@@ -199,8 +214,10 @@ trim_zero <- function(Min) {
   particles <- unique(p_zero_df$particle_no)
   
   for (p in particles) {
-    h_zero <- p_zero_df[particle_no == p, hour]
-    M[particle_no == p & hour >= h_zero, ] <- NA
+    h_zero <- suppressWarnings(min(p_zero_df[particle_no == p, hour], na.rm = TRUE))
+    if (is.finite(h_zero)) {
+      M[particle_no == p & hour >= h_zero, ] <- NA
+    }
   }
   M <- stats::na.omit(M)
   return(M)

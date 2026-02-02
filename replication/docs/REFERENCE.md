@@ -86,7 +86,7 @@ Computes HyADS exposure from linked data.
 | `year.E` | numeric | Emissions year |
 | `year.D` | numeric | Dispersion year (usually same) |
 | `link.to` | character | `"zips"`, `"counties"`, or `"grids"` |
-| `pollutant` | character | Column in units.mo (e.g., `"SO2.tons"`) |
+| `pollutant` | character | Column in units.mo (e.g., `"SO2..tons."`) |
 | `units.mo` | data.table | Monthly emissions (use `PP.units.monthly1995_2017`) |
 | `rda_file` | character | Path to RData from `combine_monthly_links()` |
 | `exp_dir` | character | Output directory |

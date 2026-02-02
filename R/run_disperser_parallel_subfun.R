@@ -647,8 +647,12 @@ subset_nc_date <- function(hpbl_file = NULL,
     sep = '-'
   ))
 
-  # Select layer by matching year-month
-  if (!is.null(time_vals) && length(time_vals) > 0) {
+  # Select layer by matching year-month when terra provides real Date/POSIXt times.
+  # Some rasters (including synthetic test rasters) may have a non-date time vector
+  # or no time metadata at all; fall back to layer names in those cases.
+  if (!is.null(time_vals) &&
+      length(time_vals) > 0 &&
+      inherits(time_vals, c("Date", "POSIXt"))) {
     # Match by year-month (first of month)
     target_ym <- format(vardate_month, "%Y-%m")
     time_ym <- format(time_vals, "%Y-%m")
