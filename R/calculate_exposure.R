@@ -179,9 +179,9 @@ calculate_exposure <- function(year.E,
       "!"
     )
   )
-  for (i in 1:12) {
-    PP.units_monthly <- subset(units.mo, month == i & year == year.E)
-    setnames(PP.units_monthly, pollutant, 'pollutant')
+  for (i in seq_len(12)) {
+    PP.units_monthly <- units.mo[month == i & year == year.E]
+    data.table::setnames(PP.units_monthly, pollutant, "pollutant", skip_absent = TRUE)
 
     #Aggregate unit power plant emissions to unit level
     PP_monthly <- PP.units_monthly[!duplicated(uID)]

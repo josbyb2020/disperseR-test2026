@@ -32,6 +32,36 @@
   invisible(value)
 }
 
+# Escape special regex characters so IDs are matched literally in list.files(pattern=...)
+.disperseR_escape_regex <- function(x) {
+  gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x)
+}
+
+# Validate ID values used as file/path components across platforms.
+# Reject path separators and characters invalid on Windows to keep outputs portable.
+.disperseR_validate_id_component <- function(id, arg_name = "ID") {
+  if (length(id) != 1 || is.na(id) || !nzchar(id)) {
+    stop(arg_name, " must be a single, non-empty string.", call. = FALSE)
+  }
+  id <- as.character(id)
+
+  if (grepl("[/\\\\]", id)) {
+    stop(arg_name, " cannot contain path separators ('/' or '\\\\').", call. = FALSE)
+  }
+  if (grepl("[:*?\"<>|]", id)) {
+    stop(
+      arg_name,
+      " contains characters that are not portable in filenames: : * ? \" < > |",
+      call. = FALSE
+    )
+  }
+  if (grepl("[[:cntrl:]]", id)) {
+    stop(arg_name, " contains control characters and is not valid.", call. = FALSE)
+  }
+
+  id
+}
+
 .disperseR_splitr_package <- function() {
   if (requireNamespace("splitr", quietly = TRUE)) {
     return("splitr")

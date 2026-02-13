@@ -140,45 +140,50 @@ combine_monthly_links <- function(month_YYYYMMs,
     }
   }
 
-  # Put all grid links on consistent extent using terra
+  # Align grid maps on a common (x, y) coordinate union.
+  # This avoids terra::rast() failures for sparse, irregular, or single-cell grids.
   if (link.to == 'grids' && length(monthly_maps) > 0) {
-    # Convert data.tables to SpatRasters using terra
-    out.r <- lapply(monthly_maps, function(dt) {
-      if (ncol(dt) > 2) {
-        r <- terra::rast(dt, type = "xyz", crs = "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m")
-        return(r)
+    monthly_maps <- lapply(monthly_maps, function(dt) {
+      dt <- data.table::as.data.table(dt)
+      if (!all(c("x", "y") %in% names(dt))) {
+        return(dt)
       }
-      return(NULL)
+      dt[, `:=`(
+        x = as.numeric(round(x, 6)),
+        y = as.numeric(round(y, 6))
+      )]
+      dt
     })
-    out.r <- Filter(Negate(is.null), out.r)
-    
-    if (length(out.r) > 1) {
-      # Calculate consistent extent using terra
-      all_extents <- lapply(out.r, terra::ext)
-      combined_ext <- Reduce(function(e1, e2) {
-        terra::ext(
-          min(e1[1], e2[1]),
-          max(e1[2], e2[2]),
-          min(e1[3], e2[3]),
-          max(e1[4], e2[4])
+
+    xy_union <- data.table::rbindlist(
+      lapply(monthly_maps, function(dt) {
+        if (!all(c("x", "y") %in% names(dt))) {
+          return(data.table::data.table(x = numeric(), y = numeric()))
+        }
+        dt[, .(x, y)]
+      }),
+      fill = TRUE
+    )
+
+    if (nrow(xy_union) > 0) {
+      xy_union <- unique(xy_union)
+      data.table::setorder(xy_union, x, y)
+
+      monthly_maps <- lapply(monthly_maps, function(dt) {
+        if (!all(c("x", "y") %in% names(dt))) {
+          return(dt)
+        }
+        out <- merge(
+          xy_union,
+          dt,
+          by = c("x", "y"),
+          all.x = TRUE,
+          sort = FALSE
         )
-      }, all_extents)
-      
-      # Extend all rasters to common extent
-      out.b <- lapply(out.r, function(r) terra::extend(r, combined_ext))
-      
-      # Convert back to data.tables
-      out.dt <- lapply(out.b, function(x) {
-        df <- terra::as.data.frame(x, xy = TRUE, na.rm = FALSE)
-        data.table::setDT(df)
-        df[, `:=`(x = round(x), y = round(y))]
-        return(df)
+        data.table::setDT(out)
+        data.table::setorder(out, x, y)
+        out
       })
-      
-      # Update monthly_maps with extended grid data
-      for (nm in names(out.dt)) {
-        monthly_maps[[nm]] <- out.dt[[nm]]
-      }
     }
   }
 

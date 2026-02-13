@@ -27,7 +27,9 @@ link_all_units(
 }
 \arguments{
 \item{units.run}{A data.table with columns: ID (character), uID (character),
-Latitude (numeric), Longitude (numeric), year (integer)}
+Latitude (numeric), Longitude (numeric), year (integer). ID values are used in
+output filenames and must be filesystem-safe (avoid /, backslash, or
+:*?"<>|).}
 
 \item{link.to}{One of 'zips', 'counties', or 'grids'}
 

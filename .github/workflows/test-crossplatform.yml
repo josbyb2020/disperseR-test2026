@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        r-version: ['4.3']
+        r-version: ['release', 'oldrel-1']
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,6 @@ jobs:
           dependencies: '"hard"'
           extra-packages: |
             any::remotes
-            github::rich-iannone/splitr
 
       - name: Install disperseR from checkout
         run: |
@@ -49,6 +48,7 @@ jobs:
           
           library(disperseR)
           library(data.table)
+          options(disperseR.verbose = FALSE)
           
           passed <- 0
           failed <- 0
@@ -208,18 +208,19 @@ jobs:
           })
           
           # ===========================================
-          # TEST 10: HYSPLIT binary detection
+          # TEST 10: HYSPLIT binary configuration behavior
           # ===========================================
-          test("splitr HYSPLIT binary exists", {
-            bin_path <- system.file(package = "splitr")
-            if (Sys.info()["sysname"] == "Windows") {
-              hycs <- file.path(bin_path, "win", "hycs_std.exe")
-            } else if (Sys.info()["sysname"] == "Darwin") {
-              hycs <- file.path(bin_path, "osx", "hycs_std")
-            } else {
-              hycs <- file.path(bin_path, "linux-amd64", "hycs_std")
-            }
-            stopifnot(file.exists(hycs))
+          test("hysplit_dispersion() fails fast without binaries", {
+            err <- tryCatch({
+              hysplit_dispersion(
+                lat = 40, lon = -75,
+                start_day = "2005-01-01",
+                start_hour = 0,
+                run_dir = tempdir()
+              )
+              NULL
+            }, error = function(e) conditionMessage(e))
+            stopifnot(grepl("splitr|binary_path|parhplot_path|binaries", err, ignore.case = TRUE))
           })
           
           # ===========================================

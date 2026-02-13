@@ -128,6 +128,34 @@ hysplit_dispersion <- function(lat = 49.263,
   }
   # HYSPLIT CONTROL expects a zero-padded hour field
   start_hour <- formatC(as.integer(start_hour), width = 2, format = "d", flag = "0")
+
+  # Validate binary configuration early so users fail fast
+  # before potentially large meteorology downloads.
+  if (!is.null(binary_path)) {
+    binary_path <- path.expand(binary_path)
+    if (!file.exists(binary_path)) {
+      stop("binary_path does not exist: ", binary_path, call. = FALSE)
+    }
+  }
+  if (!is.null(parhplot_path)) {
+    parhplot_path <- path.expand(parhplot_path)
+    if (!file.exists(parhplot_path)) {
+      stop("parhplot_path does not exist: ", parhplot_path, call. = FALSE)
+    }
+  }
+  if ((is.null(binary_path) || is.null(parhplot_path)) &&
+      is.null(.disperseR_splitr_package())) {
+    missing_cfg <- c(
+      if (is.null(binary_path)) "binary_path" else NULL,
+      if (is.null(parhplot_path)) "parhplot_path" else NULL
+    )
+    stop(
+      "HYSPLIT binaries are not fully configured. ",
+      "Install splitr with remotes::install_github('rich-iannone/splitr') ",
+      "or provide ", paste(missing_cfg, collapse = " and "), ".",
+      call. = FALSE
+    )
+  }
   
   run_type <- "day"
   run_day <- start_day
@@ -350,7 +378,7 @@ hysplit_dispersion <- function(lat = 49.263,
     nm = c("file", "available"))
 
   if (any(c("mac", "unix") %in%  disperseR::get_os())) {
-    for (k in 1:length(met)) {
+    for (k in seq_along(met)) {
       met_file_df[k, 1] <- met[k]
       met_file_df[k, 2] <- as.character( file.exists(paste0(met_dir, "/", met[k])))
     }
@@ -388,7 +416,7 @@ hysplit_dispersion <- function(lat = 49.263,
 
   if (disperseR::get_os() == "win") {
 
-    for (k in 1:length(met)) {
+    for (k in seq_along(met)) {
       met_file_df[k, 1] <- met[k]
       met_file_df[k, 2] <- as.character( file.exists(paste0(met_dir, "\\", met[k])))}
 
@@ -480,14 +508,14 @@ hysplit_dispersion <- function(lat = 49.263,
     sep = '', append = TRUE)
 
   # Write met file paths to 'CONTROL'
-  for (i in 1:length(met)) {
+  for (i in seq_along(met)) {
     cat(met_dir, "/\n", met[i], "\n",
       file = paste0(run_dir, "/", "CONTROL"),
       sep = '', append = TRUE)
   }
 
   # Write emissions blocks to 'CONTROL'
-  for (i in 1:nrow(emissions)) {
+  for (i in seq_len(nrow(emissions))) {
     cat(c(nrow(emissions), "\n",
       substr(emissions[i, 1], 1, 4), "\n",
       emissions[i, 2], "\n",
@@ -500,18 +528,19 @@ hysplit_dispersion <- function(lat = 49.263,
 
   # Get vector text elements through reading
   # selected elements from the 'grids' data frame
-  if (any(is.na(grids$lat),
-    is.na(grids$lon))) {
+  if (any(is.na(grids$lat) | is.na(grids$lon))) {
 
     grids$lat <- lat
     grids$lon <- lon
   }
 
-  if (any(is.na(grids$duration),
-    is.na(grids$start_day),
-    is.na(grids$start_hour),
-    is.na(grids$end_day),
-    is.na(grids$end_hour))) {
+  if (any(
+    is.na(grids$duration) |
+    is.na(grids$start_day) |
+    is.na(grids$start_hour) |
+    is.na(grids$end_day) |
+    is.na(grids$end_hour)
+  )) {
 
     grids$duration <- duration
     grids$start_day <- start_day
@@ -551,7 +580,7 @@ hysplit_dispersion <- function(lat = 49.263,
       paste0(run_dir, "/"),
       grids[1,1],
       "1", "50",
-      paste0(paste(unlist(strsplit(substr(grids[i, 9], 3, 10), "-")),
+      paste0(paste(unlist(strsplit(substr(grids[1, 9], 3, 10), "-")),
         collapse = " "),
         " ",
         formatC(grids[1, 10],
@@ -559,7 +588,7 @@ hysplit_dispersion <- function(lat = 49.263,
           format = "d",
           flag = "0"),
         " 00"),
-      paste0(paste(unlist(strsplit(substr(grids[i, 11], 3, 10), "-")),
+      paste0(paste(unlist(strsplit(substr(grids[1, 11], 3, 10), "-")),
         collapse = " "),
         " ",
         formatC(grids[1, 12],
@@ -583,14 +612,14 @@ hysplit_dispersion <- function(lat = 49.263,
 
   # Combine short grid name string with longer
   # output_filename string
-  for (i in 1:((length(grids_text) - 1)/10)) {
+  for (i in seq_len(length(gridnames_indices))) {
     grids_text[gridnames_indices[i]] <-
       paste0(grids_text[gridnames_indices[i]],
         output_filename)
   }
 
   # Write grid blocks to 'CONTROL'
-  for (i in 1:length(grids_text)) {
+  for (i in seq_along(grids_text)) {
     cat(grids_text[i], "\n",
       file = paste0(run_dir, "/", "CONTROL"),
       sep = '', append = TRUE)

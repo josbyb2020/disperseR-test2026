@@ -25,7 +25,7 @@ utils::globalVariables(c(
   "file", "available", "run_dir", "met_dir",
   "V1", "Pdate", "Pmonth", "Pyear", "mo", "yr", "Exposure", "seq_len", "pollutant",
   "STATE", "CITY", "TOTALESTIMATE",
-  "particle_no", "pbl", "rastercell", "ref", "zcta",
+  "particle_no", "pbl", "rastercell", "ref", "zcta", "h_zero",
   ".", "..year",
   
   # Used in formula/subset contexts

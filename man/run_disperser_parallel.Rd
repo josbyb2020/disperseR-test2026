@@ -20,7 +20,9 @@ run_disperser_parallel(
 \arguments{
 \item{input.refs}{A data.table with columns: ID (character), uID (character),
 Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
-start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).}
+start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).
+ID values are used in output filenames and must be filesystem-safe (avoid
+/, backslash, or :*?"<>|).}
 
 \item{pbl.height}{Monthly mean planetary boundary layer heights}
 

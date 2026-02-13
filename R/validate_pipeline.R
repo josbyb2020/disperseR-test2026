@@ -6,7 +6,8 @@
 #'
 #' @param dirs Optional list returned by `create_dirs()`.
 #' @param hysp_dir Directory containing `hyspdisp_*.fst` outputs.
-#' @param ziplink_dir Directory containing `ziplinks_*.fst` outputs.
+#' @param ziplink_dir Directory containing linked outputs
+#'   (`ziplinks_*.fst`, `countylinks_*.fst`, `gridlinks_*.fst`).
 #' @param exp_dir Directory containing exposure outputs (e.g., `zips_exposures_*`).
 #' @param compute_unique_zips Logical. If TRUE, reads ZIP link files and returns
 #'   a unique ZIP count. Set FALSE to avoid reading large files.
@@ -71,6 +72,8 @@ validate_pipeline <- function(dirs = NULL,
   }
 
   ziplink_files <- character(0)
+  countylink_files <- character(0)
+  gridlink_files <- character(0)
   if (is.null(ziplink_dir) || !dir.exists(ziplink_dir)) {
     issues <- c(issues, "ziplink_dir missing or does not exist")
   } else {
@@ -80,10 +83,32 @@ validate_pipeline <- function(dirs = NULL,
       recursive = FALSE,
       full.names = TRUE
     )
+    countylink_files <- list.files(
+      ziplink_dir,
+      pattern = "^countylinks_.*\\.fst$",
+      recursive = FALSE,
+      full.names = TRUE
+    )
+    gridlink_files <- list.files(
+      ziplink_dir,
+      pattern = "^gridlinks_.*\\.fst$",
+      recursive = FALSE,
+      full.names = TRUE
+    )
   }
 
   ziplink_rows <- if (length(ziplink_files) > 0) {
     sum(vapply(ziplink_files, safe_fst_nrows, integer(1)), na.rm = TRUE)
+  } else {
+    0L
+  }
+  countylink_rows <- if (length(countylink_files) > 0) {
+    sum(vapply(countylink_files, safe_fst_nrows, integer(1)), na.rm = TRUE)
+  } else {
+    0L
+  }
+  gridlink_rows <- if (length(gridlink_files) > 0) {
+    sum(vapply(gridlink_files, safe_fst_nrows, integer(1)), na.rm = TRUE)
   } else {
     0L
   }
@@ -127,6 +152,11 @@ validate_pipeline <- function(dirs = NULL,
 
   result <- list(
     runs = list(files = length(hysp_files), trajectory_points = hysp_rows),
+    links = list(
+      zips = list(files = length(ziplink_files), rows = ziplink_rows),
+      counties = list(files = length(countylink_files), rows = countylink_rows),
+      grids = list(files = length(gridlink_files), rows = gridlink_rows)
+    ),
     ziplinks = list(
       files = length(ziplink_files),
       rows = ziplink_rows,
@@ -139,8 +169,12 @@ validate_pipeline <- function(dirs = NULL,
   if (isTRUE(verbose)) {
     message("Runs: ", result$runs$files,
             " files, ", result$runs$trajectory_points, " points")
-    message("ZIP links: ", result$ziplinks$files,
-            " files, ", result$ziplinks$rows, " rows")
+    message("ZIP links: ", result$links$zips$files,
+            " files, ", result$links$zips$rows, " rows")
+    message("County links: ", result$links$counties$files,
+            " files, ", result$links$counties$rows, " rows")
+    message("Grid links: ", result$links$grids$files,
+            " files, ", result$links$grids$rows, " rows")
     if (!is.na(result$ziplinks$unique_zips)) {
       message("Unique ZIPs: ", result$ziplinks$unique_zips)
     }

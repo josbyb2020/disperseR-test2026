@@ -8,7 +8,9 @@
 #' mclapply on Unix/macOS, parLapply on Windows.
 #'
 #' @param units.run A data.table with columns: ID (character), uID (character),
-#'   Latitude (numeric), Longitude (numeric), year (integer)
+#'   Latitude (numeric), Longitude (numeric), year (integer). ID values are used
+#'   in output filenames and must be filesystem-safe across platforms (avoid `/`,
+#'   backslash, or `:*?"<>|`).
 #' @param link.to One of 'zips', 'counties', or 'grids'
 #' @param mc.cores Number of cores for parallel computation. Default 2 (CRAN policy).
 #'   Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.

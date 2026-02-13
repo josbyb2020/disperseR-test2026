@@ -22,6 +22,8 @@ Windows reliability and error clarity improvements.
 - Fixed Windows shell path escaping in `hysplit_dispersion()` for long paths
 - Fixed GIS file pattern matching (now requires exact `GIS_part_*_ps.txt` format)
 - Fixed `get_met_reanalysis()` error handling on Windows with multiple download methods
+- Fixed HYSPLIT grid control writing to avoid index leakage in grid date fields
+- Fixed link file matching for unit IDs with regex metacharacters
 
 ## Documentation
 
@@ -29,6 +31,7 @@ Windows reliability and error clarity improvements.
 - Created `replication/docs/REFERENCE.md` with API reference, parameter guide, troubleshooting
 - Enhanced README with Windows-specific notes (path limits, parallel warnings, proxy settings)
 - Clarified `monthly_maps` parameter naming in `calculate_exposure()`
+- Documented filesystem-safe ID requirements for cross-platform runs
 
 ## Internal
 

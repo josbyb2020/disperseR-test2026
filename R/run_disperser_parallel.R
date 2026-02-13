@@ -7,6 +7,8 @@
 #' @param input.refs A data.table with columns: ID (character), uID (character),
 #'   Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
 #'   start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).
+#'   ID values are used in output filenames and must be filesystem-safe across
+#'   platforms (avoid `/`, backslash, or `:*?"<>|`).
 #' @param pbl.height Monthly mean planetary boundary layer heights
 #' @param species Species type: 'so2' (default) or 'so4p' (particulate sulfate)
 #' @param proc_dir Directory for temporary files (from create_dirs())
@@ -52,6 +54,9 @@ run_disperser_parallel <- function(input.refs = NULL,
       call. = FALSE
     )
   }
+
+  input.refs[, ID := as.character(ID)]
+  invisible(lapply(input.refs$ID, .disperseR_validate_id_component, arg_name = "input.refs$ID"))
 
   if (!inherits(input.refs$start_day, "Date")) {
     start_day <- as.Date(input.refs$start_day)
@@ -239,11 +244,11 @@ run_fac <- function(x,
   meteo_dir) {
 
   subset <- input.refs[x]
-  print(subset)
-
-  ## function to negate
-  '%ni%' <- function(x, y) {
-    return(!('%in%'(x, y)))
+  unit_id <- .disperseR_validate_id_component(as.character(subset$ID[[1]]), "input.refs$ID")
+  verbose <- isTRUE(getOption("disperseR.verbose", FALSE))
+  if (verbose) {
+    message("Running ID=", unit_id, " date=", format(subset$start_day, "%Y-%m-%d"),
+            " hour=", subset$start_hour)
   }
 
   #########################################################################################################
@@ -274,13 +279,6 @@ run_fac <- function(x,
 
   #########################################################################################################
   ## subset the data using the indexes provided.
-  print(paste0(
-    'Date: ',
-    format(subset$start_day, format = "%Y-%m-%d"),
-    ', Hour: ',
-    subset$start_hour
-  ))
-
   if (is.na(subset$Height)) {
     stop("Check to make sure your Height is defined in the run_ref_tab!")
   }
@@ -301,7 +299,7 @@ run_fac <- function(x,
     hysp_dir_mo,
     paste0(
       "hyspdisp_",
-      subset$ID,
+      unit_id,
       "_",
       subset$start_day,
       "_",
@@ -314,7 +312,9 @@ run_fac <- function(x,
       ".fst"
     )
   ))
-  message(paste("output file", output_file))
+  if (verbose) {
+    message("output file ", output_file)
+  }
 
 
   ## Initial output data.table
@@ -331,9 +331,22 @@ run_fac <- function(x,
     message("Defining HYSPLIT model parameters and running the model.")
 
     ## Create run directory
-    run_dir <- file.path(proc_dir, paste0(subset$ID, '_', paste(subset[, .(ID, start_day, start_hour)], collapse = '_')))
+    run_dir <- file.path(
+      proc_dir,
+      sprintf(
+        "%s_%s_%02d",
+        unit_id,
+        format(subset$start_day, "%Y-%m-%d"),
+        as.integer(subset$start_hour)
+      )
+    )
 
     ## preemptively remove if run_dir already exists, then create
+    proc_dir_norm <- normalizePath(proc_dir, winslash = "/", mustWork = TRUE)
+    run_dir_norm <- normalizePath(run_dir, winslash = "/", mustWork = FALSE)
+    if (!startsWith(run_dir_norm, paste0(proc_dir_norm, "/"))) {
+      stop("Refusing to remove run_dir outside proc_dir: ", run_dir, call. = FALSE)
+    }
     unlink(run_dir, recursive = TRUE)
     dir.create(run_dir, showWarnings = FALSE)
 

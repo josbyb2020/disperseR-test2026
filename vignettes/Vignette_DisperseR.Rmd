@@ -125,6 +125,9 @@ input_refs <- disperseR::define_inputs(units = unitsrun,
 head(input_refs)
 ```
 
+Note: `input_refs$ID` is used in output filenames and must be filesystem-safe
+across platforms (avoid `/`, `\`, or `:*?"<>|`).
+
 ### Run HYSPLIT
 The following examples show how to run a small subset (chosen to provide workable examples on a laptop) of emissions events, link to spatial domains---U.S. ZIP codes, U.S. counties, or a regular grid---and plot the results.
 

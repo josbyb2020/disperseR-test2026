@@ -61,9 +61,8 @@ link_to <- function(d,
   )
   terra::values(r) <- NA
   
-  # Convert sf points to terra vector for cell operations
+  # Extract projected coordinates for raster cell assignment
   pts_coords <- sf::st_coordinates(pts_proj)
-  pts_vect <- terra::vect(pts_coords, crs = p4string)
   
   # Count particles per cell
   cells <- terra::cellFromXY(r, pts_coords)
@@ -102,7 +101,12 @@ link_to <- function(d,
   r2 <- tryCatch(
     terra::trim(r, padding = 1),
     error = function(e) {
-      warning("trim failed: ", e$message, ". Using original raster.")
+      msg <- conditionMessage(e)
+      if (grepl("invalid extent", msg, ignore.case = TRUE)) {
+        message("trim skipped for sparse extent; using original raster.")
+      } else {
+        warning("trim failed: ", msg, ". Using original raster.")
+      }
       r
     }
   )
@@ -208,18 +212,21 @@ link_to <- function(d,
 #' @return Trimmed data.table
 #' @export
 trim_zero <- function(Min) {
-  M <- data.table::copy(Min)
-  
-  p_zero_df <- M[height == 0, ]
-  particles <- unique(p_zero_df$particle_no)
-  
-  for (p in particles) {
-    h_zero <- suppressWarnings(min(p_zero_df[particle_no == p, hour], na.rm = TRUE))
-    if (is.finite(h_zero)) {
-      M[particle_no == p & hour >= h_zero, ] <- NA
-    }
+  M <- data.table::as.data.table(data.table::copy(Min))
+  if (nrow(M) == 0) {
+    return(M)
   }
-  M <- stats::na.omit(M)
+
+  zero_cutoff <- M[height == 0, .(h_zero = suppressWarnings(min(hour, na.rm = TRUE))), by = particle_no]
+  zero_cutoff <- zero_cutoff[is.finite(h_zero)]
+
+  if (nrow(zero_cutoff) == 0) {
+    return(M)
+  }
+
+  M <- merge(M, zero_cutoff, by = "particle_no", all.x = TRUE, sort = FALSE)
+  M <- M[is.na(h_zero) | hour < h_zero]
+  M[, h_zero := NULL]
   return(M)
 }
 
@@ -243,14 +250,7 @@ trim_pbl <- function(Min, rasterin) {
   M[, Pmonth := formatC(lubridate::month(Pdate), width = 2, format = "d", flag = "0")]
   M[, Pyear := formatC(lubridate::year(Pdate), width = 4, format = "d", flag = "0")]
   
-  my <- data.table::data.table(
-    expand.grid(
-      data.table::data.table(
-        mo = unique(M[, Pmonth]),
-        yr = unique(M[, Pyear])
-      )
-    )
-  )
+  my <- unique(M[, .(Pmonth, Pyear)])
   
   # Create coordinate matrix (assumes input is lon/lat WGS84)
   xy <- as.matrix(M[, .(lon, lat)])
@@ -270,16 +270,19 @@ trim_pbl <- function(Min, rasterin) {
   M_dt <- stats::na.omit(M)
   
   for (m in seq_len(nrow(my))) {
-    mon <- my[m, mo]
-    yer <- my[m, yr]
+    mon <- my[m, Pmonth]
+    yer <- my[m, Pyear]
+    idx <- M_dt$Pmonth %in% mon & M_dt$Pyear %in% yer
+    if (!any(idx)) {
+      next
+    }
     day <- paste(yer, mon, '01', sep = '-')
     
     pbl_layer <- subset_nc_date(hpbl_brick = rasterin, vardate = day)
     
     # Extract values - terra::values returns matrix, extract first column
     pbl_vals <- as.vector(terra::values(pbl_layer))
-    M_dt[Pmonth %in% mon & Pyear %in% yer,
-         pbl := pbl_vals[M_dt[Pmonth %in% mon & Pyear %in% yer, rastercell]]]
+    M_dt[idx, pbl := pbl_vals[rastercell]]
   }
   
   M_dt <- M_dt[height < pbl]
@@ -316,7 +319,9 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
                                   crop.usa = FALSE,
                                   return.linked.data. = TRUE) {
   
-  unitID <- unit$ID
+  if (nrow(unit) > 1)
+    stop("Please supply a single unit")
+  unitID <- .disperseR_validate_id_component(as.character(unit$ID[[1]]), "unit$ID")
 
   ziplink_dir <- .disperseR_cache_get("ziplink_dir")
   if (is.null(ziplink_dir) || !nzchar(ziplink_dir)) {
@@ -339,8 +344,6 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
-  if (nrow(unit) > 1)
-    stop("Please supply a single unit")
   
   # Parse dates
   if (is.null(start.date) | is.null(end.date)) {
@@ -359,7 +362,7 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
   
   output_file <- file.path(
     ziplink_dir,
-    paste0("gridlinks_", unit$ID, "_", start.date, "_", end.date, ".fst")
+    paste0("gridlinks_", unitID, "_", start.date, "_", end.date, ".fst")
   )
   
   if (!file.exists(output_file) | overwrite) {
@@ -371,8 +374,9 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       by = '1 day'
     )
     
+    unit_id_regex <- .disperseR_escape_regex(unitID)
     pattern.file <- paste0(
-      '_', gsub('[*]', '[*]', unit$ID), '_(',
+      "_", unit_id_regex, "_(",
       paste(vec_filedates, collapse = '|'), ').*\\.fst$'
     )
     
@@ -389,12 +393,23 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       recursive = FALSE,
       full.names = TRUE
     )
+
+    if (length(files.read) == 0) {
+      out <- data.table::data.table(x = numeric(), y = numeric(), N = numeric())
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out)
+    }
     
     l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l)
+    d <- data.table::rbindlist(l, fill = TRUE)
     
-    if (length(d) == 0)
-      return(paste("No files available to link in", month_YYYYMM))
+    if (nrow(d) == 0) {
+      out <- data.table::data.table(x = numeric(), y = numeric(), N = numeric())
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out)
+    }
     
     message(Sys.time(), " Files read and combined")
     
@@ -474,7 +489,9 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
                                      pbl. = TRUE,
                                      return.linked.data. = TRUE) {
   
-  unitID <- unit$ID
+  if (nrow(unit) > 1)
+    stop("Please supply a single unit")
+  unitID <- .disperseR_validate_id_component(as.character(unit$ID[[1]]), "unit$ID")
 
   if (is.null(counties)) {
     stop("counties must be provided for county linking.", call. = FALSE)
@@ -501,8 +518,6 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
-  if (nrow(unit) > 1)
-    stop("Please supply a single unit")
   
   if (is.null(start.date) | is.null(end.date)) {
     start.date <- as.Date(paste(
@@ -518,7 +533,7 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
   
   output_file <- file.path(
     ziplink_dir,
-    paste0("countylinks_", unit$ID, "_", start.date, "_", end.date, ".fst")
+    paste0("countylinks_", unitID, "_", start.date, "_", end.date, ".fst")
   )
   
   if (!file.exists(output_file) | overwrite) {
@@ -530,8 +545,9 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       by = '1 day'
     )
     
+    unit_id_regex <- .disperseR_escape_regex(unitID)
     pattern.file <- paste0(
-      '_', gsub('[*]', '[*]', unit$ID), '_(',
+      "_", unit_id_regex, "_(",
       paste(vec_filedates, collapse = '|'), ').*\\.fst$'
     )
     
@@ -548,12 +564,37 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       recursive = FALSE,
       full.names = TRUE
     )
+
+    if (length(files.read) == 0) {
+      out <- data.table::data.table(
+        statefp = character(),
+        countyfp = character(),
+        state_name = character(),
+        name = character(),
+        geoid = character(),
+        N = numeric()
+      )
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out)
+    }
     
     l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l)
+    d <- data.table::rbindlist(l, fill = TRUE)
     
-    if (length(d) == 0)
-      return(paste("No files available to link in", month_YYYYMM))
+    if (nrow(d) == 0) {
+      out <- data.table::data.table(
+        statefp = character(),
+        countyfp = character(),
+        state_name = character(),
+        name = character(),
+        geoid = character(),
+        N = numeric()
+      )
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out)
+    }
     
     message(Sys.time(), " Files read and combined")
     
@@ -641,7 +682,9 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
                                  pbl. = TRUE,
                                  return.linked.data. = TRUE) {
   
-  unitID <- unit$ID
+  if (nrow(unit) > 1)
+    stop("Please supply a single unit")
+  unitID <- .disperseR_validate_id_component(as.character(unit$ID[[1]]), "unit$ID")
 
   if (is.null(crosswalk.)) {
     stop("crosswalk. must be provided for ZIP linking.", call. = FALSE)
@@ -673,8 +716,6 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
     stop("Define either start.date/end.date OR month_YYYYMM")
-  if (nrow(unit) > 1)
-    stop("Please supply a single unit")
   
   if (is.null(start.date) | is.null(end.date)) {
     start.date <- as.Date(paste(
@@ -692,7 +733,7 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
   
   zip_output_file <- file.path(
     ziplink_dir,
-    paste0("ziplinks_", unit$ID, "_", start.date, "_", end.date, ".fst")
+    paste0("ziplinks_", unitID, "_", start.date, "_", end.date, ".fst")
   )
   
   if (!file.exists(zip_output_file) | overwrite) {
@@ -704,8 +745,9 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       by = '1 day'
     )
     
+    unit_id_regex <- .disperseR_escape_regex(unitID)
     pattern.file <- paste0(
-      '_', gsub('[*]', '[*]', unit$ID), '_(',
+      "_", unit_id_regex, "_(",
       paste(vec_filedates, collapse = '|'), ').*\\.fst$'
     )
     
@@ -722,12 +764,22 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       recursive = FALSE,
       full.names = TRUE
     )
+
+    if (length(files.read) == 0) {
+      out <- data.table::data.table(ZIP = character(), N = numeric())
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out[, .(ZIP, N, month, ID)])
+    }
     
     l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l)
+    d <- data.table::rbindlist(l, fill = TRUE)
     
-    if (length(d) == 0) {
-      return(paste("No files available to link in", month_YYYYMM))
+    if (nrow(d) == 0) {
+      out <- data.table::data.table(ZIP = character(), N = numeric())
+      out$month <- as.character(month_YYYYMM)
+      out$ID <- unitID
+      return(out[, .(ZIP, N, month, ID)])
     }
     
     message(Sys.time(), " Files read and combined")

@@ -148,7 +148,7 @@ get_met_reanalysis <- function(files = NULL,
   # Download one or more years of reanalysis met files
   if (!is.null(years)) {
     for (i in seq_along(years)) {
-      for (j in 1:12) {
+      for (j in seq_len(12)) {
         filename <- paste0("RP", years[i], formatC(j, width = 2, format = "d", flag = "0"), ".gbl")
         url <- paste0(base_url, filename)
         destfile <- file.path(path_met_files, filename)

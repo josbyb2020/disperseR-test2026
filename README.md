@@ -109,6 +109,9 @@ input_refs <- define_inputs(
   duration = 120
 )
 
+Note: `input_refs$ID` is used in output filenames. Keep IDs filesystem-safe
+across platforms (avoid `/`, `\`, or `:*?"<>|`).
+
 # 4. Run HYSPLIT dispersion
 pbl <- get_data("pblheight")
 run_disperser_parallel(
