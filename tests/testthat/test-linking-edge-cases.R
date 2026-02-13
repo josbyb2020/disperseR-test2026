@@ -45,23 +45,29 @@ test_that("link_to returns correctly shaped empty outputs when PBL normalization
   terra::values(pbl) <- NA_real_
   names(pbl) <- "X2005.01.01"
   
-  out_grids <- disperseR:::link_to(
-    d = d,
-    link.to = "grids",
-    p4string = p4,
-    rasterin = pbl,
-    pbl. = TRUE
+  expect_warning(
+    out_grids <- disperseR:::link_to(
+      d = d,
+      link.to = "grids",
+      p4string = p4,
+      rasterin = pbl,
+      pbl. = TRUE
+    ),
+    "No valid parcel-to-cell mappings"
   )
   expect_true(data.table::is.data.table(out_grids))
   expect_equal(names(out_grids), c("x", "y", "N"))
   expect_equal(nrow(out_grids), 0)
-  
-  out_counties <- disperseR:::link_to(
-    d = d,
-    link.to = "counties",
-    p4string = p4,
-    rasterin = pbl,
-    pbl. = TRUE
+
+  expect_warning(
+    out_counties <- disperseR:::link_to(
+      d = d,
+      link.to = "counties",
+      p4string = p4,
+      rasterin = pbl,
+      pbl. = TRUE
+    ),
+    "No valid parcel-to-cell mappings"
   )
   expect_true(data.table::is.data.table(out_counties))
   expect_equal(
@@ -69,13 +75,16 @@ test_that("link_to returns correctly shaped empty outputs when PBL normalization
     c("statefp", "countyfp", "state_name", "name", "geoid", "N")
   )
   expect_equal(nrow(out_counties), 0)
-  
-  out_zips <- disperseR:::link_to(
-    d = d,
-    link.to = "zips",
-    p4string = p4,
-    rasterin = pbl,
-    pbl. = TRUE
+
+  expect_warning(
+    out_zips <- disperseR:::link_to(
+      d = d,
+      link.to = "zips",
+      p4string = p4,
+      rasterin = pbl,
+      pbl. = TRUE
+    ),
+    "No valid parcel-to-cell mappings"
   )
   expect_true(data.table::is.data.table(out_zips))
   expect_equal(names(out_zips), c("ZIP", "N"))

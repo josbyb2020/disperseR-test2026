@@ -17,6 +17,9 @@ links trajectories to geographic areas, and calculates exposure metrics.
 
 ## First-time setup (5-10 minutes)
 
+**Requires R &gt;= 4.1.0** (for the native pipe and updated package
+ecosystem).
+
 ### Step 1: Install R packages
 
 Open R or RStudio and run:
@@ -34,10 +37,10 @@ remotes::install_github("rich-iannone/splitr")
 
 **Check your platform first:**
 
-- **Windows**: No extra steps needed.
-- **macOS Intel** (pre-2020 Macs): No extra steps needed.
-- **macOS Apple Silicon** (M1/M2/M3/M4 chips, 2020+): See below.
-- **Linux**: Install GDAL/GEOS/PROJ (see below).
+-   **Windows**: No extra steps needed.
+-   **macOS Intel** (pre-2020 Macs): No extra steps needed.
+-   **macOS Apple Silicon** (M1/M2/M3/M4 chips, 2020+): See below.
+-   **Linux**: Install GDAL/GEOS/PROJ (see below).
 
 #### macOS Apple Silicon
 
@@ -81,7 +84,7 @@ get_data(
 )
 
 # Verify everything is ready
-check_spatial_packages()
+validate_pipeline()
 ```
 
 **Windows users:** Use a short path like `C:/disperseR_project` to avoid
@@ -109,8 +112,8 @@ input_refs <- define_inputs(
   duration = 120
 )
 
-Note: `input_refs$ID` is used in output filenames. Keep IDs filesystem-safe
-across platforms (avoid `/`, `\`, or `:*?"<>|`).
+# Note: input_refs$ID is used in output filenames. Keep IDs filesystem-safe
+# across platforms (avoid /, \, or :*?"<>|).
 
 # 4. Run HYSPLIT dispersion
 pbl <- get_data("pblheight")
@@ -118,6 +121,7 @@ run_disperser_parallel(
   input.refs = input_refs,
   pbl.height = pbl,
   species = "so2",
+  proc_dir = dirs$proc_dir,
   mc.cores = 1
 )
 
@@ -160,14 +164,14 @@ Solutions:
 
 1.  Add the HYSPLIT binary folder to your antivirus exclusion list
 2.  Reduce `mc.cores` to slow down execution
-3.  Run `cleanup_hysplit_zombies()` to kill orphaned processes from
-    crashed runs
+3.  Restart R to clear any orphaned HYSPLIT processes from crashed runs
 
 ### CRS or projection errors
 
-Install system libraries for sf/terra: - macOS:
-`brew install gdal geos proj` - Ubuntu:
-`sudo apt install libgdal-dev libgeos-dev libproj-dev`
+Install system libraries for sf/terra:
+
+-   macOS: `brew install gdal geos proj`
+-   Ubuntu: `sudo apt install libgdal-dev libgeos-dev libproj-dev`
 
 ### Linux: libgfortran.so.3 not found
 
@@ -204,21 +208,21 @@ After running `create_dirs()` and `get_data()`, your project looks like:
 
 ## Learning more
 
-- **Main tutorial**: `vignette("Vignette_DisperseR")`
-- **Function help**: `?run_disperser_parallel`, `?link_all_units`,
-  `?calculate_exposure`
-- **Replication study**: See the `replication/` folder for a complete
-  worked example
+-   **Main tutorial**: `vignette("Vignette_DisperseR")`
+-   **Function help**: `?run_disperser_parallel`, `?link_all_units`,
+    `?calculate_exposure`
+-   **Replication study**: See the `replication/` folder for a complete
+    worked example
 
 ## Platform support
 
-| Platform | Status | Notes |
-|----|----|----|
-| Windows 10/11 | Supported | Use short paths; parallel uses socket clusters |
-| macOS Intel | Supported | Works out of the box |
-| macOS Apple Silicon | Supported | Requires Rosetta (see setup) |
-| Linux x86_64 | Supported | Install GDAL/GEOS/PROJ |
-| Linux ARM | Partial | Need to supply your own HYSPLIT binaries |
+| Platform            | Status    | Notes                                          |
+|---------------------|-----------|------------------------------------------------|
+| Windows 10/11       | Supported | Use short paths; parallel uses socket clusters |
+| macOS Intel         | Supported | Works out of the box                           |
+| macOS Apple Silicon | Supported | Requires Rosetta (see setup)                   |
+| Linux x86\_64       | Supported | Install GDAL/GEOS/PROJ                         |
+| Linux ARM           | Partial   | Need to supply your own HYSPLIT binaries       |
 
 ## Citation
 

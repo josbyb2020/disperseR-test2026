@@ -158,18 +158,22 @@ test_that("integration: full pipeline from define_inputs through calculate_expos
     SO2.tons = 100.0
   )
 
-  # Step 5: calculate_exposure
-  result <- calculate_exposure(
-    year.E        = 2005,
-    year.D        = 2005,
-    link.to       = "zips",
-    pollutant     = "SO2.tons",
-    units.mo      = units_mo,
-    monthly_maps  = monthly_maps,
-    exp_dir       = dirs$exp_dir,
-    source.agg    = "total",
-    time.agg      = "year",
-    allow.partial = TRUE
+  # Step 5: calculate_exposure (expect warning about missing months since we
+  # only provide 1 of 12 monthly maps)
+  expect_warning(
+    result <- calculate_exposure(
+      year.E        = 2005,
+      year.D        = 2005,
+      link.to       = "zips",
+      pollutant     = "SO2.tons",
+      units.mo      = units_mo,
+      monthly_maps  = monthly_maps,
+      exp_dir       = dirs$exp_dir,
+      source.agg    = "total",
+      time.agg      = "year",
+      allow.partial = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
   )
 
   expect_s3_class(result, "data.table")

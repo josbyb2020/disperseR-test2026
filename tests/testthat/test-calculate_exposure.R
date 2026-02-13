@@ -140,14 +140,17 @@ test_that("calculate_exposure maps legacy SO2..tons. to SO2.tons when needed", {
     `SO2.tons` = 100
   )
 
-  expect_error(
-    disperseR::calculate_exposure(
-      year.E = 2005,
-      year.D = 2005,
-      pollutant = "SO2..tons.",
-      monthly_maps = list(),
-      units.mo = mock_units
+  expect_warning(
+    expect_error(
+      disperseR::calculate_exposure(
+        year.E = 2005,
+        year.D = 2005,
+        pollutant = "SO2..tons.",
+        monthly_maps = list(),
+        units.mo = mock_units
+      ),
+      "monthly_maps is empty"
     ),
-    "monthly_maps is empty"
+    "pollutant column.*not found"
   )
 })

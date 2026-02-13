@@ -37,17 +37,21 @@ test_that("calculate_exposure produces correct numeric values with known inputs"
 
   # --- Call calculate_exposure ---
   # time.agg = "year", source.agg = "total", allow.partial = TRUE (only 1 of 12 months)
-  result <- calculate_exposure(
-    year.E        = 2005,
-    year.D        = 2005,
-    link.to       = "zips",
-    pollutant     = "SO2.tons",
-    units.mo      = units_mo,
-    monthly_maps  = monthly_maps,
-    exp_dir       = tmp_exp,
-    source.agg    = "total",
-    time.agg      = "year",
-    allow.partial = TRUE
+  # Expect warning about missing months since we only provide 1 of 12
+  expect_warning(
+    result <- calculate_exposure(
+      year.E        = 2005,
+      year.D        = 2005,
+      link.to       = "zips",
+      pollutant     = "SO2.tons",
+      units.mo      = units_mo,
+      monthly_maps  = monthly_maps,
+      exp_dir       = tmp_exp,
+      source.agg    = "total",
+      time.agg      = "year",
+      allow.partial = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
   )
 
   expect_s3_class(result, "data.table")
@@ -95,17 +99,20 @@ test_that("calculate_exposure works with multiple units and sums correctly", {
     SO2.tons = c(10.0, 20.0, 5.0, 15.0)
   )
 
-  result <- calculate_exposure(
-    year.E        = 2005,
-    year.D        = 2005,
-    link.to       = "zips",
-    pollutant     = "SO2.tons",
-    units.mo      = units_mo,
-    monthly_maps  = monthly_maps,
-    exp_dir       = tmp_exp,
-    source.agg    = "total",
-    time.agg      = "year",
-    allow.partial = TRUE
+  expect_warning(
+    result <- calculate_exposure(
+      year.E        = 2005,
+      year.D        = 2005,
+      link.to       = "zips",
+      pollutant     = "SO2.tons",
+      units.mo      = units_mo,
+      monthly_maps  = monthly_maps,
+      exp_dir       = tmp_exp,
+      source.agg    = "total",
+      time.agg      = "year",
+      allow.partial = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
   )
 
   data.table::setorder(result, ZIP)
@@ -147,17 +154,20 @@ test_that("calculate_exposure regression: hyphenated ID survives melt/merge", {
     SO2.tons = 3.0
   )
 
-  result <- calculate_exposure(
-    year.E        = 2005,
-    year.D        = 2005,
-    link.to       = "zips",
-    pollutant     = "SO2.tons",
-    units.mo      = units_mo,
-    monthly_maps  = monthly_maps,
-    exp_dir       = tmp_exp,
-    source.agg    = "total",
-    time.agg      = "year",
-    allow.partial = TRUE
+  expect_warning(
+    result <- calculate_exposure(
+      year.E        = 2005,
+      year.D        = 2005,
+      link.to       = "zips",
+      pollutant     = "SO2.tons",
+      units.mo      = units_mo,
+      monthly_maps  = monthly_maps,
+      exp_dir       = tmp_exp,
+      source.agg    = "total",
+      time.agg      = "year",
+      allow.partial = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
   )
 
   expect_equal(nrow(result), 1L)
@@ -192,18 +202,21 @@ test_that("calculate_exposure monthly time.agg returns correct per-month values"
     SO2.tons = c(10.0, 20.0)
   )
 
-  result <- calculate_exposure(
-    year.E              = 2005,
-    year.D              = 2005,
-    link.to             = "zips",
-    pollutant           = "SO2.tons",
-    units.mo            = units_mo,
-    monthly_maps        = monthly_maps,
-    exp_dir             = tmp_exp,
-    source.agg          = "total",
-    time.agg            = "month",
-    return.monthly.data = TRUE,
-    allow.partial       = TRUE
+  expect_warning(
+    result <- calculate_exposure(
+      year.E              = 2005,
+      year.D              = 2005,
+      link.to             = "zips",
+      pollutant           = "SO2.tons",
+      units.mo            = units_mo,
+      monthly_maps        = monthly_maps,
+      exp_dir             = tmp_exp,
+      source.agg          = "total",
+      time.agg            = "month",
+      return.monthly.data = TRUE,
+      allow.partial       = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
   )
 
   data.table::setorder(result, yearmonth)

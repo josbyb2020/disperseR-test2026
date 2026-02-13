@@ -28,7 +28,8 @@ library(tidyverse)
 In case you have not yet created your project folder use the following command. 
 
 ```{r, eval = FALSE, purl = FALSE}
-disperseR::create_dirs()
+dirs <- disperseR::create_dirs()
+main_dir <- dirs$main_dir
 ```
 
 If the file does not exist, download it from the
@@ -36,7 +37,7 @@ If the file does not exist, download it from the
 Then, open it.
 
 ```{r,  eval = FALSE, purl = FALSE}
-filename<- file.path(main_dir, "crosswalk.xlsx")
+filename <- file.path(main_dir, "crosswalk.xlsx")
 if(!file.exists(filename)){
   download.file("https://raw.githubusercontent.com/chris-prener/uds-mapper/main/data/zip_to_zcta_2017.xlsx", filename)
 }

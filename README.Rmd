@@ -177,6 +177,7 @@ suspicious (hundreds of .exe launches from temp directories). Solutions:
 ### CRS or projection errors
 
 Install system libraries for sf/terra:
+
 - macOS: `brew install gdal geos proj`
 - Ubuntu: `sudo apt install libgdal-dev libgeos-dev libproj-dev`
 
