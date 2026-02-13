@@ -2,7 +2,7 @@
 # Integration tests are skipped on CRAN and when splitr is not available
 
 splitr_available <- function() {
-  requireNamespace("splitr", quietly = TRUE)
+  nzchar(system.file(package = "splitr"))
 }
 
 test_that("hysplit_dispersion requires splitr", {

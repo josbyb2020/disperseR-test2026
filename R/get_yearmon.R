@@ -33,13 +33,21 @@ get_yearmon <- function(start.year = NULL,
          call. = FALSE)
   }
 
-  if (!is.character(start.year) ||
-      !is.character(start.month) ||
-      !is.character(end.year) ||
-      !is.character(end.month)) {
-    stop("start.month, start.year, end.month, end.year should all be provided as characters. Please refer to the main vignette for an example",
-         call. = FALSE)
+  # Auto-coerce numeric inputs to character
+  coerce_year <- function(x, name) {
+    if (is.numeric(x)) return(as.character(as.integer(x)))
+    if (is.character(x)) return(x)
+    stop(name, " must be character or numeric.", call. = FALSE)
   }
+  coerce_month <- function(x, name) {
+    if (is.numeric(x)) return(formatC(as.integer(x), width = 2, flag = "0"))
+    if (is.character(x)) return(x)
+    stop(name, " must be character or numeric.", call. = FALSE)
+  }
+  start.year  <- coerce_year(start.year, "start.year")
+  end.year    <- coerce_year(end.year, "end.year")
+  start.month <- coerce_month(start.month, "start.month")
+  end.month   <- coerce_month(end.month, "end.month")
 
   startdate <- paste0(start.year, "/", start.month, "/01")
   enddate <- paste0(end.year, "/", end.month, "/01")

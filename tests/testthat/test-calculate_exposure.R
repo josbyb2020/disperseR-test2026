@@ -23,15 +23,15 @@ test_that("calculate_exposure validates source.agg", {
       monthly_maps = mock_maps,
       units.mo = mock_units_mo
     ),
-    "source.agg not recognized"
+    "should be one of"
   )
 })
 
 test_that("calculate_exposure validates time.agg", {
   skip_on_cran()
-  
+
   mock_maps <- list("MAP1.2005" = data.table::data.table(ZIP = "12345", uID = 1))
-  
+
   expect_error(
     disperseR::calculate_exposure(
       year.E = 2005,
@@ -41,7 +41,7 @@ test_that("calculate_exposure validates time.agg", {
       monthly_maps = mock_maps,
       units.mo = mock_units_mo
     ),
-    "time.agg not recognized"
+    "should be one of"
   )
 })
 
@@ -96,7 +96,7 @@ test_that("calculate_exposure accepts valid source.agg values without validation
     # Should NOT be a source.agg validation error
     if (inherits(result, "error")) {
       expect_false(
-        grepl("source.agg not recognized", result$message),
+        grepl("should be one of", result$message),
         info = paste("source.agg =", agg, "should be valid")
       )
     }
@@ -123,7 +123,7 @@ test_that("calculate_exposure accepts valid time.agg values without validation e
     # Should NOT be a time.agg validation error
     if (inherits(result, "error")) {
       expect_false(
-        grepl("time.agg not recognized", result$message),
+        grepl("should be one of", result$message),
         info = paste("time.agg =", agg, "should be valid")
       )
     }

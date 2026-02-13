@@ -48,25 +48,8 @@ calculate_exposure <- function(year.E,
                                time.agg = c('year', 'month'),
                                return.monthly.data = FALSE,
                                allow.partial = FALSE) {
-  `%ni%` <- Negate(`%in%`)
-
-  # Validate source.agg
-  if (length(source.agg) > 1) {
-    message('Multiple source.agg provided, defaulting to "total".')
-    source.agg <- 'total'
-  }
-  if (source.agg %ni% c('total', 'facility', 'unit')) {
-    stop('source.agg not recognized, please provide one of c("total", "facility", "unit").')
-  }
-  
-  # Validate time.agg
-  if (length(time.agg) > 1) {
-    message('Multiple time.agg provided, defaulting to "year".')
-    time.agg <- 'year'
-  }
-  if (time.agg %ni% c('year', 'month')) {
-    stop('time.agg not recognized, please provide one of c("year", "month").')
-  }
+  source.agg <- match.arg(source.agg)
+  time.agg   <- match.arg(time.agg)
 
   # Validate units.mo
   if (is.null(units.mo)) {
@@ -190,7 +173,6 @@ calculate_exposure <- function(year.E,
     # Get HYSPLIT mappings from monthly_maps list (no global env probing)
     map.name <- paste0("MAP", i, ".", year.D)
     if (!map.name %in% names(monthly_maps)) {
-      message("  ", map.name, " not found in monthly_maps. Skipping.")
       next
     }
     month_mapping <- data.table::copy(monthly_maps[[map.name]])
@@ -215,6 +197,11 @@ calculate_exposure <- function(year.E,
     )
     if (sapply(month_mapping_long, class)['N'] == 'character')
       month_mapping_long[, `:=`(N = as.double(N))]
+
+    # Wide map columns use ID format (hyphenated, e.g. "7-1") from
+    # combine_monthly_links(); emissions data uses uID format (dotted,
+    # e.g. "7.1"). Convert so the merge matches.
+    month_mapping_long[, uID := gsub("-", ".", uID, fixed = TRUE)]
 
     #This is what I want - pollutant-weighted emissions trajectories
     PP.linkage <-

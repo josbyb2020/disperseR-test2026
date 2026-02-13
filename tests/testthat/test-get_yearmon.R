@@ -7,7 +7,7 @@ test_that("get_yearmon returns correct months for single month", {
     end.year = "2005",
     end.month = "01"
   )
-  
+
   expect_equal(result, "200501")
   expect_length(result, 1)
 })
@@ -19,7 +19,7 @@ test_that("get_yearmon returns correct sequence for multiple months", {
     end.year = "2005",
     end.month = "03"
   )
-  
+
   expect_equal(result, c("200501", "200502", "200503"))
   expect_length(result, 3)
 })
@@ -31,20 +31,42 @@ test_that("get_yearmon handles year boundaries", {
     end.year = "2005",
     end.month = "02"
   )
-  
+
   expect_equal(result, c("200411", "200412", "200501", "200502"))
   expect_length(result, 4)
 })
 
-test_that("get_yearmon requires character inputs", {
+test_that("get_yearmon accepts numeric inputs", {
+  result <- disperseR::get_yearmon(
+    start.year = 2005,
+    start.month = 1,
+    end.year = 2005,
+    end.month = 3
+  )
+
+  expect_equal(result, c("200501", "200502", "200503"))
+})
+
+test_that("get_yearmon accepts mixed numeric and character inputs", {
+  result <- disperseR::get_yearmon(
+    start.year = 2005,
+    start.month = "01",
+    end.year = "2005",
+    end.month = 3
+  )
+
+  expect_equal(result, c("200501", "200502", "200503"))
+})
+
+test_that("get_yearmon rejects non-numeric non-character inputs", {
   expect_error(
     disperseR::get_yearmon(
-      start.year = 2005,
+      start.year = TRUE,
       start.month = "01",
       end.year = "2005",
       end.month = "03"
     ),
-    "should all be provided as characters"
+    "must be character or numeric"
   )
 })
 
@@ -55,7 +77,7 @@ test_that("get_yearmon handles full year", {
     end.year = "2005",
     end.month = "12"
   )
-  
+
   expect_length(result, 12)
   expect_equal(result[1], "200501")
   expect_equal(result[12], "200512")

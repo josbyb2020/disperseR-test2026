@@ -1,8 +1,10 @@
 # tests/testthat/test-calculate_exposure_numeric.R
 # Numeric correctness and regression test for calculate_exposure()
 #
-# This is a REGRESSION TEST for the ID-mangling bug: unit IDs containing
-# hyphens (e.g., "3136-1") must survive the melt/merge pipeline.
+# Wide map columns use hyphenated ID format (e.g., "3136-1") from
+# combine_monthly_links(), while units.mo$uID uses dotted format
+# (e.g., "3136.1") from PP.units.monthly.  calculate_exposure() must
+# bridge the two formats via gsub("-", ".").
 
 test_that("calculate_exposure produces correct numeric values with known inputs", {
   # Use a tempdir for output so the test is self-contained
@@ -11,33 +13,26 @@ test_that("calculate_exposure produces correct numeric values with known inputs"
   on.exit(unlink(tmp_exp, recursive = TRUE), add = TRUE)
 
   # --- Build a mock monthly_maps list for January (month 1) of year 2005 ---
-  # The wide data.table has ZIP as the ID column, and unit IDs as value columns.
-  # Here we use a hyphenated unit ID "3136-1" to exercise the ID-mangling path.
-
-  # Two ZIPs, one unit
+  # Wide columns are hyphenated (real pipeline output from combine_monthly_links)
   mock_wide <- data.table::data.table(
     ZIP  = c("02101", "10001"),
     `3136-1` = c(5.0, 3.0)   # N values: particle counts reaching each ZIP
   )
 
-  # The monthly_maps list is keyed as "MAP{month}.{year}"
   monthly_maps <- list(
     "MAP1.2005" = mock_wide
   )
 
   # --- Build a mock units.mo data.table ---
-  # Must contain: uID, year, month, SO2.tons
-  # The uID should match the column name in monthly_maps exactly: "3136-1"
+  # uID uses dotted format (real PP.units.monthly data)
   units_mo <- data.table::data.table(
-    uID       = "3136-1",
+    uID       = "3136.1",
     year      = 2005L,
     month     = 1L,
     SO2.tons  = 10.0
   )
 
   # --- Call calculate_exposure ---
-  # time.agg = "year", source.agg = "total", allow.partial = TRUE (only 1 of 12 months)
-  # Expect warning about missing months since we only provide 1 of 12
   expect_warning(
     result <- calculate_exposure(
       year.E        = 2005,
@@ -62,7 +57,6 @@ test_that("calculate_exposure produces correct numeric values with known inputs"
   expect_true("hyads" %in% names(result))
   expect_true("ZIP" %in% names(result))
 
-  # Sort by ZIP for deterministic comparison
   data.table::setorder(result, ZIP)
 
   expect_equal(nrow(result), 2L)
@@ -75,7 +69,7 @@ test_that("calculate_exposure works with multiple units and sums correctly", {
   dir.create(tmp_exp, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(tmp_exp, recursive = TRUE), add = TRUE)
 
-  # Two units, two ZIPs, two months (January, February)
+  # Wide map columns: hyphenated (pipeline output)
   mock_jan <- data.table::data.table(
     ZIP      = c("02101", "10001"),
     `3136-1` = c(5.0, 3.0),
@@ -92,8 +86,9 @@ test_that("calculate_exposure works with multiple units and sums correctly", {
     "MAP2.2005" = mock_feb
   )
 
+  # units.mo$uID: dotted (real emissions data)
   units_mo <- data.table::data.table(
-    uID      = c("3136-1", "3136-1", "3136-2", "3136-2"),
+    uID      = c("3136.1", "3136.1", "3136.2", "3136.2"),
     year     = c(2005L, 2005L, 2005L, 2005L),
     month    = c(1L, 2L, 1L, 2L),
     SO2.tons = c(10.0, 20.0, 5.0, 15.0)
@@ -131,15 +126,16 @@ test_that("calculate_exposure works with multiple units and sums correctly", {
   expect_equal(result$hyads, c(155.0, 155.0), tolerance = 1e-10)
 })
 
-test_that("calculate_exposure regression: hyphenated ID survives melt/merge", {
-  # Specifically tests that unit IDs with hyphens (e.g., "3136-1")
-  # are not mangled by data.table::melt or column name handling.
+test_that("calculate_exposure regression: cross-format ID matching works", {
+  # Specifically tests that hyphenated wide-map IDs (e.g., "99-42") are
+  # correctly matched to dotted units.mo IDs (e.g., "99.42") after the
+  # gsub("-", ".") conversion in calculate_exposure().
 
-  tmp_exp <- file.path(tempdir(), "test_calc_exp_hyphen")
+  tmp_exp <- file.path(tempdir(), "test_calc_exp_crossfmt")
   dir.create(tmp_exp, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(tmp_exp, recursive = TRUE), add = TRUE)
 
-  # Use a deliberately awkward hyphenated ID
+  # Wide map: hyphenated ID column
   mock_wide <- data.table::data.table(
     ZIP      = "90210",
     `99-42`  = 7.0
@@ -147,8 +143,9 @@ test_that("calculate_exposure regression: hyphenated ID survives melt/merge", {
 
   monthly_maps <- list("MAP6.2005" = mock_wide)
 
+  # Emissions: dotted uID
   units_mo <- data.table::data.table(
-    uID      = "99-42",
+    uID      = "99.42",
     year     = 2005L,
     month    = 6L,
     SO2.tons = 3.0
@@ -181,6 +178,7 @@ test_that("calculate_exposure monthly time.agg returns correct per-month values"
   dir.create(tmp_exp, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(tmp_exp, recursive = TRUE), add = TRUE)
 
+  # Wide maps: hyphenated
   mock_jan <- data.table::data.table(
     ZIP      = "02101",
     `3136-1` = 5.0
@@ -195,8 +193,9 @@ test_that("calculate_exposure monthly time.agg returns correct per-month values"
     "MAP2.2005" = mock_feb
   )
 
+  # units.mo: dotted
   units_mo <- data.table::data.table(
-    uID      = c("3136-1", "3136-1"),
+    uID      = c("3136.1", "3136.1"),
     year     = c(2005L, 2005L),
     month    = c(1L, 2L),
     SO2.tons = c(10.0, 20.0)
@@ -225,4 +224,49 @@ test_that("calculate_exposure monthly time.agg returns correct per-month values"
   # Feb: 8.0 * 20.0 = 160.0
   expect_equal(nrow(result), 2L)
   expect_equal(result$hyads, c(50.0, 160.0), tolerance = 1e-10)
+})
+
+test_that("calculate_exposure bridges hyphenated map IDs to dotted emission IDs", {
+  # Explicit test: wide map has "7-1", units.mo has "7.1" — should still merge
+  tmp_exp <- file.path(tempdir(), "test_calc_exp_bridge")
+  dir.create(tmp_exp, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(tmp_exp, recursive = TRUE), add = TRUE)
+
+  mock_wide <- data.table::data.table(
+    ZIP    = c("11201", "60601"),
+    `7-1`  = c(10.0, 20.0),
+    `7-2`  = c(3.0,  0.0)
+  )
+
+  monthly_maps <- list("MAP3.2010" = mock_wide)
+
+  units_mo <- data.table::data.table(
+    uID      = c("7.1", "7.2"),
+    year     = c(2010L, 2010L),
+    month    = c(3L, 3L),
+    SO2.tons = c(2.0, 5.0)
+  )
+
+  expect_warning(
+    result <- calculate_exposure(
+      year.E        = 2010,
+      year.D        = 2010,
+      link.to       = "zips",
+      pollutant     = "SO2.tons",
+      units.mo      = units_mo,
+      monthly_maps  = monthly_maps,
+      exp_dir       = tmp_exp,
+      source.agg    = "total",
+      time.agg      = "year",
+      allow.partial = TRUE
+    ),
+    "Missing.*of 12 monthly maps"
+  )
+
+  data.table::setorder(result, ZIP)
+
+  # ZIP 11201: (10*2) + (3*5) = 20 + 15 = 35
+  # ZIP 60601: (20*2) + (0*5) = 40 + 0  = 40
+  expect_equal(nrow(result), 2L)
+  expect_equal(result$hyads, c(35.0, 40.0), tolerance = 1e-10)
 })
