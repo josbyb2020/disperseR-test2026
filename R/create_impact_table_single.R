@@ -97,6 +97,8 @@ create_impact_table_single <- function(data.linked,
     myVector <- names(dataset_sf)
   }
 
-  out <- data.table::data.table(dataset_sf[, myVector, with = FALSE])
+  # Convert to data.table first so column subsetting works uniformly
+  # (sf objects don't support with=FALSE)
+  out <- data.table::as.data.table(dataset_sf)[, myVector, with = FALSE]
   return(out)
 }

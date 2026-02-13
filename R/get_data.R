@@ -204,6 +204,13 @@ get_data <- function(data,
   # ==========================================================================
   if (data == "all") {
 
+    # Validate date parameters early (before downloading ~200MB of data)
+    if (is.null(startyear) || is.null(startmonth) ||
+        is.null(endyear) || is.null(endmonth)) {
+      stop("When data='all', you must provide start.year, start.month, end.year, and end.month ",
+           "for meteorological file downloads.", call. = FALSE)
+    }
+
     # --- Crosswalk ---
     message("Loading crosswalk data from disperseR...")
     crosswalk <- disperseR::crosswalk
@@ -295,9 +302,12 @@ get_data <- function(data,
 
     # --- Meteorological files ---
     message("Downloading meteorological files...")
-    if (is.null(startyear) || is.null(startmonth) || 
+    # (Date params already validated at the top of data=="all" block;
+    #  this guard remains for the data=="metfiles" path which shares this code.)
+    if (is.null(startyear) || is.null(startmonth) ||
         is.null(endyear) || is.null(endmonth)) {
-      stop("Please specify start.year, start.month, end.year, and end.month for metfiles.")
+      stop("Please specify start.year, start.month, end.year, and end.month for metfiles.",
+           call. = FALSE)
     }
     
     inputdates <- c(

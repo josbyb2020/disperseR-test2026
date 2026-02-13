@@ -49,6 +49,11 @@ get_yearmon <- function(start.year = NULL,
   start.month <- coerce_month(start.month, "start.month")
   end.month   <- coerce_month(end.month, "end.month")
 
+  # Validate 4-digit years
+  if (nchar(start.year) != 4 || nchar(end.year) != 4) {
+    stop("start.year and end.year must be 4-digit years (e.g., '2005').", call. = FALSE)
+  }
+
   startdate <- paste0(start.year, "/", start.month, "/01")
   enddate <- paste0(end.year, "/", end.month, "/01")
 

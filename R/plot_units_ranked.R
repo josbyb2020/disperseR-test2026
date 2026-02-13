@@ -17,12 +17,20 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
   data.ranked <- data.table::as.data.table(data.ranked)
 
   # Filter BOTH datasets by year for consistency
-  data.units <- data.units[year == year, ]
-  data.ranked <- data.ranked[year == year, ]
+  # Use ..year to reference the function argument, not the column
+  year_filter <- year
+  data.units <- data.units[year == year_filter, ]
+  data.ranked <- data.ranked[year == year_filter, ]
 
   data.units[, uID := as.character(uID)]
   data.ranked[, uID := as.character(uID)]
   unitRanks <- merge(data.ranked, data.units, by = 'uID')
+
+  if (nrow(unitRanks) == 0) {
+    stop("No data after filtering to year ", year, " and merging. ",
+         "Check that data.ranked and data.units share matching uID values.",
+         call. = FALSE)
+  }
 
   ## coordinates
   long <- unitRanks$Longitude

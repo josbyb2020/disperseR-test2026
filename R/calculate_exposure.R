@@ -202,7 +202,7 @@ calculate_exposure <- function(year.E,
       variable.name = "uID",
       value.name = "N"
     )
-    if (sapply(month_mapping_long, class)['N'] == 'character')
+    if (is.character(month_mapping_long[["N"]]))
       month_mapping_long[, `:=`(N = as.double(N))]
 
     # Wide map columns use ID format (hyphenated, e.g. "7-1") from
@@ -218,6 +218,13 @@ calculate_exposure <- function(year.E,
             all.y = TRUE)
     PP.linkage[is.na(N), N := 0]
     PP.linkage[is.na(pollutant), pollutant := 0]
+
+    # Warn if no spatial linkages matched any units (silent merge failure)
+    if (nrow(PP.linkage) > 0 && all(PP.linkage$N == 0)) {
+      warning("Month ", i, ": no spatial linkages matched any emission units. ",
+              "Check that uID formats are consistent between monthly_maps and units.mo.",
+              call. = FALSE)
+    }
 
     #  clean house
     rm(list = c('month_mapping_long', 'PP_monthly', 'month_mapping'))

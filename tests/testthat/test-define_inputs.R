@@ -194,3 +194,35 @@ test_that("error: invalid duration (negative)", {
     "duration.*positive"
   )
 })
+
+test_that("error: fractional start.hours rejected", {
+  unit_data <- disperseR::units
+  one_unit <- data.table::as.data.table(unit_data)[unit_data$year == 2005, ][1]
+
+  expect_error(
+    define_inputs(
+      units       = one_unit,
+      startday    = "2005-06-01",
+      endday      = "2005-06-01",
+      start.hours = c(0.5, 6)
+    ),
+    "whole numbers"
+  )
+})
+
+test_that("fractional duration produces warning and truncates", {
+  unit_data <- disperseR::units
+  one_unit <- data.table::as.data.table(unit_data)[unit_data$year == 2005, ][1]
+
+  expect_warning(
+    result <- define_inputs(
+      units    = one_unit,
+      startday = "2005-06-01",
+      endday   = "2005-06-01",
+      start.hours = 0,
+      duration = 240.5
+    ),
+    "truncated to integer"
+  )
+  expect_equal(result$duration_run_hours[1], 240L)
+})

@@ -8,7 +8,7 @@
 #'   Must inherit from either "traj_model" or "disp_model".
 #' @param npart Numeric. Number of particles for dispersion runs. Default 2500.
 #' @param run.dir Character. Working directory for HYSPLIT output files.
-#'   Required for dispersion models.
+#'   Required for dispersion models; ignored for trajectory models.
 #' @param binary_path Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.
 #' @param parhplot_path Path to HYSPLIT parhplot binary. If NULL, uses splitr's bundled binary.
 #'
@@ -36,8 +36,11 @@
 #'
 #' @seealso [create_disp_model()], [add_params()], [hysplit_dispersion()]
 #' @export
-run_model <- function(model, npart = 2500, run.dir, binary_path = NULL,
+run_model <- function(model, npart = 2500, run.dir = NULL, binary_path = NULL,
   parhplot_path = NULL) {
+
+  # Scalar null-coalescing helper
+  `%||%` <- function(x, y) if (is.null(x)) y else x
 
   # Explicit arguments override model fields
   if (!is.null(binary_path)) model$binary_path <- binary_path
@@ -55,13 +58,13 @@ run_model <- function(model, npart = 2500, run.dir, binary_path = NULL,
       lat = model$lat,
       lon = model$lon,
       height = model$height,
-      duration = ifelse(is.null(model$duration), 24, model$duration),
+      duration = model$duration %||% 24,
       run_period = model$run_period,
       daily_hours = model$daily_hours,
-      direction = ifelse(is.null(model$direction), "forward", model$direction),
-      met_type = ifelse(is.null(model$met_type), "reanalysis", model$met_type),
-      vert_motion = ifelse(is.null(model$vert_motion), 0, model$vert_motion),
-      model_height = ifelse(is.null(model$model_height), 20000, model$model_height),
+      direction = model$direction %||% "forward",
+      met_type = model$met_type %||% "reanalysis",
+      vert_motion = model$vert_motion %||% 0,
+      model_height = model$model_height %||% 20000,
       extended_met = TRUE,
       return_traj_df = TRUE,
       traj_name = model$traj_name,
@@ -75,18 +78,22 @@ run_model <- function(model, npart = 2500, run.dir, binary_path = NULL,
   }
 
   if (inherits(model, "disp_model")) {
+    if (is.null(run.dir)) {
+      stop("run.dir is required for dispersion models.", call. = FALSE)
+    }
+
     disp_df <- disperseR::hysplit_dispersion(
       lat = model$lat,
       lon = model$lon,
-      height = ifelse(is.null(model$height), 50, model$height),
-      duration = ifelse(is.null(model$duration), 24, model$duration),
+      height = model$height %||% 50,
+      duration = model$duration %||% 24,
       start_day = model$start_day,
       start_hour = model$start_hour,
-      direction = ifelse(is.null(model$direction), "forward", model$direction),
-      met_type = ifelse(is.null(model$met_type), "reanalysis", model$met_type),
+      direction = model$direction %||% "forward",
+      met_type = model$met_type %||% "reanalysis",
       met_dir = model$met_dir,
-      vert_motion = ifelse(is.null(model$vert_motion), 0, model$vert_motion),
-      model_height = ifelse(is.null(model$model_height), 20000, model$model_height),
+      vert_motion = model$vert_motion %||% 0,
+      model_height = model$model_height %||% 20000,
       particle_num = npart,
       particle_max = 10000,
       emissions = model$emissions,

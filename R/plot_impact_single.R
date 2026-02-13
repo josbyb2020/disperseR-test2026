@@ -62,22 +62,21 @@ plot_impact_single  <- function(data.linked,
                                            map.month = map.month,
                                            map.unitID = map.unitID,
                                            metric = metric)
-  dataset_sf$geometry <- st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
+  dataset_sf$geometry <- sf::st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
   year.use <- as.integer( substr( map.month, 1, 4))
 
   ## coordinates
-  coord <- data.table( st_coordinates( stats::na.omit( dataset_sf)$geometry))
+  coord <- data.table( sf::st_coordinates( stats::na.omit( dataset_sf)$geometry))
   setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-  if (isTRUE(zoom)) {
+  if (isTRUE(zoom) && nrow(coord) > 0) {
     long <- coord$Longitude
     minlong <-min(long) - 8
     maxlong <-max(long) + 8
     lat <- coord$Latitude
     minlat <-min(lat) - 8
     maxlat <-max(lat) + 8
-  }
-  if (!isTRUE(zoom)) {
-    ## show all the US map
+  } else {
+    ## show all the US map (or fallback when data is empty)
     minlong <- (-123)
     maxlong <- (-69)
     minlat <- 24

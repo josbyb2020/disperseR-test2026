@@ -152,6 +152,14 @@ define_inputs <- function(units,
       call. = FALSE
     )
   }
+  if (any(start.hours != as.integer(start.hours))) {
+    stop(
+      "ERROR: 'start.hours' must be whole numbers (HYSPLIT requires integer hours).\n",
+      "  You provided: ", paste(start.hours, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  start.hours <- as.integer(start.hours)
 
   # Check duration
   if (!is.numeric(duration) || length(duration) != 1 || duration <= 0) {
@@ -161,6 +169,11 @@ define_inputs <- function(units,
       "  You provided: ", duration,
       call. = FALSE
     )
+  }
+  if (duration != as.integer(duration)) {
+    warning("'duration' truncated to integer: ", as.integer(duration),
+            " (was ", duration, ")", call. = FALSE)
+    duration <- as.integer(duration)
   }
 
   # ===== Build Run Table =====

@@ -533,24 +533,24 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
     
     vec_dates <- as.character(seq.Date(as.Date(start.date), as.Date(end.date), by = '1 day'))
     vec_filedates <- seq.Date(
-      from = as.Date(start.date),
+      from = as.Date(start.date) - ceiling(duration.run.hours / 24),
       to = as.Date(end.date),
       by = '1 day'
     )
-    
+
     unit_id_regex <- .disperseR_escape_regex(unitID)
     pattern.file <- paste0(
       "_", unit_id_regex, "_(",
       paste(vec_filedates, collapse = '|'), ').*\\.fst$'
     )
-    
+
     hysp_dir.path <- file.path(
       hysp_dir,
       unique(paste(lubridate::year(vec_filedates),
                    formatC(lubridate::month(vec_filedates), width = 2, flag = '0'),
                    sep = '/'))
     )
-    
+
     files.read <- list.files(
       path = hysp_dir.path,
       pattern = pattern.file,

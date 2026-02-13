@@ -182,7 +182,7 @@ point_in_polygon <- function(points, polygons, returnList = FALSE) {
   if (returnList) {
     return(result)
   } else {
-    return(sapply(result, function(x) if (length(x) > 0) x[1] else NA_integer_))
+    return(vapply(result, function(x) if (length(x) > 0) x[1L] else NA_integer_, integer(1)))
   }
 }
 

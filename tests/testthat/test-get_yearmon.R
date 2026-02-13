@@ -70,6 +70,18 @@ test_that("get_yearmon rejects non-numeric non-character inputs", {
   )
 })
 
+test_that("get_yearmon rejects 2-digit years", {
+  expect_error(
+    disperseR::get_yearmon(
+      start.year = "05",
+      start.month = "01",
+      end.year = "05",
+      end.month = "03"
+    ),
+    "4-digit years"
+  )
+})
+
 test_that("get_yearmon handles full year", {
   result <- disperseR::get_yearmon(
     start.year = "2005",

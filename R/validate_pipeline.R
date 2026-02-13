@@ -118,17 +118,18 @@ validate_pipeline <- function(dirs = NULL,
     if (length(ziplink_files) == 0) {
       unique_zip_count <- 0L
     } else {
-      unique_zips <- character(0)
-      for (file in ziplink_files) {
+      # Accumulate in a list, then unique() once (avoids quadratic c() growth)
+      zip_chunks <- vector("list", length(ziplink_files))
+      for (i in seq_along(ziplink_files)) {
         zip_data <- tryCatch(
-          fst::read.fst(file, as.data.table = TRUE),
+          fst::read.fst(ziplink_files[[i]], columns = "ZIP", as.data.table = TRUE),
           error = function(e) NULL
         )
         if (!is.null(zip_data) && "ZIP" %in% names(zip_data)) {
-          unique_zips <- unique(c(unique_zips, as.character(zip_data$ZIP)))
+          zip_chunks[[i]] <- as.character(zip_data$ZIP)
         }
       }
-      unique_zip_count <- length(unique_zips)
+      unique_zip_count <- length(unique(unlist(zip_chunks, use.names = FALSE)))
     }
   }
 

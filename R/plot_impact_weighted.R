@@ -123,21 +123,20 @@ plot_impact_weighted <- function(data.linked,
     }
 
     setnames(dataset_sf, metric, 'metric', skip_absent = TRUE)
-    dataset_sf$geometry <- st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
+    dataset_sf$geometry <- sf::st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
 
     ## coordinates
-    coord <- data.table( st_coordinates( stats::na.omit( dataset_sf)$geometry))
+    coord <- data.table( sf::st_coordinates( stats::na.omit( dataset_sf)$geometry))
     setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-    if (isTRUE(zoom)) {
+    if (isTRUE(zoom) && nrow(coord) > 0) {
       long <- coord$Longitude
       minlong <-min(long) - 8
       maxlong <-max(long) + 8
       lat <- coord$Latitude
       minlat <-min(lat) - 8
       maxlat <-max(lat) + 8
-    }
-    if (!isTRUE(zoom)) {
-      ## show all the US map
+    } else {
+      ## show all the US map (or fallback when data is empty)
       minlong <- (-123)
       maxlong <- (-69)
       minlat <- 24
@@ -150,7 +149,7 @@ plot_impact_weighted <- function(data.linked,
     facility_loc = data.table(x = long, y = lat)
 
     if (is.null(legend.lims)) {
-      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95))
+      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95, na.rm = TRUE))
     }
 
     ### graph parameters
@@ -289,21 +288,20 @@ plot_impact_weighted <- function(data.linked,
     }
 
     setnames(dataset_sf, metric, 'metric', skip_absent = TRUE)
-    dataset_sf$geometry <- st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
+    dataset_sf$geometry <- sf::st_transform( dataset_sf$geometry, "+proj=longlat +datum=WGS84 +no_defs")
 
     ## coordinates
-    coord <- data.table( st_coordinates( stats::na.omit( dataset_sf)$geometry))
+    coord <- data.table( sf::st_coordinates( stats::na.omit( dataset_sf)$geometry))
     setnames( coord, c( 'X', 'Y'), c( 'Longitude', 'Latitude'))
-    if (isTRUE(zoom)) {
+    if (isTRUE(zoom) && nrow(coord) > 0) {
       long <- coord$Longitude
-      minlong <-min(long) - 10
-      maxlong <-max(long) + 10
+      minlong <-min(long) - 8
+      maxlong <-max(long) + 8
       lat <- coord$Latitude
-      minlat <-min(lat) - 10
-      maxlat <-max(lat) + 10
-    }
-    if (!isTRUE(zoom)) {
-      ## show all the US map
+      minlat <-min(lat) - 8
+      maxlat <-max(lat) + 8
+    } else {
+      ## show all the US map (or fallback when data is empty)
       minlong <- (-123)
       maxlong <- (-69)
       minlat <- 24
@@ -315,7 +313,7 @@ plot_impact_weighted <- function(data.linked,
     facility_loc = data.table(x = long, y = lat)
 
     if (is.null(legend.lims)) {
-      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95))
+      legend.lims <- c(0, stats::quantile(dataset_sf$metric, .95, na.rm = TRUE))
     }
 
     ### graph parameters

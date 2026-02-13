@@ -60,27 +60,29 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
     if (anyNA(year)) {
       stop("year must be numeric.", call. = FALSE)
     }
+    # Use a local variable to avoid data.table column/argument shadowing
+    year_val <- year
     if ("year" %ni% names(crosswalk_dt)) {
-      if (length(year) != 1) {
+      if (length(year_val) != 1) {
         stop(
           "year must be length 1 when crosswalk. lacks a year column.",
           call. = FALSE
         )
       }
-      crosswalk_dt[, year := year]
+      crosswalk_dt[, year := year_val]
     } else {
-      crosswalk_dt <- crosswalk_dt[year %in% ..year]
+      crosswalk_dt <- crosswalk_dt[year %in% year_val]
     }
     if ("year" %ni% names(data.linked)) {
-      if (length(year) != 1) {
+      if (length(year_val) != 1) {
         stop(
           "year must be length 1 when data.linked lacks a year column.",
           call. = FALSE
         )
       }
-      data.linked[, year := year]
+      data.linked[, year := year_val]
     } else {
-      data.linked <- data.linked[year %in% ..year]
+      data.linked <- data.linked[year %in% year_val]
     }
   }
 
