@@ -278,11 +278,11 @@ check_spatial_packages <- function() {
   modern <- c("sf", "terra")
 
   installed_deprecated <- sapply(deprecated, function(pkg) {
-    requireNamespace(pkg, quietly = TRUE)
+    nzchar(system.file(package = pkg))
   })
 
   installed_modern <- sapply(modern, function(pkg) {
-    requireNamespace(pkg, quietly = TRUE)
+    nzchar(system.file(package = pkg))
   })
 
   message("=== Spatial Package Status ===\n")

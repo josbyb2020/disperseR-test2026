@@ -716,63 +716,61 @@ hysplit_dispersion <- function(lat = 49.263,
   binary_cmd <- if (os == "mac") .disperseR_rosetta_wrap(binary_path) else shQuote(binary_path_cmd)
   parhplot_cmd <- if (os == "mac") .disperseR_rosetta_wrap(parhplot_path) else shQuote(parhplot_path_cmd)
 
-  if (os == "mac") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", binary_cmd,
-      " >> /dev/null 2>&1)"))
-    if (exit_status != 0) {
-      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
-           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
-           call. = FALSE)
-    }
+  # Log file for capturing stdout/stderr from external binaries
+  hysplit_log <- file.path(run_dir, "hysplit_run.log")
+
+  # Helper: read tail of log for error messages
+  .log_tail <- function(logfile, n = 20) {
+    if (!file.exists(logfile)) return("")
+    lines <- readLines(logfile, warn = FALSE)
+    if (length(lines) == 0) return("(empty log)")
+    paste(utils::tail(lines, n), collapse = "\n")
   }
 
-  if (os == "unix") {
+  if (os %in% c("mac", "unix")) {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", binary_cmd,
-      " >> /dev/null 2>&1)"))
+      " >> ", shQuote(hysplit_log), " 2>&1)"))
     if (exit_status != 0) {
-      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
-           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
+      stop("HYSPLIT execution failed with exit status ", exit_status, ".\n",
+           "run_dir: ", run_dir, "\n",
+           "Log tail:\n", .log_tail(hysplit_log),
            call. = FALSE)
     }
   }
 
   if (os == "win") {
-    exit_status <- system2(binary_path_cmd, stdout = FALSE, stderr = FALSE)
+    exit_status <- system2(binary_path_cmd,
+                           stdout = hysplit_log, stderr = hysplit_log)
     if (exit_status != 0) {
-      stop("HYSPLIT execution failed with exit status ", exit_status, ". ",
-           "Check CONTROL file and run_dir '", run_dir, "' for errors.",
+      stop("HYSPLIT execution failed with exit status ", exit_status, ".\n",
+           "run_dir: ", run_dir, "\n",
+           "Log tail:\n", .log_tail(hysplit_log),
            call. = FALSE)
     }
   }
 
 
   # Extract the particle positions at every hour
-  if (os == "mac") {
-    exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", parhplot_cmd,
-      " -iPARDUMP -a1)"))
-    if (exit_status != 0) {
-      stop("parhplot execution failed with exit status ", exit_status, ". ",
-           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
-           call. = FALSE)
-    }
-  }
+  parhplot_log <- file.path(run_dir, "parhplot_run.log")
 
-  if (os == "unix") {
+  if (os %in% c("mac", "unix")) {
     exit_status <- system(paste0("(cd ", shQuote(run_dir), " && ", parhplot_cmd,
-      " -iPARDUMP -a1)"))
+      " -iPARDUMP -a1 >> ", shQuote(parhplot_log), " 2>&1)"))
     if (exit_status != 0) {
-      stop("parhplot execution failed with exit status ", exit_status, ". ",
-           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
+      stop("parhplot execution failed with exit status ", exit_status, ".\n",
+           "run_dir: ", run_dir, "\n",
+           "Log tail:\n", .log_tail(parhplot_log),
            call. = FALSE)
     }
   }
 
   if (os == "win") {
     exit_status <- system2(parhplot_path_cmd, args = c("-iPARDUMP", "-a1"),
-                           stdout = FALSE, stderr = FALSE)
+                           stdout = parhplot_log, stderr = parhplot_log)
     if (exit_status != 0) {
-      stop("parhplot execution failed with exit status ", exit_status, ". ",
-           "HYSPLIT may not have produced PARDUMP file in '", run_dir, "'.",
+      stop("parhplot execution failed with exit status ", exit_status, ".\n",
+           "run_dir: ", run_dir, "\n",
+           "Log tail:\n", .log_tail(parhplot_log),
            call. = FALSE)
     }
   }

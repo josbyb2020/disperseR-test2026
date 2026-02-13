@@ -196,9 +196,33 @@ link_all_units <- function(units.run,
     }
   }
 
+  # Collect parallel results, separate successes from errors, report details
+  collect_parallel_results <- function(results, unit_id) {
+    ok <- vapply(results, data.table::is.data.table, logical(1))
+    if (any(!ok)) {
+      error_msgs <- vapply(results[!ok], function(r) {
+        if (inherits(r, "error")) conditionMessage(r)
+        else if (inherits(r, "try-error")) as.character(r)
+        else paste("non-data.table result:", class(r)[1])
+      }, character(1))
+      warning(
+        sum(!ok), " of ", length(results),
+        " parallel workers failed for unit ", unit_id, ":\n",
+        paste("  -", error_msgs, collapse = "\n"),
+        call. = FALSE
+      )
+    }
+    out <- data.table::rbindlist(results[ok])
+    message("Processed unit ", unit_id)
+    if (nrow(out) > 0) {
+      out[, month := as.character(month)]
+    }
+    out
+  }
+
   # Link functions for each spatial type
   zips_link_parallel <- function(unit) {
-    linked_zips <- safe_mclapply(
+    results <- safe_mclapply(
       year.mons,
       disperser_link_zips,
       unit = unit,
@@ -210,26 +234,11 @@ link_all_units <- function(units.run,
       pbl. = pbl_trim_effective,
       return.linked.data. = return.linked.data
     )
-
-    n_total_zips <- length(linked_zips)
-    linked_zips <- Filter(data.table::is.data.table, linked_zips)
-    n_dropped_zips <- n_total_zips - length(linked_zips)
-    if (n_dropped_zips > 0) {
-      warning(n_dropped_zips, " of ", n_total_zips,
-              " parallel workers failed for unit ", unit$ID,
-              ". Results may be incomplete.", call. = FALSE)
-    }
-    linked_zips <- data.table::rbindlist(linked_zips)
-    message(paste("Processed unit", unit$ID))
-
-    if (nrow(linked_zips) > 0) {
-      linked_zips[, month := as.character(month)]
-    }
-    return(linked_zips)
+    collect_parallel_results(results, unit$ID)
   }
 
   counties_link_parallel <- function(unit) {
-    linked_counties <- safe_mclapply(
+    results <- safe_mclapply(
       year.mons,
       disperser_link_counties,
       unit = unit,
@@ -241,26 +250,11 @@ link_all_units <- function(units.run,
       pbl. = pbl_trim_effective,
       return.linked.data. = return.linked.data
     )
-
-    n_total_counties <- length(linked_counties)
-    linked_counties <- Filter(data.table::is.data.table, linked_counties)
-    n_dropped_counties <- n_total_counties - length(linked_counties)
-    if (n_dropped_counties > 0) {
-      warning(n_dropped_counties, " of ", n_total_counties,
-              " parallel workers failed for unit ", unit$ID,
-              ". Results may be incomplete.", call. = FALSE)
-    }
-    linked_counties <- data.table::rbindlist(linked_counties)
-    message(paste("Processed unit", unit$ID))
-
-    if (nrow(linked_counties) > 0) {
-      linked_counties[, month := as.character(month)]
-    }
-    return(linked_counties)
+    collect_parallel_results(results, unit$ID)
   }
 
   grids_link_parallel <- function(unit) {
-    linked_grids <- safe_mclapply(
+    results <- safe_mclapply(
       year.mons,
       disperser_link_grids,
       unit = unit,
@@ -272,22 +266,7 @@ link_all_units <- function(units.run,
       crop.usa = crop.usa,
       return.linked.data. = return.linked.data
     )
-
-    n_total_grids <- length(linked_grids)
-    linked_grids <- Filter(data.table::is.data.table, linked_grids)
-    n_dropped_grids <- n_total_grids - length(linked_grids)
-    if (n_dropped_grids > 0) {
-      warning(n_dropped_grids, " of ", n_total_grids,
-              " parallel workers failed for unit ", unit$ID,
-              ". Results may be incomplete.", call. = FALSE)
-    }
-    linked_grids <- data.table::rbindlist(linked_grids)
-    message(paste("Processed unit", unit$ID))
-
-    if (nrow(linked_grids) > 0) {
-      linked_grids[, month := as.character(month)]
-    }
-    return(linked_grids)
+    collect_parallel_results(results, unit$ID)
   }
 
   # Inform user about parallelization mode

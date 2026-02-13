@@ -233,7 +233,7 @@ plot_impact_weighted <- function(data.linked,
 
     if (!(is.null(graph.dir))) {
       path <- file.path(graph.dir, "plot_impact_weighted_month.pdf")
-      ggplot2::ggsave(path,width = 20,height = 20,units = "cm")
+      ggplot2::ggsave(path, plot = gg, width = 20, height = 20, units = "cm")
     }
 
     return(gg)
@@ -394,7 +394,7 @@ plot_impact_weighted <- function(data.linked,
 
     if (!(is.null(graph.dir))) {
       path <- file.path(graph.dir, "plot_impact_weighted_year.pdf")
-      ggplot2::ggsave(path,width = 20,height = 20,units = "cm")
+      ggplot2::ggsave(path, plot = gg, width = 20, height = 20, units = "cm")
     }
 
     return(gg)

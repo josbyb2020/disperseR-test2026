@@ -156,6 +156,6 @@ plot_impact_unit <- function(data.linked = NULL,
 
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, "plot_impact_unit.pdf")
-    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, plot = gg, width = 20, height = 20, units = "cm")
   }
 }

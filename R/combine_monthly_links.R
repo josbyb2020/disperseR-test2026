@@ -202,10 +202,8 @@ combine_monthly_links <- function(month_YYYYMMs,
   
   rda.filename <- file.path(rdata_dir, filename)
   
-  # Save the list contents (not the list itself) for backward compatibility
-  names.map <- names(monthly_maps)
-  list2env(monthly_maps, envir = environment())
-  save(list = names.map, file = rda.filename, envir = environment())
+  # Save as a single named list (cleaner than spreading into environment)
+  save(monthly_maps, file = rda.filename)
 
   message("Monthly RData file written to ", rda.filename)
   return(monthly_maps)

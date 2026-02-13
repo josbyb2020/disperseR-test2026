@@ -100,10 +100,17 @@ calculate_exposure <- function(year.E,
     if (!file.exists(rda_file)) {
       stop("rda_file does not exist: ", rda_file, call. = FALSE)
     }
-    # Load into a temporary environment to avoid global pollution
+    # Load into a temporary environment to avoid global pollution.
+    # Handles both new format (single 'monthly_maps' list) and legacy
+    # format (many MAP*.YYYY objects spread across the environment).
     load_env <- new.env(parent = emptyenv())
     load(rda_file, envir = load_env)
-    monthly_maps <- as.list(load_env)
+    if (exists("monthly_maps", envir = load_env, inherits = FALSE) &&
+        is.list(get("monthly_maps", envir = load_env))) {
+      monthly_maps <- get("monthly_maps", envir = load_env)
+    } else {
+      monthly_maps <- as.list(load_env)
+    }
     message("Loaded ", length(monthly_maps), " monthly maps from ", basename(rda_file))
   }
   if (!is.list(monthly_maps)) {

@@ -190,7 +190,7 @@ plot_impact_single  <- function(data.linked,
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, paste0( "plot_impact_single_", link.to, '_', map.unitID, '_',
                                          map.month, ".pdf"))
-    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, plot = gg, width = 20, height = 20, units = "cm")
   }
 
   return(gg)

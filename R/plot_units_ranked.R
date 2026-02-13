@@ -12,10 +12,14 @@
 #' @export
 plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
+  # Coerce to data.table so := works regardless of what callers pass
+  data.units <- data.table::as.data.table(data.units)
+  data.ranked <- data.table::as.data.table(data.ranked)
+
   # Filter BOTH datasets by year for consistency
-  data.units <- data.units[data.units$year == year, ]
-  data.ranked <- data.ranked[data.ranked$year == year, ]
-  
+  data.units <- data.units[year == year, ]
+  data.ranked <- data.ranked[year == year, ]
+
   data.units[, uID := as.character(uID)]
   data.ranked[, uID := as.character(uID)]
   unitRanks <- merge(data.ranked, data.units, by = 'uID')
@@ -90,18 +94,25 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
   if (!(is.null(graph.dir))) {
     path <- file.path(graph.dir, "plot_ranking_map.pdf")
-    ggplot2::ggsave(path, width = 20, height = 20, units = "cm")
+    ggplot2::ggsave(path, plot = ggmap, width = 20, height = 20, units = "cm")
   }
+
+  # Pivot exposure + emission columns for faceted bar chart.
+  # SOx may not always be present; fall back to hyads.py.sum only.
+  pivot_cols <- intersect(c("hyads.py.sum", "SOx"), names(unitRanks))
+  if (length(pivot_cols) == 0) {
+    stop("unitRanks must contain at least 'hyads.py.sum' for the bar chart.", call. = FALSE)
+  }
+
+  label_map <- c(hyads.py.sum = "Hyads Exposure", SOx = "SOx emission")
 
   unitRanks <- unitRanks %>%
     tidyr::pivot_longer(
-      cols = c(hyads.py.sum, SOx),
+      cols = dplyr::all_of(pivot_cols),
       names_to = "type",
       values_to = "Measurement"
     ) %>%
-    dplyr::mutate(type = ifelse(type == "hyads.py.sum",
-      "Hyads Exposure",
-      "SOx emission"))
+    dplyr::mutate(type = label_map[type])
 
   ggbar <- ggplot2::ggplot(data=unitRanks, ggplot2::aes(x = as.character(uID), y = Measurement))+
     ggplot2::geom_bar(stat = 'identity',
