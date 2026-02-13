@@ -34,6 +34,7 @@ jobs:
           dependencies: '"hard"'
           extra-packages: |
             any::remotes
+            github::rich-iannone/splitr
 
       - name: Install disperseR from checkout
         run: |
@@ -185,7 +186,7 @@ jobs:
           # TEST 7: Windows-specific utilities
           # ===========================================
           test("cleanup_hysplit_zombies() runs without error", {
-            cleanup_hysplit_zombies(verbose = FALSE)
+            disperseR:::cleanup_hysplit_zombies(verbose = FALSE)
             TRUE
           })
           
@@ -203,7 +204,7 @@ jobs:
           # TEST 9: check_spatial_packages
           # ===========================================
           test("check_spatial_packages() runs", {
-            result <- check_spatial_packages()
+            result <- disperseR:::check_spatial_packages()
             stopifnot(is.list(result) || is.null(result) || isTRUE(result))
           })
           
