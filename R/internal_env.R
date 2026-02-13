@@ -63,7 +63,7 @@
 }
 
 .disperseR_splitr_package <- function() {
-  if (requireNamespace("splitr", quietly = TRUE)) {
+  if (nzchar(system.file(package = "splitr"))) {
     return("splitr")
   }
   NULL

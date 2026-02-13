@@ -1,5 +1,7 @@
 # tests/testthat/test-integration-pipeline.R
 # Minimal integration test exercising multiple pipeline steps end-to-end.
+# Use disperseR::units directly to avoid name collision with units package
+# (sf imports units package, whose units() function shadows the dataset)
 
 test_that("integration: create_dirs + define_inputs produces correct pipeline output", {
   # Use a unique tempdir for this test
@@ -18,8 +20,8 @@ test_that("integration: create_dirs + define_inputs produces correct pipeline ou
   expect_true(dir.exists(dirs$ziplink_dir))
 
   # Step 2: define_inputs() with a small units subset
-  data("units", package = "disperseR")
-  small_units <- units[units$year == 2005, ][1:2]  # 2 units
+  unit_data <- disperseR::units
+  small_units <- unit_data[unit_data$year == 2005, ][1:2]  # 2 units
 
   inputs <- define_inputs(
     units       = small_units,
@@ -124,8 +126,8 @@ test_that("integration: full pipeline from define_inputs through calculate_expos
   dirs <- create_dirs(location = tmp_base)
 
   # Step 2: define_inputs
-  data("units", package = "disperseR")
-  one_unit <- units[units$year == 2005, ][1]
+  unit_data <- disperseR::units
+  one_unit <- unit_data[unit_data$year == 2005, ][1]
 
   inputs <- define_inputs(
     units       = one_unit,
