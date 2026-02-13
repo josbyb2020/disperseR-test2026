@@ -55,6 +55,7 @@ combine_monthly_links <- function(month_YYYYMMs,
 
   # Use a local list to accumulate results (no assign() side effects)
   monthly_maps <- list()
+  skipped_months <- character(0)
 
   for (ym in month_YYYYMMs) {
 
@@ -78,6 +79,7 @@ combine_monthly_links <- function(month_YYYYMMs,
 
     if (length(files.month) == 0) {
       message("No data files for month_YYYYMMs ", ym)
+      skipped_months <- c(skipped_months, ym)
     } else {
       message("Reading and merging month ", month.h, " in year ", year.h)
 
@@ -91,7 +93,7 @@ combine_monthly_links <- function(month_YYYYMMs,
       if (link.to == 'zips') {
         data.h <- lapply(
           seq_along(files.month),
-          disperseR::read_ziplinks_subfun,
+          read_ziplinks_subfun,
           files.month
         )
 
@@ -106,7 +108,7 @@ combine_monthly_links <- function(month_YYYYMMs,
       } else if (link.to == 'grids') {
         data.h <- lapply(
           seq_along(files.month),
-          disperseR::read_gridlinks_subfun,
+          read_gridlinks_subfun,
           files.month
         )
 
@@ -121,7 +123,7 @@ combine_monthly_links <- function(month_YYYYMMs,
       } else if (link.to == 'counties') {
         data.h <- lapply(
           seq_along(files.month),
-          disperseR::read_countylinks_subfun,
+          read_countylinks_subfun,
           files.month
         )
 
@@ -138,6 +140,14 @@ combine_monthly_links <- function(month_YYYYMMs,
       monthly_maps[[name.map]] <- Merged_cast
       rm("MergedDT", "Merged_cast")
     }
+  }
+
+  # Warn if any months were skipped
+
+  if (length(skipped_months) > 0) {
+    attr(monthly_maps, "missing_months") <- skipped_months
+    warning(length(skipped_months), " of ", length(month_YYYYMMs),
+            " requested months had no linked data files.", call. = FALSE)
   }
 
   # Align grid maps on a common (x, y) coordinate union.

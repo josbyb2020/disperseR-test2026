@@ -15,3 +15,4 @@ NULL. Files are written to disk.
 \description{
 Write default HYSPLIT configuration files
 }
+\keyword{internal}

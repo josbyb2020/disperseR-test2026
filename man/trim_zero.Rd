@@ -15,3 +15,4 @@ Trimmed data.table
 \description{
 Trim parcels with height = 0
 }
+\keyword{internal}

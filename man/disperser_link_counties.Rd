@@ -47,3 +47,4 @@ data.table with county links
 \description{
 Link dispersion to counties
 }
+\keyword{internal}

@@ -13,3 +13,4 @@ Invisibly returns list of package status
 Utility function to verify spatial package installation
 and provide migration guidance.
 }
+\keyword{internal}

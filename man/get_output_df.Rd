@@ -10,8 +10,10 @@ get_output_df(model)
 \item{model}{A `traj_model` or `disp_model` list.}
 }
 \value{
-A data.frame containing model output, or `NA` if absent.
+A data.frame containing model output, or an empty data.table with
+  columns (particle_no, lon, lat, height, hour) if absent.
 }
 \description{
 Extract output from a model object
 }
+\keyword{internal}

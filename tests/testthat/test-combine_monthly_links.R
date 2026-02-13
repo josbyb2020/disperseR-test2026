@@ -46,7 +46,7 @@ test_that("disperser_link_grids returns empty data.table when no source files ex
 
   disperseR::create_dirs(location = tmp_loc)
 
-  out <- disperseR::disperser_link_grids(
+  out <- disperseR:::disperser_link_grids(
     month_YYYYMM = "200501",
     unit = data.table::data.table(ID = "7-1"),
     duration.run.hours = 24,

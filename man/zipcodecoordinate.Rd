@@ -3,14 +3,23 @@
 \docType{data}
 \name{zipcodecoordinate}
 \alias{zipcodecoordinate}
-\title{ZIP code coordinate reference}
+\title{ZIP code centroid coordinates}
 \format{
-data.table with ZIP and coordinate columns.
+A \code{data.frame} with 43,191 rows and 4 columns:
+\describe{
+  \item{ZIP}{\code{integer}. Five-digit ZIP code (stored as integer).}
+  \item{City}{\code{factor}. City name associated with the ZIP code.}
+  \item{Latitude}{\code{numeric}. Latitude of the ZIP code centroid in
+    decimal degrees.}
+  \item{Longitude}{\code{numeric}. Longitude of the ZIP code centroid in
+    decimal degrees.}
+}
 }
 \usage{
 zipcodecoordinate
 }
 \description{
-Coordinates for ZIP code centroids used in mapping.
+Geographic coordinates for US ZIP code centroids, used for
+  spatial mapping and linking exposure results to ZIP code locations.
 }
 \keyword{datasets}

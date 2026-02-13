@@ -163,8 +163,8 @@ calculate_exposure <- function(year.E,
   exp_dir <- path.expand(exp_dir)
   dir.create(exp_dir, recursive = TRUE, showWarnings = FALSE)
 
-  #initiate exposure data.table
-  exposures <-  data.table()
+  #initiate list for collecting monthly results (avoids O(n^2) rbind accumulation)
+  monthly_results <- vector("list", 12)
 
   #initiate list of monthly files
   monthly.filelist <- c()
@@ -205,8 +205,6 @@ calculate_exposure <- function(year.E,
       id.v <- c('x', 'y')
 
     month_mapping[is.na(month_mapping)] <- 0
-    names(month_mapping)[names(month_mapping) %ni% 'state_name'] <-
-      gsub('_|-|\\*', '.', names(month_mapping)[names(month_mapping) %ni% 'state_name'])
 
     month_mapping_long <- data.table::melt(
       month_mapping,
@@ -249,14 +247,9 @@ calculate_exposure <- function(year.E,
       # calculate exposure, label year/month
       PP.linkage[, `:=` (Exposure  = pollutant * N)]
 
-      # Append running data frame
-      exposures <- data.table(rbind(exposures,
-                                    PP.linkage[, list(Exposure = sum(Exposure)),
-                                               by = sum.by]))
-
-      # sum over the year so far
-      exposures <- exposures[, list(Exposure = sum(Exposure)),
-                             by = sum.by]
+      # collect monthly aggregate (final merge done after loop)
+      monthly_results[[i]] <- PP.linkage[, list(Exposure = sum(Exposure)),
+                                         by = sum.by]
     } else {
       # define aggregation strings
       if (source.agg == 'total'){
@@ -278,10 +271,10 @@ calculate_exposure <- function(year.E,
         yearmonth = paste0(year.E, formatC(i, width = 2, flag = "0"))
       )]
 
-      # Append running data frame
-      exposures <- data.table(rbind(exposures,
-                                    PP.linkage[, list(hyads = sum(Exposure)),
-                                               by = sum.by]))[hyads > 0]
+      # Aggregate this month's exposure
+      month_exposures <- PP.linkage[, list(hyads = sum(Exposure)),
+                                    by = sum.by]
+      month_exposures <- month_exposures[hyads > 0]
 
       # write to file, add monthly file to list if not empty data.table
       file.mo <- file.path(exp_dir,
@@ -295,20 +288,25 @@ calculate_exposure <- function(year.E,
                            ))
 
       if( link.to == 'zips')
-        exposures <- exposures[ZIP != '   NA']
+        month_exposures <- month_exposures[ZIP != '   NA']
 
-      if (nrow(exposures) != 0) {
-        write.fst(exposures,
+      if (nrow(month_exposures) != 0) {
+        write.fst(month_exposures,
                   path = file.mo)
         monthly.filelist[i] <- file.mo
       }
-      #re-initiate ZIP exposure data.table
-      exposures <- data.table::data.table()
     }
 
   }
 
   if (time.agg == 'year') {
+    # Aggregate all monthly results in one pass (replaces O(n^2) accumulation)
+    exposures <- data.table::rbindlist(
+      Filter(function(x) !is.null(x) && nrow(x) > 0, monthly_results)
+    )
+    if (nrow(exposures) > 0) {
+      exposures <- exposures[, list(Exposure = sum(Exposure)), by = sum.by]
+    }
     setnames(exposures,
              c('Exposure'),
              c('hyads'))

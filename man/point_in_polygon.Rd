@@ -19,3 +19,4 @@ If returnList=FALSE, vector of polygon indices. If TRUE, list.
 \description{
 Modern replacement for sp::over or rgeos::gContains.
 }
+\keyword{internal}

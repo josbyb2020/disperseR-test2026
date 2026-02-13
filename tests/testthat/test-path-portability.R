@@ -57,7 +57,7 @@ test_that("linking helpers reject non-portable unit IDs before IO", {
   unit_bad <- data.table::data.table(ID = "bad/name")
 
   expect_error(
-    disperseR::disperser_link_grids(
+    disperseR:::disperser_link_grids(
       month_YYYYMM = "200506",
       unit = unit_bad,
       pbl. = FALSE

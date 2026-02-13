@@ -17,3 +17,4 @@ Intersection of x and y
 \description{
 Modern replacement for rgeos::gIntersection.
 }
+\keyword{internal}

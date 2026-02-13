@@ -14,15 +14,17 @@ run_disperser_parallel(
   overwrite = FALSE,
   npart = 100,
   mc.cores = getOption("disperseR.mc.cores", 2L),
-  keep.hysplit.files = FALSE
+  keep.hysplit.files = FALSE,
+  binary_path = NULL,
+  parhplot_path = NULL
 )
 }
 \arguments{
 \item{input.refs}{A data.table with columns: ID (character), uID (character),
 Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
 start_hour (numeric), duration_emiss_hours (numeric), duration_run_hours (numeric).
-ID values are used in output filenames and must be filesystem-safe (avoid
-/, backslash, or :*?"<>|).}
+ID values are used in output filenames and must be filesystem-safe across
+platforms (avoid `/`, backslash, or `:*?"<>|`).}
 
 \item{pbl.height}{Monthly mean planetary boundary layer heights}
 
@@ -45,6 +47,10 @@ Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.
 On Windows, a socket cluster is used instead of forking.}
 
 \item{keep.hysplit.files}{Keep HYSPLIT run files? Default FALSE}
+
+\item{binary_path}{Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.}
+
+\item{parhplot_path}{Path to HYSPLIT parhplot binary. If NULL, uses splitr's bundled binary.}
 }
 \value{
 List of results from each dispersion run

@@ -15,3 +15,4 @@ CRS as character string
 \description{
 Modern replacement for sp::proj4string.
 }
+\keyword{internal}

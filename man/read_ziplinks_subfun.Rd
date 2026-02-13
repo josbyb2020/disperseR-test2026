@@ -17,3 +17,4 @@ A data.table of ZIP links for the selected file.
 \description{
 Read linked ZIP data from an .fst file
 }
+\keyword{internal}

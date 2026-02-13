@@ -15,3 +15,4 @@ Numeric vector of areas
 \description{
 Modern replacement for rgeos::gArea.
 }
+\keyword{internal}

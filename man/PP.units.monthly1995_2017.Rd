@@ -3,14 +3,37 @@
 \docType{data}
 \name{PP.units.monthly1995_2017}
 \alias{PP.units.monthly1995_2017}
-\title{Monthly unit emissions (1995-2017)}
+\title{Monthly unit emissions (1995--2017)}
 \format{
-data.table with unit identifiers, year, month, and emissions fields.
+A \code{data.table} with 966,912 rows and 11 columns:
+\describe{
+  \item{FacID}{\code{integer}. EPA facility (plant) identifier.}
+  \item{Unit.ID}{\code{character}. Unit identifier within the facility.}
+  \item{Latitude}{\code{numeric}. Latitude of the facility in decimal
+    degrees.}
+  \item{Longitude}{\code{numeric}. Longitude of the facility in decimal
+    degrees.}
+  \item{year}{\code{integer}. Calendar year of the record.}
+  \item{month}{\code{integer}. Month of the record (1--12).}
+  \item{SO2.tons}{\code{numeric}. Monthly sulfur dioxide emissions in
+    tons.}
+  \item{NOx.tons}{\code{numeric}. Monthly nitrogen oxide emissions in
+    tons.}
+  \item{HeatIn.MMBtu}{\code{numeric}. Monthly heat input in million
+    BTU.}
+  \item{GrossLoad.MWh}{\code{numeric}. Monthly gross electrical load in
+    megawatt-hours.}
+  \item{uID}{\code{character}. Unique unit identifier in dotted format
+    (e.g., \code{"3.1"}), matching the \code{uID} column in
+    \code{\link{units}}.}
+}
 }
 \usage{
 PP.units.monthly1995_2017
 }
 \description{
-Historical monthly emissions data for power plant units.
+Historical monthly emissions data for power plant units
+  reported to the US EPA Clean Air Markets Division. Covers 1995 through
+  2017 at monthly resolution.
 }
 \keyword{datasets}

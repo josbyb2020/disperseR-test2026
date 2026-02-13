@@ -18,7 +18,7 @@ NULL
 #' @param x sf object or terra SpatVector/SpatRaster
 #' @param crs Target CRS (character string, EPSG code, or crs object)
 #' @return Transformed spatial object
-#' @export
+#' @keywords internal
 transform_crs <- function(x, crs) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     return(sf::st_transform(x, crs = crs))
@@ -36,7 +36,7 @@ transform_crs <- function(x, crs) {
 #'
 #' @param x sf object or terra Spat* object
 #' @return CRS as character string
-#' @export
+#' @keywords internal
 get_crs <- function(x) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     crs_obj <- sf::st_crs(x)
@@ -57,7 +57,7 @@ get_crs <- function(x) {
 #' @param dist Buffer distance in CRS units
 #' @param ... Additional arguments passed to st_buffer or buffer
 #' @return Buffered spatial object
-#' @export
+#' @keywords internal
 spatial_buffer <- function(x, dist, ...) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     return(sf::st_buffer(x, dist = dist, ...))
@@ -76,7 +76,7 @@ spatial_buffer <- function(x, dist, ...) {
 #' @param x First sf object or terra SpatVector
 #' @param y Second sf object or terra SpatVector
 #' @return Intersection of x and y
-#' @export
+#' @keywords internal
 spatial_intersect <- function(x, y) {
   if ((inherits(x, "sf") || inherits(x, "sfc")) &&
       (inherits(y, "sf") || inherits(y, "sfc"))) {
@@ -95,7 +95,7 @@ spatial_intersect <- function(x, y) {
 #'
 #' @param x sf object or terra SpatVector
 #' @return Unified spatial object
-#' @export
+#' @keywords internal
 spatial_union <- function(x) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     return(sf::st_union(x))
@@ -113,7 +113,7 @@ spatial_union <- function(x) {
 #'
 #' @param x sf object or terra SpatVector with polygon geometry
 #' @return Numeric vector of areas
-#' @export
+#' @keywords internal
 spatial_area <- function(x) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     areas <- sf::st_area(x)
@@ -132,7 +132,7 @@ spatial_area <- function(x) {
 #'
 #' @param x sf object or terra SpatVector
 #' @return Centroids as sf or SpatVector
-#' @export
+#' @keywords internal
 spatial_centroid <- function(x) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     suppressWarnings(return(sf::st_centroid(x)))
@@ -150,7 +150,7 @@ spatial_centroid <- function(x) {
 #'
 #' @param x sf object or terra SpatVector
 #' @return Matrix of coordinates
-#' @export
+#' @keywords internal
 get_coordinates <- function(x) {
   if (inherits(x, "sf") || inherits(x, "sfc")) {
     return(sf::st_coordinates(x))
@@ -170,7 +170,7 @@ get_coordinates <- function(x) {
 #' @param polygons sf object with polygon geometry
 #' @param returnList If TRUE, return list of polygon indices for each point
 #' @return If returnList=FALSE, vector of polygon indices. If TRUE, list.
-#' @export
+#' @keywords internal
 point_in_polygon <- function(points, polygons, returnList = FALSE) {
   if (!inherits(points, c("sf", "sfc")) || 
       !inherits(polygons, c("sf", "sfc"))) {
@@ -196,7 +196,7 @@ point_in_polygon <- function(points, polygons, returnList = FALSE) {
 #' @param join Function defining spatial relationship (default: st_intersects)
 #' @param ... Additional arguments
 #' @return sf object with joined attributes
-#' @export
+#' @keywords internal
 spatial_join <- function(x, y, join = sf::st_intersects, ...) {
   sf::st_join(x, y, join = join, ...)
 }
@@ -209,7 +209,7 @@ spatial_join <- function(x, y, join = sf::st_intersects, ...) {
 #' @param path Path to shapefile (.shp)
 #' @param ... Additional arguments passed to st_read
 #' @return sf object
-#' @export
+#' @keywords internal
 read_shapefile <- function(path, ...) {
   if (!file.exists(path)) {
     stop("File not found: ", path)
@@ -226,7 +226,7 @@ read_shapefile <- function(path, ...) {
 #' @param path Output path (without extension)
 #' @param ... Additional arguments passed to st_write
 #' @return Path to written file (invisibly)
-#' @export
+#' @keywords internal
 write_shapefile <- function(x, path, ...) {
   if (!inherits(x, "sf")) {
     stop("Input must be an sf object")
@@ -246,7 +246,7 @@ write_shapefile <- function(x, path, ...) {
 #' @description Standard CRS definitions used in disperseR.
 #'
 #' @return Named list of CRS strings
-#' @export
+#' @keywords internal
 get_crs_definitions <- function() {
   list(
     # North American Albers Equal Area Conic (main projection for disperseR)
@@ -272,7 +272,7 @@ get_crs_definitions <- function() {
 #' and provide migration guidance.
 #'
 #' @return Invisibly returns list of package status
-#' @export
+#' @keywords internal
 check_spatial_packages <- function() {
   deprecated <- c("rgdal", "rgeos", "maptools")
   modern <- c("sf", "terra")

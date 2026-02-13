@@ -1,7 +1,7 @@
 # disperseR Linux Testing - Downloads from GitHub
 FROM rocker/r-ver:4.3.2
 
-LABEL description="Cross-platform testing for disperseR v0.2.0 from GitHub fork"
+LABEL description="Cross-platform testing for disperseR v0.2.1 from GitHub fork"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -32,7 +32,7 @@ RUN R -e "install.packages(c('remotes', 'data.table', 'sf', 'terra', 'fst', 'ggp
 # Install splitr from GitHub (provides HYSPLIT binaries)
 RUN R -e "remotes::install_github('rich-iannone/splitr')"
 
-# Install disperseR v0.2.0 from YOUR GitHub fork (NOT the deprecated upstream)
+# Install disperseR v0.2.1 from YOUR GitHub fork (NOT the deprecated upstream)
 RUN R -e "remotes::install_github('josbyb2020/disperseR-test2026')"
 
 # Simple test script

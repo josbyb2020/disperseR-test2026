@@ -15,3 +15,4 @@ Unified spatial object
 \description{
 Modern replacement for rgeos::gUnion.
 }
+\keyword{internal}

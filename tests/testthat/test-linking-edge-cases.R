@@ -12,7 +12,7 @@ test_that("trim_zero trims from earliest zero-height hour", {
     hour = c(1, 2, 3, 4, 1, 2, 3)
   )
   
-  out <- disperseR::trim_zero(d)
+  out <- disperseR:::trim_zero(d)
   
   # Particle 1 zeros at hour 3 -> keep hours 1-2 only
   expect_equal(out[particle_no == 1, max(hour)], 2)
@@ -45,7 +45,7 @@ test_that("link_to returns correctly shaped empty outputs when PBL normalization
   terra::values(pbl) <- NA_real_
   names(pbl) <- "X2005.01.01"
   
-  out_grids <- disperseR::link_to(
+  out_grids <- disperseR:::link_to(
     d = d,
     link.to = "grids",
     p4string = p4,
@@ -56,7 +56,7 @@ test_that("link_to returns correctly shaped empty outputs when PBL normalization
   expect_equal(names(out_grids), c("x", "y", "N"))
   expect_equal(nrow(out_grids), 0)
   
-  out_counties <- disperseR::link_to(
+  out_counties <- disperseR:::link_to(
     d = d,
     link.to = "counties",
     p4string = p4,
@@ -70,7 +70,7 @@ test_that("link_to returns correctly shaped empty outputs when PBL normalization
   )
   expect_equal(nrow(out_counties), 0)
   
-  out_zips <- disperseR::link_to(
+  out_zips <- disperseR:::link_to(
     d = d,
     link.to = "zips",
     p4string = p4,

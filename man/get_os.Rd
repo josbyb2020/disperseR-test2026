@@ -12,3 +12,4 @@ One of "win", "mac", or "unix".
 \description{
 Detect the operating system
 }
+\keyword{internal}

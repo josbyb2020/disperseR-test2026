@@ -15,3 +15,4 @@ Matrix of coordinates
 \description{
 Modern replacement for sp::coordinates.
 }
+\keyword{internal}

@@ -45,3 +45,4 @@ data.table with linked concentrations
 Core linking function that converts parcel locations to 
 spatial concentrations and links to ZIPs, counties, or grids.
 }
+\keyword{internal}

@@ -55,10 +55,12 @@ file <- file.path( directory, "2014fd_cb6_14j", "inputs", "ptegu",
 d_nei <- data.table::fread(file, skip = 18)
 ```
 
-The other data set is hosted on "https://dataverse.harvard.edu/api/access/datafile/3086908?gbrecs=true". We specify this location and download it the same way. 
+The other data set is hosted on the
+[Harvard Dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/M3D2NR).
+We specify the direct-access URL and download it the same way.
 
 ```{r, eval = FALSE, purl = FALSE}
-url <- "https://dataverse.harvard.edu/api/access/datafile/3086908?gbrecs=true"
+url <- "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/M3D2NR/QKLA2U"
   
 directory <- proc_dir
   
@@ -253,8 +255,8 @@ get_units_data <- function(year, d_ampd) {
     NOx = NOx..tons.,
     Height = conv_unit(stkhgt, "ft", "m"),
     Diam = conv_unit(stkdiam, "ft", "m"),
-    Velocity = conv_unit(stktemp, "ft_per_sec", "m_per_sec"),
-    Temp = conv_unit(stkvel, "F", "K")
+    Velocity = conv_unit(stkvel, "ft_per_sec", "m_per_sec"),
+    Temp = conv_unit(stktemp, "F", "K")
     )]
 
   ampd <- ampd[, inputed := 0]

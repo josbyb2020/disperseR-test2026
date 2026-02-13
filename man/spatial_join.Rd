@@ -21,3 +21,4 @@ sf object with joined attributes
 \description{
 Modern replacement for sp::over.
 }
+\keyword{internal}

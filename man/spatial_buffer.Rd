@@ -19,3 +19,4 @@ Buffered spatial object
 \description{
 Modern replacement for rgeos::gBuffer.
 }
+\keyword{internal}

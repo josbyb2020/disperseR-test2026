@@ -101,6 +101,18 @@ link_all_units <- function(units.run,
     pbl_trim_effective <- isTRUE(pbl_trim)
   }
 
+  # Rotate PBL raster once if needed (avoid repeating per-unit).
+  # NetCDF PBL files often use 0-360 longitude; disperseR particle data
+  # uses -180..180, so rotate when the raster's western edge is near 0.
+  if (pbl_trim_effective && !is.null(pbl.height)) {
+    if (terra::is.lonlat(pbl.height)) {
+      e_xmin <- terra::ext(pbl.height)[1]
+      if (e_xmin >= 0 && e_xmin < 5) {
+        pbl.height <- terra::rotate(pbl.height)
+      }
+    }
+  }
+
   # If year.mons not provided, derive from start/end dates.
   if (is.null(year.mons)) {
     sd <- as.Date(start.date)
@@ -188,7 +200,7 @@ link_all_units <- function(units.run,
   zips_link_parallel <- function(unit) {
     linked_zips <- safe_mclapply(
       year.mons,
-      disperseR::disperser_link_zips,
+      disperser_link_zips,
       unit = unit,
       pbl.height = pbl.height,
       crosswalk. = crosswalk.,
@@ -199,7 +211,15 @@ link_all_units <- function(units.run,
       return.linked.data. = return.linked.data
     )
 
-    linked_zips <- data.table::rbindlist(Filter(data.table::is.data.table, linked_zips))
+    n_total_zips <- length(linked_zips)
+    linked_zips <- Filter(data.table::is.data.table, linked_zips)
+    n_dropped_zips <- n_total_zips - length(linked_zips)
+    if (n_dropped_zips > 0) {
+      warning(n_dropped_zips, " of ", n_total_zips,
+              " parallel workers failed for unit ", unit$ID,
+              ". Results may be incomplete.", call. = FALSE)
+    }
+    linked_zips <- data.table::rbindlist(linked_zips)
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_zips) > 0) {
@@ -211,7 +231,7 @@ link_all_units <- function(units.run,
   counties_link_parallel <- function(unit) {
     linked_counties <- safe_mclapply(
       year.mons,
-      disperseR::disperser_link_counties,
+      disperser_link_counties,
       unit = unit,
       pbl.height = pbl.height,
       counties = counties.,
@@ -222,7 +242,15 @@ link_all_units <- function(units.run,
       return.linked.data. = return.linked.data
     )
 
-    linked_counties <- data.table::rbindlist(Filter(data.table::is.data.table, linked_counties))
+    n_total_counties <- length(linked_counties)
+    linked_counties <- Filter(data.table::is.data.table, linked_counties)
+    n_dropped_counties <- n_total_counties - length(linked_counties)
+    if (n_dropped_counties > 0) {
+      warning(n_dropped_counties, " of ", n_total_counties,
+              " parallel workers failed for unit ", unit$ID,
+              ". Results may be incomplete.", call. = FALSE)
+    }
+    linked_counties <- data.table::rbindlist(linked_counties)
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_counties) > 0) {
@@ -234,7 +262,7 @@ link_all_units <- function(units.run,
   grids_link_parallel <- function(unit) {
     linked_grids <- safe_mclapply(
       year.mons,
-      disperseR::disperser_link_grids,
+      disperser_link_grids,
       unit = unit,
       pbl.height = pbl.height,
       duration.run.hours = duration.run.hours,
@@ -245,7 +273,15 @@ link_all_units <- function(units.run,
       return.linked.data. = return.linked.data
     )
 
-    linked_grids <- data.table::rbindlist(Filter(data.table::is.data.table, linked_grids))
+    n_total_grids <- length(linked_grids)
+    linked_grids <- Filter(data.table::is.data.table, linked_grids)
+    n_dropped_grids <- n_total_grids - length(linked_grids)
+    if (n_dropped_grids > 0) {
+      warning(n_dropped_grids, " of ", n_total_grids,
+              " parallel workers failed for unit ", unit$ID,
+              ". Results may be incomplete.", call. = FALSE)
+    }
+    linked_grids <- data.table::rbindlist(linked_grids)
     message(paste("Processed unit", unit$ID))
 
     if (nrow(linked_grids) > 0) {

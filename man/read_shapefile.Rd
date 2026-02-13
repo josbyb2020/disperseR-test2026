@@ -17,3 +17,4 @@ sf object
 \description{
 Modern replacement for rgdal::readOGR and raster::shapefile.
 }
+\keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_impact_weighted.R
 \name{plot_impact_weighted}
 \alias{plot_impact_weighted}
-\title{\code{plot_impact_weighted}}
+\title{Plot population-weighted exposure impact}
 \usage{
 plot_impact_weighted(
   data.linked,

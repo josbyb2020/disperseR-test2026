@@ -7,7 +7,7 @@
 #' @param file Destination file path.
 #' @param dir Directory for unzip output (if applicable).
 #' @return Invisibly returns TRUE on success.
-#' @export
+#' @keywords internal
 #'
 # Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {

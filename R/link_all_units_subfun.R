@@ -29,7 +29,7 @@ NULL
 #' @param crop.usa Crop to continental USA
 #'
 #' @return data.table with linked concentrations
-#' @export
+#' @keywords internal
 link_to <- function(d,
                     link.to = 'zips',
                     p4string,
@@ -210,7 +210,7 @@ link_to <- function(d,
 #'
 #' @param Min Input data.table
 #' @return Trimmed data.table
-#' @export
+#' @keywords internal
 trim_zero <- function(Min) {
   M <- data.table::as.data.table(data.table::copy(Min))
   if (nrow(M) == 0) {
@@ -236,7 +236,7 @@ trim_zero <- function(Min) {
 #' @param Min Input data.table with lon, lat, height, Pdate columns
 #' @param rasterin PBL height SpatRaster
 #' @return Trimmed data.table
-#' @export
+#' @keywords internal
 #' @importFrom terra cellFromXY
 #' @importFrom lubridate month year
 trim_pbl <- function(Min, rasterin) {
@@ -304,7 +304,7 @@ trim_pbl <- function(Min, rasterin) {
 #' @param crop.usa Crop to USA
 #' @param return.linked.data. Return linked data
 #' @return data.table with grid links
-#' @export
+#' @keywords internal
 #' @importFrom fst read.fst write.fst
 #' @importFrom lubridate month year
 disperser_link_grids <- function(month_YYYYMM = NULL,
@@ -419,22 +419,15 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl.) {
-      # Only rotate if raster is in lon/lat and needs it
-      if (terra::is.lonlat(pbl.height)) {
-        d_xmin <- min(d$lon)
-        e_xmin <- terra::ext(pbl.height)[1]
-        if (d_xmin < e_xmin - 5)
-          pbl.height <- terra::rotate(pbl.height)
-      }
       # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {
       d_trim <- d
     }
-    
+
     p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-    
+
     disp_df_link <- link_to(
       d = d_trim,
       link.to = 'grids',
@@ -444,7 +437,7 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       pbl. = pbl.,
       crop.usa = crop.usa
     )
-    
+
     message(Sys.time(), " Grids linked")
     
     out <- disp_df_link
@@ -476,7 +469,7 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
 #' @inheritParams disperser_link_grids
 #' @param counties County sf object
 #' @return data.table with county links
-#' @export
+#' @keywords internal
 disperser_link_counties <- function(month_YYYYMM = NULL,
                                      start.date = NULL,
                                      end.date = NULL,
@@ -604,22 +597,15 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl.) {
-      # Only rotate if raster is in lon/lat and needs it
-      if (terra::is.lonlat(pbl.height)) {
-        d_xmin <- min(d$lon)
-        e_xmin <- terra::ext(pbl.height)[1]
-        if (d_xmin < e_xmin - 5)
-          pbl.height <- terra::rotate(pbl.height)
-      }
       # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {
       d_trim <- d
     }
-    
+
     p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-    
+
     disp_df_link <- link_to(
       d = d_trim,
       link.to = 'counties',
@@ -629,7 +615,7 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       res.link. = res.link.,
       pbl. = pbl.
     )
-    
+
     message(Sys.time(), " Counties linked")
     
     out <- data.table::as.data.table(disp_df_link)
@@ -669,7 +655,7 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
 #' @inheritParams disperser_link_grids
 #' @param crosswalk. Crosswalk data.table
 #' @return data.table with ZIP code links
-#' @export
+#' @keywords internal
 disperser_link_zips <- function(month_YYYYMM = NULL,
                                  start.date = NULL,
                                  end.date = NULL,
@@ -790,23 +776,15 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
     }
     if (pbl. && !is.null(pbl.height)) {
-      # Only rotate if raster is in lon/lat and needs it
-      if (terra::is.lonlat(pbl.height)) {
-        d_xmin <- min(d$lon)
-        e_xmin <- terra::ext(pbl.height)[1]
-        if (d_xmin < e_xmin - 5) {
-          pbl.height <- terra::rotate(pbl.height)
-        }
-      }
       # trim_pbl handles coordinate projection internally
       d_trim <- trim_pbl(d, rasterin = pbl.height)
       message(Sys.time(), " PBLs trimmed")
     } else {
       d_trim <- d
     }
-    
+
     p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
-    
+
     disp_df_link <- link_to(
       d = d_trim,
       link.to = 'zips',
@@ -817,7 +795,7 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       res.link. = res.link.,
       pbl. = pbl.
     )
-    
+
     message(Sys.time(), " ZIPs linked")
     
     out <- disp_df_link[, .(ZIP, N)]

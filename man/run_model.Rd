@@ -4,7 +4,13 @@
 \alias{run_model}
 \title{Run HYSPLIT trajectory or dispersion model}
 \usage{
-run_model(model, npart = 2500, run.dir)
+run_model(
+  model,
+  npart = 2500,
+  run.dir,
+  binary_path = NULL,
+  parhplot_path = NULL
+)
 }
 \arguments{
 \item{model}{A model object created by [create_disp_model()] or similar.
@@ -14,6 +20,10 @@ Must inherit from either "traj_model" or "disp_model".}
 
 \item{run.dir}{Character. Working directory for HYSPLIT output files.
 Required for dispersion models.}
+
+\item{binary_path}{Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.}
+
+\item{parhplot_path}{Path to HYSPLIT parhplot binary. If NULL, uses splitr's bundled binary.}
 }
 \value{
 The input model object with results attached:

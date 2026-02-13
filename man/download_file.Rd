@@ -20,3 +20,4 @@ Invisibly returns TRUE on success.
 Downloads a file and checks that it exists and is non-empty.
 Zip files are unzipped to `dir`.
 }
+\keyword{internal}

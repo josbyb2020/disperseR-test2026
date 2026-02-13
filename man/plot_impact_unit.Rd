@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_impact_unit.R
 \name{plot_impact_unit}
 \alias{plot_impact_unit}
-\title{create a set of directories to run disperseR}
+\title{Plot exposure impacts from multiple units}
 \usage{
 plot_impact_unit(
   data.linked = NULL,
@@ -36,11 +36,13 @@ plot_impact_unit(
 \item{graph.dir}{location to save output.}
 }
 \value{
-Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+A \code{gtable} object (from \code{gridExtra::grid.arrange})
+  containing a time-series panel and a map panel. If \code{graph.dir} is
+  supplied, the figure is also saved as a PDF.
 }
 \description{
-`plot_impact_unit()` produces two graphs. One is a map showing where the units are and showing their rank and the other one contains bar plots.
-}
-\details{
-\code{plot_impact_unit}
+`plot_impact_unit()` produces a two-panel figure. The first
+  panel is a time-series line plot of HyADS exposure by unit for each
+  selected ZIP code. The second panel is a map showing the locations of the
+  selected ZIP codes overlaid on US state boundaries.
 }

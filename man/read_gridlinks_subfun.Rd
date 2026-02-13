@@ -17,3 +17,4 @@ A data.table of grid links for the selected file.
 \description{
 Read linked grid data from an .fst file
 }
+\keyword{internal}

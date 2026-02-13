@@ -28,11 +28,13 @@ In case you have not yet created your project folder use the following command.
 disperseR::create_dirs()
 ```
 
-We first download the data from [Open Data Soft](https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/table/)
+We first download the data. The original source was Open Data Soft's
+US ZIP code latitude/longitude dataset. The data is now bundled in the package
+as `disperseR::zipcodecoordinate`, so manual download is optional.
 
 ```{r, eval = FALSE, purl = FALSE}
 filename <- file.path(main_dir, 'zipcodecoordinate.csv')
-url <- 'https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/download/?format=csv&timezone=Europe/Berlin&use_labels_for_header=true'
+url <- 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/us-zip-code-latitude-and-longitude/exports/csv'
 
 if(!file.exists(filename)){
     download.file(url = url, destfile = filename)

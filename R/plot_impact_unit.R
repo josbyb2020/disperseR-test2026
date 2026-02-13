@@ -1,9 +1,9 @@
-#' create a set of directories to run disperseR
+#' Plot exposure impacts from multiple units
 #'
-#' \code{plot_impact_unit}
-#'
-#' @description `plot_impact_unit()` produces two graphs. One is a map showing where the units are and showing their rank and the other one contains bar plots.
-#'
+#' @description `plot_impact_unit()` produces a two-panel figure. The first
+#'   panel is a time-series line plot of HyADS exposure by unit for each
+#'   selected ZIP code. The second panel is a map showing the locations of the
+#'   selected ZIP codes overlaid on US state boundaries.
 #'
 #' @param data.linked data for plotting as output from disperseR::calculate_exposure()
 #'
@@ -23,8 +23,9 @@
 #'
 #' @param graph.dir location to save output.
 #'
-#'
-#' @return Creates directories (does not overwrite if existing). Outputs string variables with paths to the environment.
+#' @return A \code{gtable} object (from \code{gridExtra::grid.arrange})
+#'   containing a time-series panel and a map panel. If \code{graph.dir} is
+#'   supplied, the figure is also saved as a PDF.
 
 
 #' @export plot_impact_unit

@@ -3,15 +3,34 @@
 \docType{data}
 \name{units}
 \alias{units}
-\title{Power plant unit metadata}
+\title{Power plant unit metadata (1995--2018)}
 \format{
-data.table with unit identifiers, location, and year fields.
+A \code{data.table} with 25,089 rows and 10 columns:
+\describe{
+  \item{ID}{\code{character}. Unique unit identifier in
+    \code{"FacilityID-UnitID"} format (e.g., \code{"7-1"}).}
+  \item{Latitude}{\code{numeric}. Latitude of the unit in decimal degrees
+    (NAD83).}
+  \item{Longitude}{\code{numeric}. Longitude of the unit in decimal degrees
+    (NAD83).}
+  \item{SOx}{\code{numeric}. Annual sulfur oxide emissions in tons.}
+  \item{CO2}{\code{numeric}. Annual carbon dioxide emissions in tons.}
+  \item{NOx}{\code{numeric}. Annual nitrogen oxide emissions in tons.}
+  \item{Height}{\code{numeric}. Stack height in meters.}
+  \item{inputed}{\code{numeric}. Flag indicating whether emissions were
+    imputed (\code{1}) or observed (\code{0}).}
+  \item{year}{\code{integer}. Calendar year of the record (1995--2018).}
+  \item{uID}{\code{character}. Unique unit identifier in dotted format
+    (e.g., \code{"7.1"}), used as a key in disperseR internals.}
+}
 }
 \usage{
 units
 }
 \description{
-Unit-level metadata used in dispersion runs, including unit IDs
-and coordinates.
+Unit-level metadata for coal-fired power plant units used in
+  HyADS dispersion runs. Contains annual records of unit identifiers,
+  geographic coordinates, stack height, and annual emissions of SOx, CO2,
+  and NOx.
 }
 \keyword{datasets}

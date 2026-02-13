@@ -32,7 +32,7 @@ NULL
 #' cleanup_hysplit_zombies()
 #' }
 #'
-#' @export
+#' @keywords internal
 cleanup_hysplit_zombies <- function(verbose = TRUE) {
   killed <- 0L
   

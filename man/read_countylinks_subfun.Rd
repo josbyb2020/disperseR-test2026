@@ -17,3 +17,4 @@ A data.table of county links for the selected file.
 \description{
 Read linked county data from an .fst file
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ Character vector of listing lines.
 \description{
 Read a HYSPLIT listing file
 }
+\keyword{internal}

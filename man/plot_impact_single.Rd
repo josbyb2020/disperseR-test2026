@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_impact_single.R
 \name{plot_impact_single}
 \alias{plot_impact_single}
-\title{\code{plot_impact_single}}
+\title{Plot exposure impact from a single unit}
 \usage{
 plot_impact_single(
   data.linked,

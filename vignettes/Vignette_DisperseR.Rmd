@@ -41,6 +41,14 @@ use by disperseR functions. Run this at the start of each session:
  
 ```{r, purl = FALSE}
 dirs <- disperseR::create_dirs(location = "~/disperseR_project")
+
+# Extract directory paths for use throughout this vignette
+proc_dir   <- dirs$proc_dir
+hysp_dir   <- dirs$hysp_dir
+meteo_dir  <- dirs$meteo_dir
+graph_dir  <- dirs$graph_dir
+rdata_dir  <- dirs$rdata_dir
+exp_dir    <- dirs$exp_dir
 ```
 
 Windows note: use a short path (example `C:/disperseR_project`) to avoid
@@ -63,22 +71,28 @@ Existing data is preserved; only missing directories are created.
 
 `get_data()` downloads required datasets. Meteorology files are ~120 MB each.
 
-For January-March 2005:
-
+For our November 2005 -- February 2006 analysis window, we download meteorology
+one extra month on each side (October 2005 -- March 2006) to cover the 120-hour
+(5-day) forward trajectories that may extend beyond the analysis months:
 
 ```{r, purl = FALSE}
-disperseR::get_data(data = "all", 
-  start.year = "2005", 
-  start.month = "11", 
-  end.year = "2006", 
-  end.month = "02")
+disperseR::get_data(data = "all",
+  start.year = "2005",
+  start.month = "10",
+  end.year = "2006",
+  end.month = "03")
+
+# Load ancillary data objects into the workspace
+pblheight    <- disperseR::get_data("pblheight")
+crosswalk    <- disperseR::crosswalk
+zcta_dataset <- disperseR::get_data("zcta_dataset")
 ```
 
 ### The units data 
 
 The units data should be loaded separately so that you are able to select which units to process. 
 
-This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://ampd.epa.gov/ampd/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. Again, if you would like to know how these data were prepared please see the `Vignette_Units_Preparation` vignette.
+This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://campd.epa.gov/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. Again, if you would like to know how these data were prepared please see the `Vignette_Units_Preparation` vignette.
 
 You can visualize the data like this in RStudio:
 
@@ -175,13 +189,13 @@ With the `link_all_units()` function, users can link all air parcels to three sp
 
 `link_all_units()` can be set to parallelize the runs by splitting different months on different cores, but you can make it serial just by setting the `mc.cores = 1`. The result of `link_all_units()` is a data.table of ZIP codes, counties, or grids and relative contributions `N`, and an identical `.csv` file is saved to the folder with a path specified by the `ziplink_dir` variable. `N` is not weighted by the `unit`'s emissions. 
 
-Below we present how to use `link_all_units()` for chosen units. First, we create an argument (called `yearmons` here) denoting the year and month combinations for which we would like to calculate unweighted exposure. Here we only choose July 2005 through June 2006 to cover all of the example runs specified above, and we create the variable using the `get_yearmon()` function.
+Below we present how to use `link_all_units()` for chosen units. First, we create an argument (called `yearmons` here) denoting the year and month combinations for which we would like to calculate unweighted exposure. Here we choose November 2005 through February 2006 to match the analysis period defined above, and we create the variable using the `get_yearmon()` function.
 
 ```{r, purl = FALSE}
-yearmons <- disperseR::get_yearmon(start.year = "2005", 
-  start.month = "07", 
-  end.year = "2006", 
-  end.month = "06")
+yearmons <- disperseR::get_yearmon(start.year = "2005",
+  start.month = "11",
+  end.year = "2006",
+  end.month = "02")
 ```
 
 Let's look again at our `unitsrun` data set. 
@@ -194,7 +208,12 @@ We only have three units in our `unitsrun` data set. "3136-1", "3136-2" and "314
 
 If you want to run the function for a specific start and end date you can specify the `start.date` and the `end.date` arguments. For example, `start.date="2005-01-02"` for 2 January 2005. These arguments are set to `NULL` by default and the function computes the start and the end dates using the `year.mons` provided. 
 
-`pbl.height = pblheight` by default but you can change it. The same applies to `crosswalk. = crosswalk` (`crosswalk.` is only required for linking to ZIP codes). `counties.` is required for linking to counties, and is set as `counties. = USAboundaries::us_counties( )` by default. If you'd only like to save time and only link to ZIP codes or counties in a subset of the country, provide `crosswalk.` or `counties.` that correspond to the domain of interest.
+`pbl.height = pblheight` by default but you can change it. The same applies to `crosswalk. = crosswalk` (`crosswalk.` is only required for linking to ZIP codes). `counties.` is required for linking to counties; you can build a county `sf` object from the `maps` package (which is already a dependency) as shown below. If you'd only like to save time and only link to ZIP codes or counties in a subset of the country, provide `crosswalk.` or `counties.` that correspond to the domain of interest.
+
+```{r, purl = FALSE}
+# Build a US counties sf object from the maps package
+us_counties_sf <- sf::st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
+```
 
 Changing `duration.run.hours` to values less than that applied in `run_disperser_parallel()` allows the exploration of air parcel locations in closer time proximity to each emissions event.
 
@@ -219,7 +238,7 @@ linked_counties <- disperseR::link_all_units(
   mc.cores = parallel::detectCores(),
   year.mons = yearmons,
   pbl.height = pblheight,
-  counties. = USAboundaries::us_counties( ),
+  counties. = us_counties_sf,
   crosswalk. = NULL,
   duration.run.hours = 20,
   overwrite = FALSE)
@@ -270,7 +289,7 @@ impact_table_county_single <- disperseR::create_impact_table_single(
   data.linked=linked_counties,
   link.to = 'counties',
   data.units = unitsrun,
-  counties. = USAboundaries::us_counties( ),
+  counties. = us_counties_sf,
   map.unitID = "3136-1",
   map.month = "200511",
   metric = 'N')
@@ -294,7 +313,7 @@ link_plot_zips <- disperseR::plot_impact_single(
   data.linked = linked_zips,
   link.to = 'zips',
   map.unitID = "3136-1",
-  map.month = "20061",
+  map.month = "200601",
   data.units = unitsrun,
   zcta.dataset = zcta_dataset,
   metric = 'N',
@@ -308,7 +327,7 @@ link_plot_grids <- disperseR::plot_impact_single(
   data.linked = linked_grids,
   link.to = 'grids',
   map.unitID = "3136-1",
-  map.month = "20061",
+  map.month = "200601",
   data.units = unitsrun,
   metric = 'N',
   graph.dir = graph_dir,
@@ -321,8 +340,8 @@ link_plot_counties <- disperseR::plot_impact_single(
   data.linked = linked_counties,
   link.to = 'counties',
   map.unitID = "3136-1",
-  map.month = "20061",
-  counties. = USAboundaries::us_counties( ),
+  map.month = "200601",
+  counties. = us_counties_sf,
   data.units = unitsrun,
   metric = 'N',
   graph.dir = graph_dir,
@@ -437,7 +456,7 @@ counties_exp_ann_plot <- disperseR::plot_impact_weighted(
   data.linked = exp_ann_unit_counties,
   data.units = unitsrun,
   link.to = 'counties',
-  counties. = USAboundaries::us_counties( ),
+  counties. = us_counties_sf,
   time.agg = 'year',
   metric = 'hyads',
   legend.name = 'Aggregate HyADS exposure',
@@ -521,7 +540,7 @@ zip_exp_mon_plot <- disperseR::plot_impact_weighted(
   time.agg = 'month',
   map.month = "200511", 
   metric = 'hyads',
-  legend.name = 'Montly HyADS exposure', 
+  legend.name = 'Monthly HyADS exposure', 
   zoom = T, # TRUE by default
   graph.dir = graph_dir)
 

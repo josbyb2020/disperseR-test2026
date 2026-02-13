@@ -34,7 +34,7 @@ disperseR::create_dirs()
 
 ### The crosswalk
 
-ZIP code linkage procedure requires a ZCTA-to-ZIP code crosswalk file. ZCTAs are not exact geographic matches to ZIP codes, and multiple groups compile and maintain Crosswalk files. We used the Crosswalk maintained by [UDS Mapper](https://www.udsmapper.org/zcta-crosswalk.cfm) and preprocessed it also including information about the population size. While not necessary for the HYSPLIT model or processing of its outputs, population-weighted exposure metrics allow for direct comparisons between power plants. If you would like to know more details about how this crosswalk was prepared, see the `Vignette_Crosswalk_Preparation` vignette.
+ZIP code linkage procedure requires a ZCTA-to-ZIP code crosswalk file. ZCTAs are not exact geographic matches to ZIP codes, and multiple groups compile and maintain Crosswalk files. We used the Crosswalk maintained by the [UDS Mapper project](https://github.com/chris-prener/uds-mapper) and preprocessed it also including information about the population size. While not necessary for the HYSPLIT model or processing of its outputs, population-weighted exposure metrics allow for direct comparisons between power plants. If you would like to know more details about how this crosswalk was prepared, see the `Vignette_Crosswalk_Preparation` vignette.
 
 Let's load the crosswalk file and assign it to `crosswalk`
 
@@ -66,7 +66,7 @@ head(PP.units.monthly1995_2017)
 
 ### ZIP code coordinates 
 
-The `disperseR` package contains a data set with coordinates of ZIP codes. This might be useful for plotting, but it is not necessary as it will be used automatically by our plotting functions where required. We are using data from: [Open Data Soft](https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/table/)
+The `disperseR` package contains a data set with coordinates of ZIP codes. This might be useful for plotting, but it is not necessary as it will be used automatically by our plotting functions where required. We are using data from Open Data Soft (ZIP code latitude/longitude dataset, bundled in the package).
 If needed however, you can access it as follows: 
 
 ```{r, purl = FALSE}
@@ -108,7 +108,7 @@ pblheight
 
 ### The units data 
 
-This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://ampd.epa.gov/ampd/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. See the `Vignette_Units_Preparation` vignette for details on how these data were prepared.
+This package contains annual emissions and stack height data from [EPA's Air Markets Program Data](https://campd.epa.gov/) and the [Energy Information Agency](https://www.eia.gov/electricity/data/eia860/) for years 2003-2012. See the `Vignette_Units_Preparation` vignette for details on how these data were prepared.
 
 Now, we need to select the power plants whose impact we will analyse. In this case, we'll use the two units in 2005 with the greatest SOx emissions, and two with the greatest SOx emissions in 2006. You are free to choose your own units. You can see that unit "3136-1" is on top of the ranking in both years. 
 

@@ -47,3 +47,4 @@ data.table with ZIP code links
 \description{
 Link dispersion to ZIP codes
 }
+\keyword{internal}

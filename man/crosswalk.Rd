@@ -3,15 +3,29 @@
 \docType{data}
 \name{crosswalk}
 \alias{crosswalk}
-\title{Crosswalk data for ZIP and census geographies}
+\title{ZCTA-to-ZIP crosswalk with population estimates}
 \format{
-data.table with ZIP identifiers and associated geography fields.
+A \code{data.table} with 41,151 rows and 6 columns:
+\describe{
+  \item{ZIP}{\code{character}. Five-digit ZIP code.}
+  \item{CITY}{\code{character}. City name associated with the ZIP code.}
+  \item{ZCTA}{\code{character}. Five-digit ZIP Code Tabulation Area
+    identifier that the ZIP code maps to.}
+  \item{STATE}{\code{character}. Two-letter US state or territory
+    abbreviation (e.g., \code{"NY"}, \code{"PR"}).}
+  \item{TOTALESTIMATE}{\code{integer}. Total population estimate for the
+    ZCTA from the American Community Survey.}
+  \item{MARGINOFERROR}{\code{factor}. Margin of error for the population
+    estimate. Values of \code{"*****"} indicate that the estimate is not
+    applicable or suppressed.}
+}
 }
 \usage{
 crosswalk
 }
 \description{
-Crosswalk table used to link ZIP codes to counties and other
-census geographies.
+Crosswalk table used to link ZIP codes to ZIP Code Tabulation
+  Areas (ZCTAs) and other census geographies. Includes city, state, and
+  population estimates.
 }
 \keyword{datasets}

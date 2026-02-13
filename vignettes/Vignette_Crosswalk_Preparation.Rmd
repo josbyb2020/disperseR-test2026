@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this vignette, we show how we prepared the crosswalk dataset that is attached to the `hyspdisp` package. In case you want to use a different crosswalk you can follow some of these preprocessing steps. 
+In this vignette, we show how we prepared the crosswalk dataset that is attached to the `disperseR` package. In case you want to use a different crosswalk you can follow some of these preprocessing steps. 
 
 First, we load the packages that we will need for completing this task. 
 
@@ -31,13 +31,14 @@ In case you have not yet created your project folder use the following command.
 disperseR::create_dirs()
 ```
 
-If the file does not exist, download it from [USDMAPPER](https://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx).
-Then, open it. 
+If the file does not exist, download it from the
+[UDS Mapper archive](https://github.com/chris-prener/uds-mapper).
+Then, open it.
 
 ```{r,  eval = FALSE, purl = FALSE}
 filename<- file.path(main_dir, "crosswalk.xlsx")
 if(!file.exists(filename)){
-  download.file("https://www.udsmapper.org/docs/zip_to_zcta_2017.xlsx", filename)
+  download.file("https://raw.githubusercontent.com/chris-prener/uds-mapper/main/data/zip_to_zcta_2017.xlsx", filename)
 }
 crosswalk <- readxl::read_excel(filename, skip = 0)
 ```

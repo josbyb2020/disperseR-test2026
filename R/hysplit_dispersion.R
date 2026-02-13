@@ -164,7 +164,7 @@ hysplit_dispersion <- function(lat = 49.263,
   # write default versions of those config files
   if (!("SETUP.CFG" %in% list.files(run_dir)) ||
       !("ASCDATA.CFG" %in% list.files(run_dir))) {
-    disperseR::hysplit_config_init(run_dir)
+    hysplit_config_init(run_dir)
   }
 
   # Set number of particles to 1 in the SETUP.CFG file
@@ -377,7 +377,7 @@ hysplit_dispersion <- function(lat = 49.263,
     nc = 2)),
     nm = c("file", "available"))
 
-  if (any(c("mac", "unix") %in%  disperseR::get_os())) {
+  if (any(c("mac", "unix") %in%  get_os())) {
     for (k in seq_along(met)) {
       met_file_df[k, 1] <- met[k]
       met_file_df[k, 2] <- as.character( file.exists(paste0(met_dir, "/", met[k])))
@@ -414,7 +414,7 @@ hysplit_dispersion <- function(lat = 49.263,
     }
   }
 
-  if (disperseR::get_os() == "win") {
+  if (get_os() == "win") {
 
     for (k in seq_along(met)) {
       met_file_df[k, 1] <- met[k]
@@ -464,66 +464,52 @@ hysplit_dispersion <- function(lat = 49.263,
       "height_",height, "-",
       duration, "h")
 
-  # Write start year, month, day, hour to 'CONTROL'
-  cat(start_year_GMT, " ",
-    start_month_GMT, " ",
-    start_day_GMT, " ",
-    start_hour, "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = FALSE)
+  # Build CONTROL file content as a character vector, then write once.
+  # HYSPLIT is extremely picky about CONTROL file format, so each line
+  # must exactly match what the original cat() calls produced.
 
-  #Write number of starting locations to 'CONTROL'
-  cat("1\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  control_lines <- character(0)
 
-  # Write starting latitude, longitude, and height
-  # AGL to 'CONTROL'
-  cat(lat, " ",
-    lon, " ",
-    height, "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  # Start year, month, day, hour
+  control_lines <- c(control_lines,
+    paste0(start_year_GMT, " ", start_month_GMT, " ", start_day_GMT, " ", start_hour))
 
-  # Write direction and number of simulation hours
-  # to 'CONTROL'
-  cat(ifelse(direction == "backward", "-", ""),
-    duration, "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  # Number of starting locations
+  control_lines <- c(control_lines, "1")
 
-  # Write vertical motion option to 'CONTROL'
-  cat(vert_motion, "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  # Starting latitude, longitude, and height AGL
+  control_lines <- c(control_lines,
+    paste0(lat, " ", lon, " ", height))
 
-  # Write top of model domain in meters to 'CONTROL'
-  cat(model_height, "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  # Direction and number of simulation hours
+  control_lines <- c(control_lines,
+    paste0(ifelse(direction == "backward", "-", ""), duration))
 
-  # Write number of met files used to 'CONTROL'
-  cat(length(met), "\n",
-    file = paste0(run_dir, "/", "CONTROL"),
-    sep = '', append = TRUE)
+  # Vertical motion option
+  control_lines <- c(control_lines, as.character(vert_motion))
 
-  # Write met file paths to 'CONTROL'
+  # Top of model domain in meters
+  control_lines <- c(control_lines, as.character(model_height))
+
+  # Number of met files
+  control_lines <- c(control_lines, as.character(length(met)))
+
+  # Met file paths (directory and filename on separate lines)
   for (i in seq_along(met)) {
-    cat(met_dir, "/\n", met[i], "\n",
-      file = paste0(run_dir, "/", "CONTROL"),
-      sep = '', append = TRUE)
+    control_lines <- c(control_lines,
+      paste0(met_dir, "/"),
+      met[i])
   }
 
-  # Write emissions blocks to 'CONTROL'
+  # Emissions blocks
   for (i in seq_len(nrow(emissions))) {
-    cat(c(nrow(emissions), "\n",
-      substr(emissions[i, 1], 1, 4), "\n",
-      emissions[i, 2], "\n",
-      emissions[i, 3], "\n",
+    control_lines <- c(control_lines,
+      as.character(nrow(emissions)),
+      substr(emissions[i, 1], 1, 4),
+      as.character(emissions[i, 2]),
+      as.character(emissions[i, 3]),
       paste0(paste(unlist(strsplit(substr(emissions[i, 4], 3, 10), "-")), collapse = " "), " ",
-        formatC(emissions[i, 5], width = 2,format = "d", flag = "0"), " 00")), "\n",
-      file = paste0(run_dir, "/", "CONTROL"),
-      sep = "", append = TRUE)
+        formatC(emissions[i, 5], width = 2, format = "d", flag = "0"), " 00"))
   }
 
   # Get vector text elements through reading
@@ -618,41 +604,27 @@ hysplit_dispersion <- function(lat = 49.263,
         output_filename)
   }
 
-  # Write grid blocks to 'CONTROL'
-  for (i in seq_along(grids_text)) {
-    cat(grids_text[i], "\n",
-      file = paste0(run_dir, "/", "CONTROL"),
-      sep = '', append = TRUE)
-  }
+  # Append grid lines
+  control_lines <- c(control_lines, grids_text)
 
-
-
-  # Write species blocks to 'CONTROL'
-  cat(nrow(species), "\n",
-      file = paste0(run_dir, "/", "CONTROL"),
-      sep = "", append = TRUE)
+  # Species blocks
+  control_lines <- c(control_lines, as.character(nrow(species)))
   for (i in seq_len(nrow(species))) {
-    cat(
+    control_lines <- c(control_lines,
       paste(species[i, 2], species[i, 3], species[i, 4]),
-      "\n",
       paste(species[i, 5], species[i, 6], species[i, 7], species[i, 8], species[i, 9]),
-      "\n",
       paste(species[i, 10], species[i, 11], species[i, 12]),
-      "\n",
-      species[i, 13],
-      "\n",
-      species[i, 14],
-      "\n",
-      file = paste0(run_dir, "/", "CONTROL"),
-      sep = "",
-      append = TRUE
-    )
+      as.character(species[i, 13]),
+      as.character(species[i, 14]))
   }
+
+  # Write CONTROL file in a single call
+  writeLines(control_lines, con = paste0(run_dir, "/", "CONTROL"))
 
   # CONTROL file is now complete and in the
   # working directory; execute the model run
 
-  os <- disperseR::get_os()
+  os <- get_os()
   if (!os %in% c("mac", "unix", "win")) {
     stop("Unsupported operating system for HYSPLIT execution: ", os, call. = FALSE)
   }
@@ -880,7 +852,7 @@ hysplit_dispersion <- function(lat = 49.263,
   #     ")"))
   # }
   #
-  # if (disperseR::get_os() == "win") {
+  # if (get_os() == "win") {
   #
   #   if (is.null(disp_name)) {
   #     folder_name <-
@@ -906,40 +878,21 @@ hysplit_dispersion <- function(lat = 49.263,
   #     "\")"))
   # }
 
-  # Write the dispersion data frame to a CSV if
-  # it is requested
+  # Read dispersion data once if needed for CSV writing or returning
+  if (write_disp_CSV || return_disp_df) {
+    disp_df <- dispersion_read(archive_folder = run_dir)
+  }
+
+  # Write the dispersion data frame to a CSV if requested
   if (write_disp_CSV) {
-    disp_df <-
-      disperseR::dispersion_read(archive_folder = run_dir)
-          # paste0(hysp_dir, "/",
-          #   folder_name))
-
-    if (os %in% c("mac", "unix")) {
-      utils::write.table(
-        disp_df,
-        file = file.path(run_dir, #"/", #hysp_dir, "/",
-          # folder_name,
-          "dispersion.csv"),
-        sep = ",",
-        row.names = FALSE)
-    }
-
-    if (os == "win") {
-      utils::write.table(
-        disp_df,
-        file = file.path( run_dir, #hysp_dir, "/",
-          # folder_name,
-          "dispersion.csv"),
-        sep = ",",
-        row.names = FALSE)
-    }
+    data.table::fwrite(
+      disp_df,
+      file = file.path(run_dir, "dispersion.csv")
+    )
   }
 
   # Return a dispersion data frame if it is requested
   if (return_disp_df) {
-
-    disp_df <- dispersion_read(archive_folder = file.path( run_dir)) #file.path(hysp_dir, folder_name))
-
     invisible(disp_df)
   }
 }

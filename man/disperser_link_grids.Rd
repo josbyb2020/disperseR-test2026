@@ -47,3 +47,4 @@ data.table with grid links
 \description{
 Link dispersion to grids
 }
+\keyword{internal}

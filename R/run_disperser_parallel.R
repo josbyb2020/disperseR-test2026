@@ -22,6 +22,8 @@
 #'   Set `options(disperseR.mc.cores = parallel::detectCores())` to use all cores.
 #'   On Windows, a socket cluster is used instead of forking.
 #' @param keep.hysplit.files Keep HYSPLIT run files? Default FALSE
+#' @param binary_path Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.
+#' @param parhplot_path Path to HYSPLIT parhplot binary. If NULL, uses splitr's bundled binary.
 #'
 #' @return List of results from each dispersion run
 #' @export
@@ -35,7 +37,9 @@ run_disperser_parallel <- function(input.refs = NULL,
   overwrite = FALSE,
   npart = 100,
   mc.cores = getOption("disperseR.mc.cores", 2L),
-  keep.hysplit.files = FALSE) {
+  keep.hysplit.files = FALSE,
+  binary_path = NULL,
+  parhplot_path = NULL) {
 
   if (is.null(input.refs) || nrow(input.refs) == 0) {
     stop("input.refs must be a non-empty data.table")
@@ -156,20 +160,33 @@ run_disperser_parallel <- function(input.refs = NULL,
     mc.cores <- 1
   }
   
+  message(sprintf("Processing %d dispersion runs across %d core(s)...",
+                  length(run_sample), mc.cores))
+
   if (mc.cores == 1 || length(run_sample) == 1) {
     # Sequential execution
+    n_total <- length(run_sample)
     results <- lapply(
       X = run_sample,
-      FUN = run_fac,
-      input.refs = input.refs,
-      pbl.height = pbl.height,
-      species = species,
-      proc_dir = proc_dir,
-      hysp_dir = hysp_dir,
-      meteo_dir = meteo_dir,
-      overwrite = overwrite,
-      npart = npart,
-      keep.hysplit.files = keep.hysplit.files
+      FUN = function(i) {
+        if (i %% 10 == 0 || i == n_total) {
+          message(sprintf("  [%d/%d] runs completed", i, n_total))
+        }
+        run_fac(
+          x = i,
+          input.refs = input.refs,
+          pbl.height = pbl.height,
+          species = species,
+          proc_dir = proc_dir,
+          hysp_dir = hysp_dir,
+          meteo_dir = meteo_dir,
+          overwrite = overwrite,
+          npart = npart,
+          keep.hysplit.files = keep.hysplit.files,
+          binary_path = binary_path,
+          parhplot_path = parhplot_path
+        )
+      }
     )
   } else if (is_windows) {
     # Windows: use socket cluster with parLapply
@@ -182,7 +199,8 @@ run_disperser_parallel <- function(input.refs = NULL,
     parallel::clusterExport(cl, c(
       "input.refs", "pbl.height", "species", "proc_dir",
       "hysp_dir", "meteo_dir",
-      "overwrite", "npart", "keep.hysplit.files", "run_fac"
+      "overwrite", "npart", "keep.hysplit.files",
+      "binary_path", "parhplot_path", "run_fac"
     ), envir = environment())
     
     # Load disperseR on each worker
@@ -206,7 +224,9 @@ run_disperser_parallel <- function(input.refs = NULL,
           meteo_dir = meteo_dir,
           overwrite = overwrite,
           npart = npart,
-          keep.hysplit.files = keep.hysplit.files
+          keep.hysplit.files = keep.hysplit.files,
+          binary_path = binary_path,
+          parhplot_path = parhplot_path
         )
       }
     )
@@ -224,6 +244,8 @@ run_disperser_parallel <- function(input.refs = NULL,
       overwrite = overwrite,
       npart = npart,
       keep.hysplit.files = keep.hysplit.files,
+      binary_path = binary_path,
+      parhplot_path = parhplot_path,
       mc.cores = mc.cores
     )
   }
@@ -241,11 +263,13 @@ run_fac <- function(x,
   keep.hysplit.files = FALSE,
   proc_dir,
   hysp_dir,
-  meteo_dir) {
+  meteo_dir,
+  binary_path = NULL,
+  parhplot_path = NULL) {
 
   subset <- input.refs[x]
   unit_id <- .disperseR_validate_id_component(as.character(subset$ID[[1]]), "input.refs$ID")
-  verbose <- isTRUE(getOption("disperseR.verbose", FALSE))
+  verbose <- isTRUE(getOption("disperseR.verbose", TRUE))
   if (verbose) {
     message("Running ID=", unit_id, " date=", format(subset$start_day, "%Y-%m-%d"),
             " hour=", subset$start_hour)
@@ -379,7 +403,8 @@ run_fac <- function(x,
         met_type = "reanalysis",
         met_dir = meteo_dir
       ) %>%
-      disperseR::run_model(npart = npart, run.dir = run_dir)
+      disperseR::run_model(npart = npart, run.dir = run_dir,
+        binary_path = binary_path, parhplot_path = parhplot_path)
 
 
     ## Extract output from the dispersion model

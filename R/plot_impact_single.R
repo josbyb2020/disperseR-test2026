@@ -1,5 +1,4 @@
-#' \code{plot_impact_single}
-#'
+#' Plot exposure impact from a single unit
 #'
 #' @description `plot_impact_single()` takes output from `link_all_units()` and creates a spatial plot
 #'

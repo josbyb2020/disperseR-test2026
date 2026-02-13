@@ -19,3 +19,4 @@ Path to written file (invisibly)
 \description{
 Modern replacement for rgdal::writeOGR.
 }
+\keyword{internal}

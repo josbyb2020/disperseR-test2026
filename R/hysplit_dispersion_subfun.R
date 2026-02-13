@@ -2,7 +2,7 @@
 #'
 #' @param file_path Path to the `listing` file.
 #' @return Character vector of listing lines.
-#' @export
+#' @keywords internal
 read_listing_file <- function(file_path) {
   as.vector(
     utils::read.table(
@@ -16,7 +16,7 @@ read_listing_file <- function(file_path) {
 #'
 #' @param dir Directory to write `SETUP.CFG` and `ASCDATA.CFG`.
 #' @return NULL. Files are written to disk.
-#' @export
+#' @keywords internal
 hysplit_config_init <- function(dir) {
   # Default `SETUP.CFG` configuration file
   cat(
@@ -50,7 +50,7 @@ hysplit_config_init <- function(dir) {
 #' Detect the operating system
 #'
 #' @return One of "win", "mac", or "unix".
-#' @export
+#' @keywords internal
 get_os <- function() {
   if (.Platform$OS.type == "windows") {
     return("win")
@@ -69,5 +69,5 @@ get_os <- function() {
 #' @noRd
 .dispersion_read_internal <- function(archive_folder) {
 
-  disperseR::dispersion_read(archive_folder)
+  dispersion_read(archive_folder)
 }

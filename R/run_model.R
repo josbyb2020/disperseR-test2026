@@ -9,6 +9,8 @@
 #' @param npart Numeric. Number of particles for dispersion runs. Default 2500.
 #' @param run.dir Character. Working directory for HYSPLIT output files.
 #'   Required for dispersion models.
+#' @param binary_path Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.
+#' @param parhplot_path Path to HYSPLIT parhplot binary. If NULL, uses splitr's bundled binary.
 #'
 #' @return The input model object with results attached:
 #'   - For traj_model: `model$traj_df` contains trajectory data frame
@@ -34,7 +36,12 @@
 #'
 #' @seealso [create_disp_model()], [add_params()], [hysplit_dispersion()]
 #' @export
-run_model <- function(model, npart = 2500, run.dir) {
+run_model <- function(model, npart = 2500, run.dir, binary_path = NULL,
+  parhplot_path = NULL) {
+
+  # Explicit arguments override model fields
+  if (!is.null(binary_path)) model$binary_path <- binary_path
+  if (!is.null(parhplot_path)) model$parhplot_path <- parhplot_path
 
   if (inherits(model, "traj_model")) {
     # Check if splitr is available for trajectory models

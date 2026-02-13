@@ -19,3 +19,4 @@ Reads `GIS_part_###_ps.csv` files produced by parhplot and combines them
 into a single data.frame. The hour is extracted from each filename (the
 numeric suffix), supporting any number of hours per run.
 }
+\keyword{internal}

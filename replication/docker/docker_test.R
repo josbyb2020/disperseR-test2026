@@ -221,15 +221,15 @@ cat("  Total:  ", length(results), "\n\n")
 # Print all results
 cat("Detailed Results:\n")
 for (name in names(results)) {
-    status <- if (grepl("^PASS", results[[name]])) "✓" else if (grepl("^PARTIAL", results[[name]])) "~" else "✗"
+    status <- if (grepl("^PASS", results[[name]])) "PASS" else if (grepl("^PARTIAL", results[[name]])) "WARN" else "FAIL"
     cat(sprintf("  %s %-20s: %s\n", status, name, results[[name]]))
 }
 
 # Exit code based on failures
 if (fail_count > 0) {
-    cat("\n⚠ Some tests failed. See details above.\n")
+    cat("\nSome tests failed. See details above.\n")
     quit(status = 1)
 } else {
-    cat("\n✓ All critical tests passed on Linux.\n")
+    cat("\nAll critical tests passed on Linux.\n")
     quit(status = 0)
 }

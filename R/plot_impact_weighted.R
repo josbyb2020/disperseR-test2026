@@ -1,5 +1,4 @@
-#' \code{plot_impact_weighted}
-#'
+#' Plot population-weighted exposure impact
 #'
 #' @description `plot_impact_weighted()` takes output from `calculate_exposure()` and creates a spatial plot
 #'
@@ -54,6 +53,13 @@ plot_impact_weighted <- function(data.linked,
                                  graph.dir = NULL,
                                  zoom = TRUE,
                                  ...) {
+  # Validate time.agg
+  valid_time_agg <- c("month", "year")
+  if (!time.agg %in% valid_time_agg) {
+    stop("time.agg must be one of: ", paste(sQuote(valid_time_agg), collapse = ", "),
+         ". Got: ", sQuote(time.agg), call. = FALSE)
+  }
+
   # define a default theme
   theme.default <- ggplot2::theme(
     plot.title = if (!is.null(plot.name)) {

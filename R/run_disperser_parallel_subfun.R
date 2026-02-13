@@ -1,23 +1,34 @@
 #' Extract output from a model object
 #'
 #' @param model A `traj_model` or `disp_model` list.
-#' @return A data.frame containing model output, or `NA` if absent.
-#' @export
+#' @return A data.frame containing model output, or an empty data.table with
+#'   columns (particle_no, lon, lat, height, hour) if absent.
+#' @keywords internal
 
 #########################################################
 ################# get_output_df
 
 get_output_df <- function(model) {
+  empty_dt <- data.table::data.table(
+    particle_no = integer(0),
+    lon = numeric(0),
+    lat = numeric(0),
+    height = numeric(0),
+    hour = integer(0)
+  )
+
   if (inherits(model, "traj_model")) {
     if (is.null(model$traj_df)) {
-      return(NA)
+      warning("Model run produced no trajectory output (traj_df is NULL).", call. = FALSE)
+      return(empty_dt)
     }
     return(model$traj_df)
   }
 
   if (inherits(model, "disp_model")) {
     if (is.null(model$disp_df)) {
-      return(NA)
+      warning("Model run produced no dispersion output (disp_df is NULL).", call. = FALSE)
+      return(empty_dt)
     }
     return(model$disp_df)
   }
@@ -36,7 +47,7 @@ get_output_df <- function(model) {
 #' @return A data.frame of particle positions with columns: particle_no, lon,
 #'   lat, height, hour. Returns an empty data.frame with a warning if no
 #'   matching files are found.
-#' @export
+#' @keywords internal
 dispersion_read <- function(archive_folder) {
 
   if (!dir.exists(archive_folder)) {
@@ -71,13 +82,13 @@ dispersion_read <- function(archive_folder) {
     hour_str <- sub("^GIS_part_([0-9]+)_ps\\.csv$", "\\1", fname)
     hour_val <- as.integer(hour_str)
 
-    disp <- utils::read.csv(fpath, header = FALSE)
-    colnames(disp) <- c("particle_no", "lon", "lat", "height")
-    disp$hour <- hour_val
+    disp <- data.table::fread(fpath, header = FALSE)
+    data.table::setnames(disp, c("particle_no", "lon", "lat", "height"))
+    disp[, hour := hour_val]
     result_list[[i]] <- disp
   }
 
-  dispersion <- do.call(rbind, result_list)
+  dispersion <- as.data.frame(data.table::rbindlist(result_list))
   return(dispersion)
 }
 
@@ -607,7 +618,7 @@ add_grid <- function(model,
 #' @param varname Variable name in NetCDF
 #' @param vardate Date to extract
 #' @return Single-layer SpatRaster
-#' @export
+#' @keywords internal
 #' @importFrom terra rast rotate subset nlyr names
 #' @importFrom lubridate year month
 subset_nc_date <- function(hpbl_file = NULL,

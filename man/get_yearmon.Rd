@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_yearmon.R
 \name{get_yearmon}
 \alias{get_yearmon}
-\title{create a set of directories to run disperseR}
+\title{Generate a year-month sequence}
 \usage{
 get_yearmon(
   start.year = NULL,
@@ -21,11 +21,11 @@ get_yearmon(
 \item{end.month}{what month of that year? eg. end.month = "03"}
 }
 \value{
-vector of months that you can loop over
+A character vector of year-month strings in \code{YYYYMM} format.
 }
 \description{
-`get_yearmon()` outputs a vector of months that you can loop over. For Jan-March 2005, you just have to use the `get_yearmon()` `start.year = "2005"`, `start.month = "01"`, `end.year = "2005"`, and `end.month = "03"`.
-}
-\details{
-\code{get_yearmon}
+`get_yearmon()` outputs a character vector of year-month
+  strings (format \code{YYYYMM}) that you can loop over. For January
+  through March 2005, use `start.year = "2005"`, `start.month = "01"`,
+  `end.year = "2005"`, and `end.month = "03"`.
 }

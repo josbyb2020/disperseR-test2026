@@ -18,7 +18,8 @@ validate_pipeline(
 
 \item{hysp_dir}{Directory containing `hyspdisp_*.fst` outputs.}
 
-\item{ziplink_dir}{Directory containing `ziplinks_*.fst` outputs.}
+\item{ziplink_dir}{Directory containing linked outputs
+(`ziplinks_*.fst`, `countylinks_*.fst`, `gridlinks_*.fst`).}
 
 \item{exp_dir}{Directory containing exposure outputs (e.g., `zips_exposures_*`).}
 

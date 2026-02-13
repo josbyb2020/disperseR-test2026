@@ -15,3 +15,4 @@ Centroids as sf or SpatVector
 \description{
 Modern replacement for rgeos::gCentroid.
 }
+\keyword{internal}

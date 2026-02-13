@@ -44,8 +44,7 @@ rankfacs_by_popwgt_location <- function(link.files = NULL,
       data.linked[, V1 := NULL]
     }
     data.linked[, `:=`(
-      ZIP = formatC(ZIP, width = 5, format = "d", flag = "0"),
-      uID = gsub('_|-|\\*', '.', uID)
+      ZIP = formatC(ZIP, width = 5, format = "d", flag = "0")
     )]
     # Extract year from yearmonth if present
     if ("yearmonth" %in% names(data.linked)) {

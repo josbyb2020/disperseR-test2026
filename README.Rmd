@@ -28,6 +28,8 @@ to geographic areas, and calculates exposure metrics.
 
 ## First-time setup (5-10 minutes)
 
+**Requires R >= 4.1.0** (for the native pipe and updated package ecosystem).
+
 ### Step 1: Install R packages
 
 Open R or RStudio and run:
@@ -91,7 +93,7 @@ get_data(
 )
 
 # Verify everything is ready
-check_spatial_packages()
+validate_pipeline()
 ```
 
 **Windows users:** Use a short path like `C:/disperseR_project` to avoid 
@@ -119,8 +121,8 @@ input_refs <- define_inputs(
   duration = 120
 )
 
-Note: `input_refs$ID` is used in output filenames. Keep IDs filesystem-safe
-across platforms (avoid `/`, `\`, or `:*?"<>|`).
+# Note: input_refs$ID is used in output filenames. Keep IDs filesystem-safe
+# across platforms (avoid /, \, or :*?"<>|).
 
 # 4. Run HYSPLIT dispersion
 pbl <- get_data("pblheight")
@@ -128,6 +130,7 @@ run_disperser_parallel(
   input.refs = input_refs,
   pbl.height = pbl,
   species = "so2",
+  proc_dir = dirs$proc_dir,
   mc.cores = 1
 )
 
@@ -169,7 +172,7 @@ suspicious (hundreds of .exe launches from temp directories). Solutions:
 
 1. Add the HYSPLIT binary folder to your antivirus exclusion list
 2. Reduce `mc.cores` to slow down execution
-3. Run `cleanup_hysplit_zombies()` to kill orphaned processes from crashed runs
+3. Restart R to clear any orphaned HYSPLIT processes from crashed runs
 
 ### CRS or projection errors
 

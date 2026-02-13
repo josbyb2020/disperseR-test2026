@@ -12,3 +12,4 @@ Named list of CRS strings
 \description{
 Standard CRS definitions used in disperseR.
 }
+\keyword{internal}

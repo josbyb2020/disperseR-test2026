@@ -17,3 +17,4 @@ Transformed spatial object
 \description{
 Modern replacement for sp::spTransform.
 }
+\keyword{internal}
