@@ -27,6 +27,19 @@ create_impact_table_single <- function(data.linked,
                                        map.unitID,
                                        metric = 'N') {
 
+  link.to <- match.arg(link.to, c("zips", "counties", "grids"))
+
+  if (link.to == "zips" && is.null(zcta.dataset)) {
+    stop("'zcta.dataset' is required when link.to='zips'.\n",
+         "  Get it with: zcta_dataset <- get_data('zcta_dataset')",
+         call. = FALSE)
+  }
+  if (link.to == "counties" && is.null(counties.)) {
+    stop("'counties.' is required when link.to='counties'.\n",
+         "  Provide an sf object with county polygons.",
+         call. = FALSE)
+  }
+
   year.use <- as.integer(substr(map.month, 1, 4))
   datareduced <- data.linked[month == map.month & ID == map.unitID]
   dataunits <- data.units[ID == map.unitID & year == year.use]

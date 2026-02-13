@@ -16,8 +16,8 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
   data.units <- data.table::as.data.table(data.units)
   data.ranked <- data.table::as.data.table(data.ranked)
 
-  # Filter BOTH datasets by year for consistency
-  # Use ..year to reference the function argument, not the column
+  # Filter BOTH datasets by year for consistency.
+  # Local variable avoids data.table column name shadowing.
   year_filter <- year
   data.units <- data.units[year == year_filter, ]
   data.ranked <- data.ranked[year == year_filter, ]

@@ -30,6 +30,9 @@ utils::globalVariables(c(
   
   # Used in formula/subset contexts
   "date", "i",
+
+  # LazyData datasets referenced inside package code
+  "crosswalk", "PP.units.monthly1995_2017", "zipcodecoordinate",
   
   # Directory cache entries set by create_dirs()
   "main_dir", "input_dir", "output_dir", "process_dir", "ziplink_dir",

@@ -216,23 +216,12 @@ get_data <- function(data,
            "for meteorological file downloads.", call. = FALSE)
     }
 
-    # --- Crosswalk ---
-    message("Loading crosswalk data from disperseR...")
-    crosswalk <- crosswalk
+    # --- Cache built-in datasets for use by other functions ---
+    message("Loading built-in datasets...")
     .disperseR_cache_set("crosswalk", crosswalk)
-    message("  Cached as 'crosswalk'")
-
-    # --- PP.units.monthly1995_2017 ---
-    message("Loading PP.units.monthly1995_2017 data from disperseR...")
-    PP.units.monthly1995_2017 <- PP.units.monthly1995_2017
     .disperseR_cache_set("PP.units.monthly1995_2017", PP.units.monthly1995_2017)
-    message("  Cached as 'PP.units.monthly1995_2017'")
-
-    # --- Zip code coordinates ---
-    message("Loading zipcodecoordinate data from disperseR...")
-    zipcodecoordinate <- zipcodecoordinate
     .disperseR_cache_set("zipcodecoordinate", zipcodecoordinate)
-    message("  Cached as 'zipcodecoordinate'")
+    message("  Cached crosswalk, PP.units.monthly1995_2017, zipcodecoordinate")
 
     # --- ZCTA shapefile ---
     message("Downloading ZCTA shapefile...")
@@ -379,9 +368,7 @@ get_data <- function(data,
   # ==========================================================================
 
   if (data == "crosswalk") {
-    message("Loading crosswalk data from disperseR...")
-    crosswalk <- crosswalk
-    message("  Crosswalk data loaded")
+    message("Loading crosswalk data...")
     .disperseR_cache_set("crosswalk", crosswalk)
     return(crosswalk)
   }

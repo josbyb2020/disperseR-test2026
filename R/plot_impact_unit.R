@@ -77,8 +77,6 @@ plot_impact_unit <- function(data.linked = NULL,
 
   #################################################################################
 
-  zipcodecoordinate <- zipcodecoordinate
-
   colorscale <- viridis::scale_color_viridis(
     name = legend.title,
     discrete = FALSE,
