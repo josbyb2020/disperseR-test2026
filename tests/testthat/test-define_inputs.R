@@ -6,7 +6,7 @@ test_that("happy path: 1 unit, 1-day range produces correct data.table structure
   data("units", package = "disperseR")
   # Filter to 1 unit in year 2005 to keep test fast
 
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   result <- define_inputs(
     units      = one_unit,
@@ -30,7 +30,7 @@ test_that("happy path: 1 unit, 1-day range produces correct data.table structure
 
 test_that("happy path: row count matches days * length(start.hours)", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   # 3 days, 4 start hours => 12 rows for 1 unit
 
@@ -52,7 +52,7 @@ test_that("happy path: row count matches days * length(start.hours)", {
 
 test_that("edge case: single day (startday == endday), single start.hour", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
 
   result <- define_inputs(
@@ -106,7 +106,7 @@ test_that("error: missing required columns in units (ID, year)", {
 
 test_that("error: unparseable date string for startday", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(
@@ -120,7 +120,7 @@ test_that("error: unparseable date string for startday", {
 
 test_that("error: endday before startday", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(
@@ -134,7 +134,7 @@ test_that("error: endday before startday", {
 
 test_that("error: invalid start.hours (negative)", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(
@@ -149,7 +149,7 @@ test_that("error: invalid start.hours (negative)", {
 
 test_that("error: invalid start.hours (> 23)", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(
@@ -164,7 +164,7 @@ test_that("error: invalid start.hours (> 23)", {
 
 test_that("error: invalid duration (0)", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(
@@ -179,7 +179,7 @@ test_that("error: invalid duration (0)", {
 
 test_that("error: invalid duration (negative)", {
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- data.table::as.data.table(units)[units$year == 2005, ][1]
 
   expect_error(
     define_inputs(

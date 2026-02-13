@@ -34,7 +34,6 @@ jobs:
           dependencies: '"hard"'
           extra-packages: |
             any::remotes
-            github::rich-iannone/splitr
 
       - name: Install disperseR from checkout
         run: |

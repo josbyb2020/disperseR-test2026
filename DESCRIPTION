@@ -42,7 +42,6 @@ Imports:
     fst,
     grid
 Suggests:
-    splitr,
     ggmap,
     ggrepel,
     knitr,

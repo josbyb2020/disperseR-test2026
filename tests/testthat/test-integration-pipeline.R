@@ -19,7 +19,7 @@ test_that("integration: create_dirs + define_inputs produces correct pipeline ou
 
   # Step 2: define_inputs() with a small units subset
   data("units", package = "disperseR")
-  small_units <- units[year == 2005][1:2]  # 2 units
+  small_units <- units[units$year == 2005, ][1:2]  # 2 units
 
   inputs <- define_inputs(
     units       = small_units,
@@ -125,7 +125,7 @@ test_that("integration: full pipeline from define_inputs through calculate_expos
 
   # Step 2: define_inputs
   data("units", package = "disperseR")
-  one_unit <- units[year == 2005][1]
+  one_unit <- units[units$year == 2005, ][1]
 
   inputs <- define_inputs(
     units       = one_unit,
