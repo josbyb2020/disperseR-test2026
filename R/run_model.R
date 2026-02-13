@@ -82,7 +82,7 @@ run_model <- function(model, npart = 2500, run.dir = NULL, binary_path = NULL,
       stop("run.dir is required for dispersion models.", call. = FALSE)
     }
 
-    disp_df <- disperseR::hysplit_dispersion(
+    disp_df <- hysplit_dispersion(
       lat = model$lat,
       lon = model$lon,
       height = model$height %||% 50,

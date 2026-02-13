@@ -32,6 +32,46 @@
   invisible(value)
 }
 
+#' List all cached values from create_dirs() and get_data()
+#'
+#' @description Shows directory paths and datasets currently stored in the
+#'   internal disperseR session cache. Useful for debugging "Run create_dirs()
+#'   first" errors.
+#'
+#' @return A named list of cached values (directory paths shown as strings,
+#'   large objects summarized by class and size).
+#' @export
+disperseR_cache_list <- function() {
+  nms <- ls(envir = .disperseR_cache)
+  if (length(nms) == 0) {
+    message("disperseR cache is empty. Run create_dirs() to populate it.")
+    return(invisible(list()))
+  }
+  vals <- lapply(nms, function(nm) {
+    val <- get(nm, envir = .disperseR_cache)
+    if (is.character(val) && length(val) == 1) {
+      val  # directory paths — show as-is
+    } else {
+      paste0("<", class(val)[1], " ", format(utils::object.size(val), units = "auto"), ">")
+    }
+  })
+  names(vals) <- nms
+  vals
+}
+
+#' Clear the disperseR session cache
+#'
+#' @description Removes all cached directory paths and datasets. You will need
+#'   to call `create_dirs()` again after clearing.
+#'
+#' @return Invisibly returns NULL.
+#' @export
+disperseR_cache_clear <- function() {
+  rm(list = ls(envir = .disperseR_cache), envir = .disperseR_cache)
+  message("disperseR cache cleared.")
+  invisible(NULL)
+}
+
 # Escape special regex characters so IDs are matched literally in list.files(pattern=...)
 .disperseR_escape_regex <- function(x) {
   gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", x)

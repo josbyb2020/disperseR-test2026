@@ -178,24 +178,22 @@ define_inputs <- function(units,
 
   # ===== Build Run Table =====
 
-  out <- data.table::data.table(
-    expand.grid(
-      ID = unique(units$ID),
-      year = unique(units$year),
-      start_hour = start.hours,
-      start_day = seq.Date(
-        from = startday.date,
-        to = endday.date,
-        by = "1 day"
-      ),
-      duration_emiss_hours = 1,
-      duration_run_hours = duration
-    )
-  )
+  # Use CJ (cross-join) instead of expand.grid to avoid factor coercion
+  # and derive year from start_day to avoid a wasteful Cartesian product
+  # with a separate year dimension.
+  days <- seq.Date(from = startday.date, to = endday.date, by = "1 day")
 
-  # Filter to matching years only
-  out <- out[year == data.table::year(start_day)]
-  out <- unique(merge(out, units, by = c("ID", "year")))
+  out <- data.table::CJ(
+    ID = unique(units$ID),
+    start_day = days,
+    start_hour = start.hours,
+    sorted = FALSE
+  )
+  out[, year := as.integer(format(start_day, "%Y"))]
+  out[, `:=`(duration_emiss_hours = 1L, duration_run_hours = duration)]
+
+  # Merge with units — filters to valid ID+year combos and adds metadata
+  out <- unique(merge(out, units, by = c("ID", "year"), all = FALSE))
 
   if (nrow(out) == 0) {
     warning(

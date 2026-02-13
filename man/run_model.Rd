@@ -7,7 +7,7 @@
 run_model(
   model,
   npart = 2500,
-  run.dir,
+  run.dir = NULL,
   binary_path = NULL,
   parhplot_path = NULL
 )
@@ -19,7 +19,7 @@ Must inherit from either "traj_model" or "disp_model".}
 \item{npart}{Numeric. Number of particles for dispersion runs. Default 2500.}
 
 \item{run.dir}{Character. Working directory for HYSPLIT output files.
-Required for dispersion models.}
+Required for dispersion models; ignored for trajectory models.}
 
 \item{binary_path}{Path to HYSPLIT binary (hycs_std). If NULL, uses splitr's bundled binary.}
 

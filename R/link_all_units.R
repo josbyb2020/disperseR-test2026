@@ -120,7 +120,7 @@ link_all_units <- function(units.run,
     if (is.na(sd) || is.na(ed)) {
       stop("start.date and end.date must be coercible to Date (e.g., '2005-01-02')", call. = FALSE)
     }
-    year.mons <- disperseR::get_yearmon(
+    year.mons <- get_yearmon(
       start.year = format(sd, "%Y"),
       start.month = format(sd, "%m"),
       end.year = format(ed, "%Y"),
@@ -174,6 +174,8 @@ link_all_units <- function(units.run,
     on.exit(parallel::stopCluster(cl), add = TRUE)
 
     parallel::clusterExport(cl, c("hysp_dir", "ziplink_dir"), envir = environment())
+    # Workers need ::: to reach internal cache setter (not exported).
+    # This is the standard R pattern for socket-cluster workers.
     parallel::clusterEvalQ(cl, {
       library(disperseR)
       library(data.table)

@@ -45,8 +45,8 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
   rank<-unitRanks$hyads.rank
 
-  facility_loc <- data.table(x = long, y = lat, hyads.py.sum = hyads.py.sum, rank = rank, uID = uID) %>%
-    dplyr::mutate(label = paste("UNIT:", uID, "ranked", rank))
+  facility_loc <- data.table(x = long, y = lat, hyads.py.sum = hyads.py.sum, rank = rank, uID = uID)
+  facility_loc[, label := paste("UNIT:", uID, "ranked", rank)]
 
   title <- paste("Ranking (The biggest polluters) for year: ", year)
 
@@ -114,13 +114,13 @@ plot_units_ranked <- function(data.ranked, data.units, year, graph.dir = NULL) {
 
   label_map <- c(hyads.py.sum = "Hyads Exposure", SOx = "SOx emission")
 
-  unitRanks <- unitRanks %>%
-    tidyr::pivot_longer(
-      cols = dplyr::all_of(pivot_cols),
-      names_to = "type",
-      values_to = "Measurement"
-    ) %>%
-    dplyr::mutate(type = label_map[type])
+  unitRanks <- data.table::melt(
+    unitRanks,
+    measure.vars = pivot_cols,
+    variable.name = "type",
+    value.name = "Measurement"
+  )
+  unitRanks[, type := label_map[as.character(type)]]
 
   ggbar <- ggplot2::ggplot(data=unitRanks, ggplot2::aes(x = as.character(uID), y = Measurement))+
     ggplot2::geom_bar(stat = 'identity',

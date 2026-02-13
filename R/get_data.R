@@ -94,11 +94,16 @@ download_file <- function(url, file, dir) {
          call. = FALSE)
   }
   
+  # Log checksum for reproducibility
+  checksum <- tools::md5sum(file)
+  message("  Downloaded: ", basename(file),
+          " (", file.info(file)$size, " bytes, MD5: ", checksum, ")")
+
   # Unzip if applicable
   if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
     utils::unzip(file, exdir = dir)
   }
-  
+
   return(invisible(TRUE))
 }
 
@@ -213,19 +218,19 @@ get_data <- function(data,
 
     # --- Crosswalk ---
     message("Loading crosswalk data from disperseR...")
-    crosswalk <- disperseR::crosswalk
+    crosswalk <- crosswalk
     .disperseR_cache_set("crosswalk", crosswalk)
     message("  Cached as 'crosswalk'")
 
     # --- PP.units.monthly1995_2017 ---
     message("Loading PP.units.monthly1995_2017 data from disperseR...")
-    PP.units.monthly1995_2017 <- disperseR::PP.units.monthly1995_2017
+    PP.units.monthly1995_2017 <- PP.units.monthly1995_2017
     .disperseR_cache_set("PP.units.monthly1995_2017", PP.units.monthly1995_2017)
     message("  Cached as 'PP.units.monthly1995_2017'")
 
     # --- Zip code coordinates ---
     message("Loading zipcodecoordinate data from disperseR...")
-    zipcodecoordinate <- disperseR::zipcodecoordinate
+    zipcodecoordinate <- zipcodecoordinate
     .disperseR_cache_set("zipcodecoordinate", zipcodecoordinate)
     message("  Cached as 'zipcodecoordinate'")
 
@@ -329,7 +334,7 @@ get_data <- function(data,
 
     if (length(metfiles) > 0) {
       message("  Downloading: ", paste(metfiles, collapse = ", "))
-      disperseR::get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
+      get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
       
       # Validate downloads completed
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
@@ -351,7 +356,7 @@ get_data <- function(data,
     data.table::setnames(zcta, 'ZCTA5CE10', 'ZCTA')
     zcta <- merge(
       zcta,
-      as.data.frame(disperseR::crosswalk),
+      as.data.frame(crosswalk),
       by = "ZCTA",
       all = FALSE
     )
@@ -375,7 +380,7 @@ get_data <- function(data,
 
   if (data == "crosswalk") {
     message("Loading crosswalk data from disperseR...")
-    crosswalk <- disperseR::crosswalk
+    crosswalk <- crosswalk
     message("  Crosswalk data loaded")
     .disperseR_cache_set("crosswalk", crosswalk)
     return(crosswalk)
@@ -420,7 +425,7 @@ get_data <- function(data,
 
     if (length(metfiles) > 0) {
       message("Downloading: ", paste(metfiles, collapse = ", "))
-      disperseR::get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
+      get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
       
       # Validate downloads completed
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
@@ -471,7 +476,7 @@ get_data <- function(data,
     data.table::setnames(zcta, 'ZCTA5CE10', 'ZCTA')
     zcta <- merge(
       zcta,
-      as.data.frame(disperseR::crosswalk),
+      as.data.frame(crosswalk),
       by = "ZCTA",
       all = FALSE
     )

@@ -462,8 +462,8 @@ create_grid <- function(lat, lon, range, division) {
   lon_seq <- seq(lon_min, lon_max, by = division[2])
   
   # Create grid
-  grid_expand <- expand.grid(lat = lat_seq, lon = lon_seq)
-  
+  grid_expand <- data.table::CJ(lat = lat_seq, lon = lon_seq, sorted = FALSE)
+
   list(lat = grid_expand$lat, lon = grid_expand$lon)
 }
 

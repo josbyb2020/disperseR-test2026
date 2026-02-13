@@ -376,23 +376,23 @@ run_fac <- function(x,
 
     ## Define the dispersion model
     dispersion_model <-
-      disperseR::create_disp_model() %>%
-      disperseR::add_emissions(
+      create_disp_model() %>%
+      add_emissions(
         rate = 1,
         duration = subset$duration_emiss_hours,
         start_day = as.character(subset$start_day),
         start_hour = subset$start_hour
       ) %>%
-      disperseR::add_species(
+      add_species(
         name = species_param$name,
         pdiam = species_param$pdiam,
         density = 0,
         shape_factor = 0,
         ddep_vel = species_param$ddep_vel
       ) %>%
-      disperseR::add_grid(range = c(0.5, 0.5),
+      add_grid(range = c(0.5, 0.5),
         division = c(0.1, 0.1)) %>%
-      disperseR::add_params(
+      add_params(
         lat = subset$Latitude,
         lon = subset$Longitude,
         height = subset$Height,
@@ -403,7 +403,7 @@ run_fac <- function(x,
         met_type = "reanalysis",
         met_dir = meteo_dir
       ) %>%
-      disperseR::run_model(npart = npart, run.dir = run_dir,
+      run_model(npart = npart, run.dir = run_dir,
         binary_path = binary_path, parhplot_path = parhplot_path)
 
 

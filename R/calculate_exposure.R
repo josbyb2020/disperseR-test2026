@@ -195,19 +195,27 @@ calculate_exposure <- function(year.E,
 
     month_mapping[is.na(month_mapping)] <- 0
 
-    month_mapping_long <- data.table::melt(
-      month_mapping,
-      id.vars = id.v,
-      variable.factor = FALSE,
-      variable.name = "uID",
-      value.name = "N"
-    )
+    # Auto-detect long vs wide format from combine_monthly_links().
+    # Long format has explicit ID + N columns; wide format has one column per ID.
+    if ("ID" %in% names(month_mapping) && "N" %in% names(month_mapping)) {
+      # Long format — just rename ID → uID for merge compatibility
+      month_mapping_long <- data.table::copy(month_mapping)
+      data.table::setnames(month_mapping_long, "ID", "uID")
+    } else {
+      # Wide format — melt to long
+      month_mapping_long <- data.table::melt(
+        month_mapping,
+        id.vars = id.v,
+        variable.factor = FALSE,
+        variable.name = "uID",
+        value.name = "N"
+      )
+    }
     if (is.character(month_mapping_long[["N"]]))
       month_mapping_long[, `:=`(N = as.double(N))]
 
-    # Wide map columns use ID format (hyphenated, e.g. "7-1") from
-    # combine_monthly_links(); emissions data uses uID format (dotted,
-    # e.g. "7.1"). Convert so the merge matches.
+    # IDs may use hyphenated format (e.g. "7-1") while emissions data uses
+    # dotted uID format (e.g. "7.1"). Normalize so the merge matches.
     month_mapping_long[, uID := gsub("-", ".", uID, fixed = TRUE)]
 
     #This is what I want - pollutant-weighted emissions trajectories

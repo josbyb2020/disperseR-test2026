@@ -11,6 +11,10 @@
 #'   `paste0('hyads_unwgted_', link.to, '.RData')`
 #' @param ziplink_dir Directory containing linked files from link_all_units().
 #'   If NULL, uses the directory cached by create_dirs().
+#' @param format Output format: `"wide"` (default, one column per ID — matches
+#'   legacy behavior) or `"long"` (ZIP/grid/county, ID, N — much more
+#'   memory-efficient for large runs). The `"long"` format skips the memory-heavy
+#'   `dcast()` pivot and is recommended for national-scale analyses.
 #' @param rdata_dir Directory to save output RData file.
 #'   If NULL, uses the directory cached by create_dirs().
 #'
@@ -24,9 +28,12 @@
 
 combine_monthly_links <- function(month_YYYYMMs,
                                    link.to = 'zips',
+                                   format = c("wide", "long"),
                                    filename = NULL,
                                    ziplink_dir = NULL,
                                    rdata_dir = NULL) {
+
+  format <- match.arg(format)
 
   # Resolve directory paths from package cache if not provided
   if (is.null(ziplink_dir)) {
@@ -98,13 +105,17 @@ combine_monthly_links <- function(month_YYYYMMs,
         )
 
         MergedDT <- data.table::rbindlist(data.h)
-        Merged_cast <- data.table::dcast(
-          MergedDT,
-          ZIP ~ ID,
-          fun.aggregate = sum,
-          value.var = "N"
-        )
-        
+        if (format == "long") {
+          Merged_cast <- MergedDT[, .(N = sum(N)), by = .(ZIP, ID)]
+        } else {
+          Merged_cast <- data.table::dcast(
+            MergedDT,
+            ZIP ~ ID,
+            fun.aggregate = sum,
+            value.var = "N"
+          )
+        }
+
       } else if (link.to == 'grids') {
         data.h <- lapply(
           seq_along(files.month),
@@ -113,12 +124,16 @@ combine_monthly_links <- function(month_YYYYMMs,
         )
 
         MergedDT <- data.table::rbindlist(data.h)
-        Merged_cast <- data.table::dcast(
-          MergedDT,
-          x + y ~ ID,
-          fun.aggregate = sum,
-          value.var = "N"
-        )
+        if (format == "long") {
+          Merged_cast <- MergedDT[, .(N = sum(N)), by = .(x, y, ID)]
+        } else {
+          Merged_cast <- data.table::dcast(
+            MergedDT,
+            x + y ~ ID,
+            fun.aggregate = sum,
+            value.var = "N"
+          )
+        }
 
       } else if (link.to == 'counties') {
         data.h <- lapply(
@@ -128,12 +143,17 @@ combine_monthly_links <- function(month_YYYYMMs,
         )
 
         MergedDT <- data.table::rbindlist(data.h)
-        Merged_cast <- data.table::dcast(
-          MergedDT,
-          statefp + countyfp + state_name + name + geoid ~ ID,
-          fun.aggregate = sum,
-          value.var = "N"
-        )
+        if (format == "long") {
+          Merged_cast <- MergedDT[, .(N = sum(N)),
+            by = .(statefp, countyfp, state_name, name, geoid, ID)]
+        } else {
+          Merged_cast <- data.table::dcast(
+            MergedDT,
+            statefp + countyfp + state_name + name + geoid ~ ID,
+            fun.aggregate = sum,
+            value.var = "N"
+          )
+        }
       }
 
       name.map <- paste0("MAP", month.m, ".", year.h)
@@ -150,9 +170,10 @@ combine_monthly_links <- function(month_YYYYMMs,
             " requested months had no linked data files.", call. = FALSE)
   }
 
-  # Align grid maps on a common (x, y) coordinate union.
+  # Align grid maps on a common (x, y) coordinate union (wide format only).
   # This avoids terra::rast() failures for sparse, irregular, or single-cell grids.
-  if (link.to == 'grids' && length(monthly_maps) > 0) {
+  # Long format doesn't need alignment — downstream aggregation handles it.
+  if (link.to == 'grids' && format == "wide" && length(monthly_maps) > 0) {
     monthly_maps <- lapply(monthly_maps, function(dt) {
       dt <- data.table::as.data.table(dt)
       if (!all(c("x", "y") %in% names(dt))) {

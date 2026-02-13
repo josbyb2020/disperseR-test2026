@@ -77,7 +77,7 @@ plot_impact_unit <- function(data.linked = NULL,
 
   #################################################################################
 
-  zipcodecoordinate <- disperseR::zipcodecoordinate
+  zipcodecoordinate <- zipcodecoordinate
 
   colorscale <- viridis::scale_color_viridis(
     name = legend.title,
@@ -146,6 +146,11 @@ plot_impact_unit <- function(data.linked = NULL,
       legend.key.size = grid::unit(.05, 'npc'),
       legend.direction = 'horizontal'
     )
+
+  if (!requireNamespace("gridExtra", quietly = TRUE)) {
+    stop("Package 'gridExtra' is required for plot_impact_unit(). ",
+         "Install it with: install.packages('gridExtra')", call. = FALSE)
+  }
 
   gg <-
     gridExtra::grid.arrange(plot1,

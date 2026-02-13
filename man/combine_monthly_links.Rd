@@ -7,6 +7,7 @@
 combine_monthly_links(
   month_YYYYMMs,
   link.to = "zips",
+  format = c("wide", "long"),
   filename = NULL,
   ziplink_dir = NULL,
   rdata_dir = NULL
@@ -18,6 +19,11 @@ combine_monthly_links(
 
 \item{link.to}{Spatial scale for plotting. One of 'zips', 'counties', 
 or 'grids' that should match original input to `disperseR::link_all_units()`}
+
+\item{format}{Output format: `"wide"` (default, one column per ID — matches
+legacy behavior) or `"long"` (ZIP/grid/county, ID, N — much more
+memory-efficient for large runs). The `"long"` format skips the memory-heavy
+`dcast()` pivot and is recommended for national-scale analyses.}
 
 \item{filename}{Output filename. Defaults to 
 `paste0('hyads_unwgted_', link.to, '.RData')`}
