@@ -3,7 +3,7 @@ disperseR
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# disperseR 0.2.1
+# disperseR 0.2.2
 
 Run HYSPLIT many times in parallel and aggregate exposure to ZIP code
 level.
@@ -228,5 +228,5 @@ After running `create_dirs()` and `get_data()`, your project looks like:
 
     Henneman, L., Choirat, C., & Garbulinska, M. (2019). disperseR:
     An R package for HYSPLIT dispersion modeling and ZIP code-level
-    exposure assessment. R package version 0.2.1.
+    exposure assessment. R package version 0.2.2.
     https://github.com/josbyb2020/disperseR-test2026

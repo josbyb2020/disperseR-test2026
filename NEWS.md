@@ -1,3 +1,29 @@
+# disperseR 0.2.2
+
+Download reliability and HYSPLIT run-time UX improvements.
+
+## New Features
+
+- Download retry: `download_file()` and `get_met_reanalysis()` now retry up to 3 times with
+  exponential backoff on failure, cleaning up partial files between attempts
+- Download timeout: Increased minimum timeout from 5 to 10 minutes for large files (PBL ~154MB)
+- Met date padding: `get_data()` automatically expands the requested date range by ±1 month
+  so HYSPLIT has the prev/current/next month files it needs without surprise mid-run downloads
+- Pre-flight met check: `run_disperser_parallel()` validates all required met files exist before
+  launching any HYSPLIT runs; auto-downloads missing files (prompts in interactive, auto in batch)
+- Warning deduplication: `run_fac()` captures all warnings during each HYSPLIT run, deduplicates
+  them, and emits a structured summary classifying each as `[benign]` or `[review]`
+- Post-download met validation: `hysplit_dispersion()` now checks that all 3 required reanalysis
+  met files exist and are non-empty before executing the model
+
+## Bug Fixes
+
+- Fixed cryptic "trim skipped for sparse extent" message in `link_to()` — now explains that
+  raster trimming was skipped because the parcel footprint is too sparse, and results are
+  unaffected
+
+---
+
 # disperseR 0.2.1
 
 Windows reliability, performance, correctness, and API cleanup improvements.

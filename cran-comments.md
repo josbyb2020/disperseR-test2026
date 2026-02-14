@@ -1,4 +1,4 @@
-# CRAN Submission Comments for disperseR 0.2.1
+# CRAN Submission Comments for disperseR 0.2.2
 
 ## Test Environments
 
