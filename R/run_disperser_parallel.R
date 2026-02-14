@@ -8,7 +8,7 @@
 #' @keywords internal
 .compute_required_met_files <- function(input.refs) {
   start_dates <- as.Date(input.refs$start_day)
-  # Unique year-month combinations
+  # unique year-months across all runs
   ym <- unique(format(start_dates, "%Y-%m"))
   all_files <- character(0)
 
@@ -145,7 +145,7 @@ run_disperser_parallel <- function(input.refs = NULL,
     stop("proc_dir does not exist and could not be created: ", proc_dir, call. = FALSE)
   }
 
-  # Resolve directory paths from package cache (set by create_dirs()).
+  # pull dir paths from the cache that create_dirs() set up
   if (is.null(hysp_dir)) {
     hysp_dir <- .disperseR_cache_get("hysp_dir")
   }
@@ -165,11 +165,11 @@ run_disperser_parallel <- function(input.refs = NULL,
     )
   }
 
-  # --- Pre-flight met file validation (reanalysis only) ---
+  # check that all needed met files are on disk before we start anything
   required_met <- .compute_required_met_files(input.refs)
   existing_files <- list.files(meteo_dir)
   met_paths <- file.path(meteo_dir, required_met)
-  # Treat zero-size files as missing
+  # zero-size files are useless — treat them as missing
   zero_size <- required_met[required_met %in% existing_files &
                              file.info(met_paths)$size == 0]
   missing_met <- required_met[!required_met %in% existing_files]
@@ -182,7 +182,7 @@ run_disperser_parallel <- function(input.refs = NULL,
       length(missing_met), length(required_met), est_mb,
       paste(missing_met, collapse = ", ")
     ))
-    # Delete zero-size corrupt files before re-download
+    # nuke corrupt zero-size files so the re-download doesn't skip them
     for (zf in zero_size) {
       fpath <- file.path(meteo_dir, zf)
       if (file.exists(fpath)) unlink(fpath, force = TRUE)
@@ -210,11 +210,11 @@ run_disperser_parallel <- function(input.refs = NULL,
 
   run_sample <- seq_len(nrow(input.refs))
 
-  # Detect OS and choose parallelization strategy
+  # pick parallelization strategy based on OS
   is_windows <- .Platform$OS.type == "windows"
   
 
-  # Windows: cleanup orphaned HYSPLIT processes and warn about AV
+  # on windows: kill zombie HYSPLIT processes and warn about antivirus
   if (is_windows) {
     cleanup_hysplit_zombies(verbose = FALSE)
     warn_av_interference(length(run_sample))
@@ -245,7 +245,7 @@ run_disperser_parallel <- function(input.refs = NULL,
                   length(run_sample), mc.cores))
 
   if (mc.cores == 1 || length(run_sample) == 1) {
-    # Sequential execution
+    # single-core path
     n_total <- length(run_sample)
     results <- lapply(
       X = run_sample,
@@ -270,13 +270,13 @@ run_disperser_parallel <- function(input.refs = NULL,
       }
     )
   } else if (is_windows) {
-    # Windows: use socket cluster with parLapply
+    # windows: socket cluster (can't fork on windows)
     message(sprintf("Windows detected: using socket cluster with %d workers", mc.cores))
     
     cl <- parallel::makeCluster(mc.cores)
     on.exit(parallel::stopCluster(cl), add = TRUE)
     
-    # Export required variables and packages to workers
+    # ship everything the workers need
     parallel::clusterExport(cl, c(
       "input.refs", "pbl.height", "species", "proc_dir",
       "hysp_dir", "meteo_dir",
@@ -284,7 +284,7 @@ run_disperser_parallel <- function(input.refs = NULL,
       "binary_path", "parhplot_path", "run_fac"
     ), envir = environment())
     
-    # Load disperseR on each worker
+    # load packages on each worker
     parallel::clusterEvalQ(cl, {
       library(disperseR)
       library(data.table)
@@ -312,7 +312,7 @@ run_disperser_parallel <- function(input.refs = NULL,
       }
     )
   } else {
-    # Unix/macOS: use mclapply (fork-based)
+    # unix/mac: fork with mclapply
     results <- parallel::mclapply(
       X = run_sample,
       FUN = run_fac,
@@ -356,7 +356,7 @@ run_fac <- function(x,
             " hour=", subset$start_hour)
   }
 
-  # Known benign warning patterns that can be safely classified
+  # warnings matching these patterns are harmless noise from spatial libs
   benign_patterns <- c(
     "invalid extent",
     "unknown CRS",
@@ -397,7 +397,7 @@ run_fac <- function(x,
     }
   )
 
-  # Deduplicate and classify warnings
+  # dedupe and print a clean summary instead of 50+ raw warnings
   if (length(captured_warnings) > 0 && verbose) {
     deduped <- unique(captured_warnings)
     counts <- table(captured_warnings)
@@ -427,13 +427,12 @@ run_fac <- function(x,
 }
 
 
-# Internal body of run_fac, extracted so withCallingHandlers can wrap it
+# the actual work — pulled out so run_fac() can wrap it in withCallingHandlers
 .run_fac_body <- function(subset, unit_id, verbose, species, npart, overwrite,
                            keep.hysplit.files, proc_dir, hysp_dir, meteo_dir,
                            binary_path, parhplot_path) {
 
-  #########################################################################################################
-  ## Define species parameters
+  # species parameters
 
   if (species == 'so2') {
     species_param <-
@@ -458,16 +457,12 @@ run_fac <- function(x,
     stop("No species or incorrect species defined!")
   }
 
-  #########################################################################################################
-  ## subset the data using the indexes provided.
+  # height can't be NA or HYSPLIT will choke
   if (is.na(subset$Height)) {
     stop("Check to make sure your Height is defined in the run_ref_tab!")
   }
 
-  #########################################################################################################
-  ## Check if Height parameter in unit is NA
-
-  # create sharded directory structure
+  # output goes into hysp_dir/YYYY/MM/
   hysp_dir_yr <- file.path(hysp_dir, subset$year)
   hysp_dir_mo <- file.path( hysp_dir_yr,
                             formatC(
@@ -475,7 +470,6 @@ run_fac <- function(x,
                               width = 2, flag = '0'))
   dir.create( hysp_dir_mo, showWarnings = TRUE, recursive = TRUE)
 
-  ## Define output file names
   output_file <- path.expand(file.path(
     hysp_dir_mo,
     paste0(
@@ -498,20 +492,18 @@ run_fac <- function(x,
   }
 
 
-  ## Initial output data.table
+  # default message if the file already exists
   out <-
     paste(
       "Partial trimmed parcel locations (below height 0 and the highest PBL height) already exist at",
       output_file
     )
 
-  ## Check if output parcel locations file already exists
   tmp.exists <- file.exists( file.path(output_file))
 
   if (!tmp.exists | overwrite == TRUE) {
     message("Defining HYSPLIT model parameters and running the model.")
 
-    ## Create run directory
     run_dir <- file.path(
       proc_dir,
       sprintf(
@@ -522,7 +514,7 @@ run_fac <- function(x,
       )
     )
 
-    ## preemptively remove if run_dir already exists, then create
+    # clean slate — but refuse to nuke anything outside proc_dir
     proc_dir_norm <- normalizePath(proc_dir, winslash = "/", mustWork = TRUE)
     run_dir_norm <- normalizePath(run_dir, winslash = "/", mustWork = FALSE)
     if (!startsWith(run_dir_norm, paste0(proc_dir_norm, "/"))) {
@@ -531,7 +523,7 @@ run_fac <- function(x,
     unlink(run_dir, recursive = TRUE)
     dir.create(run_dir, showWarnings = FALSE)
 
-    ## Define the dispersion model
+    # build + run the dispersion model
     dispersion_model <-
       create_disp_model() %>%
       add_emissions(
@@ -564,19 +556,12 @@ run_fac <- function(x,
         binary_path = binary_path, parhplot_path = parhplot_path)
 
 
-    ## Extract output from the dispersion model
+    # extract output, trim bad particles, save to .fst
     dispersion_df <- dispersion_model %>% get_output_df() %>% data.table()
-
-    ## trim particles if they go below zero
     disp_df <- trim_zero(dispersion_df)
-
-    ## Add parcel date and time
     disp_df$Pdate <- subset$start_day + disp_df$hour / 24
+    disp_df_trim <- disp_df[height <= 2665]  # global max PBL cutoff
 
-    # trims particles that are above the global max boundary value
-    disp_df_trim <- disp_df[height <= 2665]
-
-    ## Save R data frame
     save.vars <- c('lon', 'lat', 'height', 'Pdate', 'hour')
     partial_trimmed_parcel_locs <-
       disp_df_trim[, save.vars, with = FALSE]
@@ -587,7 +572,7 @@ run_fac <- function(x,
         output_file
       )
 
-    ## Erase run files
+    # clean up temp run files unless user wants to keep them
     if (!keep.hysplit.files)
       unlink(run_dir, recursive = TRUE)
   }

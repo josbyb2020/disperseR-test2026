@@ -26,11 +26,11 @@ get_met_reanalysis <- function(files = NULL,
   path_met_files,
   base_url = NULL) {
 
-  # Use HTTPS by default (more reliable than FTP on corporate/academic networks)
+  # default to HTTPS — way more reliable than FTP on most networks
   if (is.null(base_url)) {
     base_url <- "https://www.ready.noaa.gov/data/archives/reanalysis/"
   }
-  # Ensure trailing slash
+  # make sure the URL ends with /
   if (!grepl("/$", base_url)) {
     base_url <- paste0(base_url, "/")
   }
@@ -47,17 +47,17 @@ get_met_reanalysis <- function(files = NULL,
          path_met_files, call. = FALSE)
   }
   
-  # Set a longer timeout for large meteorology files (CRAN recommendation)
+  # bump timeout — met files are ~120MB each
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout), add = TRUE)
-  options(timeout = max(600, old_timeout))  # At least 10 minutes
+  options(timeout = max(600, old_timeout))
 
-  # Internal helper for validated downloads (with retry)
+  # download a single met file with up to 3 retries
   .download_met_file <- function(url, destfile) {
     max_attempts <- 3L
 
     for (attempt in seq_len(max_attempts)) {
-      # Clean up partial/empty file from previous attempt
+      # nuke leftover partial file before retrying
       if (attempt > 1L && file.exists(destfile)) {
         unlink(destfile, force = TRUE)
       }
@@ -124,7 +124,7 @@ get_met_reanalysis <- function(files = NULL,
         }
       }
 
-      # Validate file exists and has content
+      # make sure we got a real file, not an empty stub
       if (download_ok && file.exists(destfile)) {
         fsize <- file.info(destfile)$size
         if (is.na(fsize) || fsize == 0) {
@@ -140,7 +140,7 @@ get_met_reanalysis <- function(files = NULL,
         return(TRUE)
       }
 
-      # Download failed
+      # didn't work — retry or give up
       if (attempt < max_attempts) {
         msg <- if (!is.null(last_error)) last_error$message else "unknown error"
         message("  Download attempt ", attempt, " failed for ",
@@ -159,7 +159,7 @@ get_met_reanalysis <- function(files = NULL,
   downloaded <- character(0)
   failed <- character(0)
 
-  # Download list of reanalysis met files by name
+  # grab specific files by name
   if (!is.null(files)) {
     for (i in seq_along(files)) {
       url <- paste0(base_url, files[i])
@@ -173,7 +173,7 @@ get_met_reanalysis <- function(files = NULL,
     }
   }
 
-  # Download one or more years of reanalysis met files
+  # bulk download by year (all 12 months)
   if (!is.null(years)) {
     for (i in seq_along(years)) {
       for (j in seq_len(12)) {
@@ -190,7 +190,7 @@ get_met_reanalysis <- function(files = NULL,
     }
   }
   
-  # Report summary
+  # let the user know if anything failed
   if (length(failed) > 0) {
     warning(length(failed), " file(s) failed to download: ",
             paste(failed, collapse = ", "), call. = FALSE)

@@ -365,13 +365,12 @@ hysplit_dispersion <- function(lat = 49.263,
         ".gbl"))
   }
 
-  # Remove list values containing '0' (representing
-  # missing .w5 data files for Feb in leap years)
+  # drop '0' entries — those are placeholders for missing Feb .w5 files in leap years
   if(exists("met")) {
     met <- met[!met %in% c(0)]
   }
 
-  # Validate all required met files exist and are non-empty
+  # sanity check — make sure all met files actually exist and aren't empty
   if (exists("met") && length(met) > 0) {
     met_paths <- file.path(met_dir, met)
     missing_met <- met[!file.exists(met_paths)]

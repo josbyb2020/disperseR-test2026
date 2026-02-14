@@ -9,17 +9,16 @@
 #' @return Invisibly returns TRUE on success.
 #' @keywords internal
 #'
-# Helper function for downloading files with error handling
 download_file <- function(url, file, dir) {
-  # Set a longer timeout for large downloads (CRAN recommendation)
+  # bump timeout so large files (PBL ~154MB) don't die mid-transfer
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout), add = TRUE)
-  options(timeout = max(600, old_timeout))  # At least 10 minutes
+  options(timeout = max(600, old_timeout))
 
   max_attempts <- 3L
 
   for (attempt in seq_len(max_attempts)) {
-    # Clean up any partial file from a previous failed attempt
+    # nuke any leftover partial file before retrying
     if (attempt > 1L && file.exists(file)) {
       unlink(file, force = TRUE)
     }
@@ -29,7 +28,7 @@ download_file <- function(url, file, dir) {
       Sys.sleep(wait)
     }
 
-    # Capture warnings but continue execution
+    # collect warnings but don't let them kill the download
     download_warnings <- NULL
     dl_ok <- tryCatch(
       withCallingHandlers({
@@ -95,13 +94,13 @@ download_file <- function(url, file, dir) {
 
     if (!isTRUE(dl_ok)) next
 
-    # Report warnings if any occurred
+    # surface any warnings that happened during the download
     if (length(download_warnings) > 0) {
       warning("Download warnings: ", paste(download_warnings, collapse = "; "),
               call. = FALSE)
     }
 
-    # Post-download validation
+    # make sure we actually got something
     if (!file.exists(file) || file.info(file)$size == 0) {
       if (file.exists(file)) unlink(file, force = TRUE)
       if (attempt < max_attempts) {
@@ -112,7 +111,7 @@ download_file <- function(url, file, dir) {
            max_attempts, " attempts.\nURL: ", url, call. = FALSE)
     }
 
-    # Success — log checksum and unzip if needed
+    # good to go — log checksum and unzip if it's a zip
     checksum <- tools::md5sum(file)
     message("  Downloaded: ", basename(file),
             " (", file.info(file)$size, " bytes, MD5: ", checksum, ")")
@@ -139,9 +138,7 @@ download_file <- function(url, file, dir) {
 .pad_met_dates <- function(start_date, end_date) {
   start_date <- as.Date(start_date)
   end_date   <- as.Date(end_date)
-  # Subtract one month from the start
   padded_start <- seq(start_date, length = 2, by = "-1 month")[2]
-  # Add one month to the end
   padded_end   <- seq(end_date,   length = 2, by = "1 month")[2]
   list(start = padded_start, end = padded_end)
 }
@@ -201,8 +198,6 @@ get_data <- function(data,
                      end.year = NULL,
                      end.month = NULL) {
 
-  # Validate data parameter
-
   valid_data <- c("all", "crosswalk", "zctashapefile", "zctashapefileSF",
                   "pblheight", "metfiles", "zcta_dataset")
   if (!data %in% valid_data) {
@@ -210,16 +205,15 @@ get_data <- function(data,
          paste(valid_data, collapse = ", "), call. = FALSE)
   }
 
-  # Store parameters
   startyear <- start.year
   startmonth <- start.month
   endyear <- end.year
   endmonth <- end.month
 
-  # Standard projection for disperseR (North American Albers Equal Area Conic)
-  p4s <- "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
+  # albers equal area conic — standard projection for everything in disperseR
+  p4s <-"+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m"
 
-  # Validate cached directory variables for data types that require them
+  # make sure create_dirs() was called so we know where to put things
   dirs_needed <- c("all", "zctashapefile", "zctashapefileSF", "pblheight", "metfiles", "zcta_dataset")
   if (data %in% dirs_needed) {
     zcta_dir <- .disperseR_cache_get("zcta_dir")
@@ -243,26 +237,24 @@ get_data <- function(data,
     }
   }
 
-  # ==========================================================================
-  # ALL DATA
-  # ==========================================================================
+  # --- all data at once ---
   if (data == "all") {
 
-    # Validate date parameters early (before downloading ~200MB of data)
+    # bail early if dates are missing — no point downloading ~200MB first
     if (is.null(startyear) || is.null(startmonth) ||
         is.null(endyear) || is.null(endmonth)) {
       stop("When data='all', you must provide start.year, start.month, end.year, and end.month ",
            "for meteorological file downloads.", call. = FALSE)
     }
 
-    # --- Cache built-in datasets for use by other functions ---
+    # stash built-in datasets so other functions can grab them later
     message("Loading built-in datasets...")
     .disperseR_cache_set("crosswalk", crosswalk)
     .disperseR_cache_set("PP.units.monthly1995_2017", PP.units.monthly1995_2017)
     .disperseR_cache_set("zipcodecoordinate", zipcodecoordinate)
     message("  Cached crosswalk, PP.units.monthly1995_2017, zipcodecoordinate")
 
-    # --- ZCTA shapefile ---
+    # zcta shapefile
     message("Downloading ZCTA shapefile...")
     directory <- zcta_dir
     file <- file.path(directory, 'cb_2017_us_zcta510_500k.zip')
@@ -293,7 +285,7 @@ get_data <- function(data,
            call. = FALSE)
     }
 
-    # Read and transform using sf (replaces raster::shapefile + sp::spTransform)
+    # read + reproject with sf
     message("  Processing shapefile with sf...")
     zcta <- sf::st_read(zcta_shp, quiet = TRUE)
     zcta_trans <- sf::st_transform(zcta, crs = p4s)
@@ -301,7 +293,7 @@ get_data <- function(data,
     .disperseR_cache_set("zcta", zcta_trans)
     message("  Cached as 'zcta'")
 
-    # --- Planetary boundary layer height ---
+    # pbl height (NARR monthly means)
     message("Downloading planetary boundary layer data...")
     directory <- hpbl_dir
     file <- file.path(directory, 'hpbl.mon.mean.nc')
@@ -320,23 +312,21 @@ get_data <- function(data,
            call. = FALSE)
     }
 
-    # Read using terra (replaces raster::brick)
+    # read with terra and fix the CRS (dataset ships with a wrong one)
     old_tz <- Sys.getenv("TZ")
     Sys.setenv(TZ = "UTC")
     on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
     message("  Processing PBL data with terra...")
     hpbl_rasterin <- terra::rast(file, subds = "hpbl")
     
-    # Set CRS to fix dataset error
     terra::crs(hpbl_rasterin) <- "+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50"
     message("  Preprocessing complete")
     .disperseR_cache_set("pblheight", hpbl_rasterin)
     message("  Cached as 'pblheight'")
 
-    # --- Meteorological files ---
+    # met files — the date guard below is redundant for data=="all" but
+    # stays because the data=="metfiles" path shares this code
     message("Downloading meteorological files...")
-    # (Date params already validated at the top of data=="all" block;
-    #  this guard remains for the data=="metfiles" path which shares this code.)
     if (is.null(startyear) || is.null(startmonth) ||
         is.null(endyear) || is.null(endmonth)) {
       stop("Please specify start.year, start.month, end.year, and end.month for metfiles.",
@@ -350,7 +340,7 @@ get_data <- function(data,
     start <- as.Date(inputdates[1])
     end <- as.Date(inputdates[2])
 
-    # Pad by +/- 1 month: HYSPLIT needs prev/current/next month met files
+    # HYSPLIT needs prev/current/next month so we pad ±1 month
     padded <- .pad_met_dates(start, end)
     message("  HYSPLIT requires met files for prev/current/next months.",
             "\n  Expanding requested range ",
@@ -374,7 +364,7 @@ get_data <- function(data,
       message("  Downloading: ", paste(metfiles, collapse = ", "))
       get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
 
-      # Validate downloads completed
+      # double-check nothing got lost
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
       if (length(still_missing) > 0) {
         stop("Meteorology download failed. Missing files: ",
@@ -386,7 +376,7 @@ get_data <- function(data,
       message("  All requested files already available.")
     }
 
-    # --- ZCTA dataset (merged with crosswalk) ---
+    # zcta dataset merged with crosswalk (used by graph functions)
     message("Creating ZCTA dataset for graphs...")
     directory <- zcta_dir
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
@@ -412,9 +402,7 @@ get_data <- function(data,
     )))
   }
 
-  # ==========================================================================
-  # INDIVIDUAL DATA TYPES
-  # ==========================================================================
+  # --- individual data types ---
 
   if (data == "crosswalk") {
     message("Loading crosswalk data...")
@@ -422,21 +410,21 @@ get_data <- function(data,
     return(crosswalk)
   }
 
-  # --- ZCTA shapefile setup ---
+  # zcta shapefile setup
   if (data == "zctashapefile" || data == "zcta_dataset" || data == "zctashapefileSF") {
     directory <- zcta_dir
     file <- file.path(directory, 'cb_2017_us_zcta510_500k.zip')
     url <- 'https://www2.census.gov/geo/tiger/GENZ2017/shp/cb_2017_us_zcta510_500k.zip'
   }
 
-  # --- PBL height setup ---
+  # pbl height setup
   if (data == "pblheight") {
     directory <- hpbl_dir
     file <- file.path(directory, 'hpbl.mon.mean.nc')
     url <- 'https://downloads.psl.noaa.gov/NARR/Monthlies/monolevel/hpbl.mon.mean.nc'
   }
 
-  # --- Meteorological files ---
+  # met files
   if (data == "metfiles") {
     if (is.null(startyear) || is.null(startmonth) ||
         is.null(endyear) || is.null(endmonth)) {
@@ -449,7 +437,7 @@ get_data <- function(data,
     start <- as.Date(inputdates[1])
     end <- as.Date(inputdates[2])
 
-    # Pad by +/- 1 month: HYSPLIT needs prev/current/next month met files
+    # same ±1 month padding as the data=="all" path
     padded <- .pad_met_dates(start, end)
     message("HYSPLIT requires met files for prev/current/next months.",
             "\n  Expanding requested range ",
@@ -473,7 +461,6 @@ get_data <- function(data,
       message("Downloading: ", paste(metfiles, collapse = ", "))
       get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
 
-      # Validate downloads completed
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
       if (length(still_missing) > 0) {
         stop("Meteorology download failed. Missing files: ",
@@ -487,7 +474,7 @@ get_data <- function(data,
     return(invisible(NULL))
   }
 
-  # --- Download files if needed ---
+  # download if we don't already have the file
   if (data != "metfiles" && data != "all") {
     if (!file.exists(file)) {
       message("Downloading data (this may take a moment)...")
@@ -502,7 +489,7 @@ get_data <- function(data,
     }
   }
 
-  # --- Process and return ZCTA dataset ---
+  # zcta dataset (merged with crosswalk)
   if (data == "zcta_dataset") {
     message("Processing ZCTA dataset...")
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
@@ -531,7 +518,7 @@ get_data <- function(data,
     return(zcta)
   }
 
-  # --- Process and return ZCTA shapefile (as sf object) ---
+  # zcta shapefile as sf
   if (data == "zctashapefile" || data == "zctashapefileSF") {
     message("Processing ZCTA shapefile...")
     zcta_path <- file.path(directory, 'cb_2017_us_zcta510_500k.shp')
@@ -547,7 +534,6 @@ get_data <- function(data,
            "The zip file may be corrupted. Please delete '", file, "' and try again.",
            call. = FALSE)
     }
-    # Use sf instead of raster::shapefile + sp::spTransform
     zcta <- sf::st_read(zcta_path, quiet = TRUE)
     zcta_trans <- sf::st_transform(zcta, crs = p4s)
     message("Preprocessing complete")
@@ -555,7 +541,7 @@ get_data <- function(data,
     return(zcta_trans)
   }
 
-  # --- Process and return PBL height raster ---
+  # pbl height raster
   if (data == "pblheight") {
     if (!file.exists(file)) {
       stop("PBL data file '", file, "' does not exist. ",
@@ -566,7 +552,6 @@ get_data <- function(data,
     Sys.setenv(TZ = "UTC")
     on.exit(Sys.setenv(TZ = old_tz), add = TRUE)
     message("Processing PBL height data...")
-    # Use terra instead of raster::brick
     hpbl_rasterin <- terra::rast(file, subds = "hpbl")
     terra::crs(hpbl_rasterin) <- "+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50"
     message("Preprocessing complete")
