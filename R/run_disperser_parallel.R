@@ -1,3 +1,41 @@
+#' Compute required reanalysis met files for a set of input refs
+#'
+#' Replicates the prev/current/next month logic from \code{hysplit_dispersion}
+#' across all unique start months in \code{input.refs}.
+#'
+#' @param input.refs data.table with \code{start_day} (Date) column.
+#' @return Character vector of unique required met filenames (e.g. "RP200501.gbl").
+#' @keywords internal
+.compute_required_met_files <- function(input.refs) {
+  start_dates <- as.Date(input.refs$start_day)
+  # Unique year-month combinations
+  ym <- unique(format(start_dates, "%Y-%m"))
+  all_files <- character(0)
+
+  for (ym_str in ym) {
+    d <- as.Date(paste0(ym_str, "-01"))
+    yr <- as.integer(format(d, "%Y"))
+    mo <- as.integer(format(d, "%m"))
+
+    # Previous month
+    if (mo == 1L) {
+      prev <- paste0("RP", yr - 1L, "12.gbl")
+    } else {
+      prev <- paste0("RP", yr, formatC(mo - 1L, width = 2, flag = "0"), ".gbl")
+    }
+    # Current month
+    curr <- paste0("RP", yr, formatC(mo, width = 2, flag = "0"), ".gbl")
+    # Next month
+    if (mo == 12L) {
+      nxt <- paste0("RP", yr + 1L, "01.gbl")
+    } else {
+      nxt <- paste0("RP", yr, formatC(mo + 1L, width = 2, flag = "0"), ".gbl")
+    }
+    all_files <- c(all_files, prev, curr, nxt)
+  }
+  unique(all_files)
+}
+
 #' Run the dispersion model in parallel
 #'
 #' @description Runs HYSPLIT dispersion simulations in parallel across multiple
@@ -127,8 +165,51 @@ run_disperser_parallel <- function(input.refs = NULL,
     )
   }
 
+  # --- Pre-flight met file validation (reanalysis only) ---
+  required_met <- .compute_required_met_files(input.refs)
+  existing_files <- list.files(meteo_dir)
+  met_paths <- file.path(meteo_dir, required_met)
+  # Treat zero-size files as missing
+  zero_size <- required_met[required_met %in% existing_files &
+                             file.info(met_paths)$size == 0]
+  missing_met <- required_met[!required_met %in% existing_files]
+  missing_met <- unique(c(missing_met, zero_size))
+
+  if (length(missing_met) > 0) {
+    est_mb <- length(missing_met) * 120L
+    message(sprintf(
+      "Pre-flight check: %d of %d required met file(s) missing (~%d MB):\n  %s",
+      length(missing_met), length(required_met), est_mb,
+      paste(missing_met, collapse = ", ")
+    ))
+    # Delete zero-size corrupt files before re-download
+    for (zf in zero_size) {
+      fpath <- file.path(meteo_dir, zf)
+      if (file.exists(fpath)) unlink(fpath, force = TRUE)
+    }
+    if (interactive()) {
+      ans <- readline("Download missing met files now? [Y/n] ")
+      if (tolower(trimws(ans)) %in% c("n", "no")) {
+        stop("Aborting: missing met files. Download them with get_data(data='metfiles', ...).",
+             call. = FALSE)
+      }
+    } else {
+      message("Non-interactive session: auto-downloading missing met files...")
+    }
+    result <- get_met_reanalysis(files = missing_met, path_met_files = meteo_dir)
+    still_missing <- missing_met[!missing_met %in% list.files(meteo_dir)]
+    if (length(still_missing) > 0) {
+      stop("Pre-flight download failed. Still missing: ",
+           paste(still_missing, collapse = ", "), call. = FALSE)
+    }
+    message("Pre-flight download complete: all met files present.")
+  } else {
+    message(sprintf("Pre-flight check: all %d required met files present.",
+                    length(required_met)))
+  }
+
   run_sample <- seq_len(nrow(input.refs))
-  
+
   # Detect OS and choose parallelization strategy
   is_windows <- .Platform$OS.type == "windows"
   
@@ -274,6 +355,82 @@ run_fac <- function(x,
     message("Running ID=", unit_id, " date=", format(subset$start_day, "%Y-%m-%d"),
             " hour=", subset$start_hour)
   }
+
+  # Known benign warning patterns that can be safely classified
+  benign_patterns <- c(
+    "invalid extent",
+    "unknown CRS",
+    "CRS comment",
+    "deprecated",
+    "column name",
+    "st_crs.*comment",
+    "old-style crs",
+    "GDAL Message",
+    "Column .* lost",
+    "attribute variables",
+    "already exists",
+    "single-line footer"
+  )
+
+  captured_warnings <- character(0)
+
+  out <- withCallingHandlers(
+    {
+      .run_fac_body(
+        subset = subset,
+        unit_id = unit_id,
+        verbose = verbose,
+        species = species,
+        npart = npart,
+        overwrite = overwrite,
+        keep.hysplit.files = keep.hysplit.files,
+        proc_dir = proc_dir,
+        hysp_dir = hysp_dir,
+        meteo_dir = meteo_dir,
+        binary_path = binary_path,
+        parhplot_path = parhplot_path
+      )
+    },
+    warning = function(w) {
+      captured_warnings <<- c(captured_warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  # Deduplicate and classify warnings
+  if (length(captured_warnings) > 0 && verbose) {
+    deduped <- unique(captured_warnings)
+    counts <- table(captured_warnings)
+    is_benign <- vapply(deduped, function(msg) {
+      any(vapply(benign_patterns, function(pat) grepl(pat, msg, ignore.case = TRUE),
+                 logical(1)))
+    }, logical(1))
+
+    benign_msgs <- deduped[is_benign]
+    review_msgs <- deduped[!is_benign]
+
+    if (length(benign_msgs) > 0 || length(review_msgs) > 0) {
+      message("  -- Warning summary for ID=", unit_id,
+              " (", sum(counts), " total, ", length(deduped), " unique) --")
+    }
+    for (msg in benign_msgs) {
+      n <- as.integer(counts[msg])
+      message("    [benign] (x", n, ") ", substr(msg, 1, 120))
+    }
+    for (msg in review_msgs) {
+      n <- as.integer(counts[msg])
+      message("    [review] (x", n, ") ", substr(msg, 1, 120))
+    }
+  }
+
+  return(out)
+}
+
+
+# Internal body of run_fac, extracted so withCallingHandlers can wrap it
+.run_fac_body <- function(subset, unit_id, verbose, species, npart, overwrite,
+                           keep.hysplit.files, proc_dir, hysp_dir, meteo_dir,
+                           binary_path, parhplot_path) {
 
   #########################################################################################################
   ## Define species parameters
@@ -434,7 +591,6 @@ run_fac <- function(x,
     if (!keep.hysplit.files)
       unlink(run_dir, recursive = TRUE)
   }
-
 
   return(out)
 }

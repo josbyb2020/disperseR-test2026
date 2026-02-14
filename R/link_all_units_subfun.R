@@ -103,7 +103,9 @@ link_to <- function(d,
     error = function(e) {
       msg <- conditionMessage(e)
       if (grepl("invalid extent", msg, ignore.case = TRUE)) {
-        message("trim skipped for sparse extent; using original raster.")
+        message("Note: Raster trimming skipped (parcel footprint too sparse ",
+                "for optimization). Results are unaffected -- the full raster ",
+                "is used instead.")
       } else {
         warning("trim failed: ", msg, ". Using original raster.")
       }

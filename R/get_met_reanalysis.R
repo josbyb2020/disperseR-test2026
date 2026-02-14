@@ -50,80 +50,108 @@ get_met_reanalysis <- function(files = NULL,
   # Set a longer timeout for large meteorology files (CRAN recommendation)
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout), add = TRUE)
-  options(timeout = max(300, old_timeout))  # At least 5 minutes
-  
-  # Internal helper for validated downloads
-  .download_met_file <- function(url, destfile) {
-    download_ok <- FALSE
-    last_error <- NULL
-    
-    if (.Platform$OS.type == "windows" &&
-        requireNamespace("downloader", quietly = TRUE)) {
-      download_ok <- tryCatch({
-        downloader::download(
-          url = url,
-          destfile = destfile,
-          method = "auto",
-          quiet = FALSE,
-          mode = "wb",
-          cacheOK = FALSE
-        )
-        TRUE
-      }, error = function(e) {
-        last_error <<- e
-        FALSE
-      })
-    }
+  options(timeout = max(600, old_timeout))  # At least 10 minutes
 
-    if (!download_ok) {
-      download_methods <- "auto"
-      if (.Platform$OS.type == "windows") {
-        download_methods <- character(0)
-        if (capabilities("libcurl")) {
-          download_methods <- c(download_methods, "libcurl")
-        }
-        download_methods <- c(download_methods, "wininet", "auto")
-        download_methods <- unique(download_methods)
+  # Internal helper for validated downloads (with retry)
+  .download_met_file <- function(url, destfile) {
+    max_attempts <- 3L
+
+    for (attempt in seq_len(max_attempts)) {
+      # Clean up partial/empty file from previous attempt
+      if (attempt > 1L && file.exists(destfile)) {
+        unlink(destfile, force = TRUE)
+      }
+      if (attempt > 1L) {
+        wait <- 2^(attempt - 1L)
+        message("  Retry ", attempt, "/", max_attempts, " for ",
+                basename(destfile), " after ", wait, "s...")
+        Sys.sleep(wait)
       }
 
-      for (method in download_methods) {
-        status <- tryCatch(
-          utils::download.file(
+      download_ok <- FALSE
+      last_error <- NULL
+
+      if (.Platform$OS.type == "windows" &&
+          requireNamespace("downloader", quietly = TRUE)) {
+        download_ok <- tryCatch({
+          downloader::download(
             url = url,
             destfile = destfile,
-            method = method,
+            method = "auto",
             quiet = FALSE,
             mode = "wb",
             cacheOK = FALSE
-          ),
-          error = function(e) e
-        )
-        if (inherits(status, "error")) {
-          last_error <- status
-          next
-        }
-        if (is.numeric(status) && status == 0) {
-          download_ok <- TRUE
-          break
-        }
-        last_error <- status
+          )
+          TRUE
+        }, error = function(e) {
+          last_error <<- e
+          FALSE
+        })
       }
-    }
 
-    if (!download_ok && !is.null(last_error)) {
-      warning("Download failed for ", basename(destfile), ": ", last_error$message,
-              call. = FALSE)
-    }
-    
-    # Validate file exists and has content
-    if (download_ok && file.exists(destfile)) {
-      fsize <- file.info(destfile)$size
-      if (is.na(fsize) || fsize == 0) {
-        warning("Downloaded file is empty: ", basename(destfile), call. = FALSE)
-        unlink(destfile, force = TRUE)
-        return(FALSE)
+      if (!download_ok) {
+        download_methods <- "auto"
+        if (.Platform$OS.type == "windows") {
+          download_methods <- character(0)
+          if (capabilities("libcurl")) {
+            download_methods <- c(download_methods, "libcurl")
+          }
+          download_methods <- c(download_methods, "wininet", "auto")
+          download_methods <- unique(download_methods)
+        }
+
+        for (method in download_methods) {
+          status <- tryCatch(
+            utils::download.file(
+              url = url,
+              destfile = destfile,
+              method = method,
+              quiet = FALSE,
+              mode = "wb",
+              cacheOK = FALSE
+            ),
+            error = function(e) e
+          )
+          if (inherits(status, "error")) {
+            last_error <- status
+            next
+          }
+          if (is.numeric(status) && status == 0) {
+            download_ok <- TRUE
+            break
+          }
+          last_error <- status
+        }
       }
-      return(TRUE)
+
+      # Validate file exists and has content
+      if (download_ok && file.exists(destfile)) {
+        fsize <- file.info(destfile)$size
+        if (is.na(fsize) || fsize == 0) {
+          if (attempt < max_attempts) {
+            message("  Downloaded file is empty: ", basename(destfile), ", retrying...")
+            unlink(destfile, force = TRUE)
+            next
+          }
+          warning("Downloaded file is empty: ", basename(destfile), call. = FALSE)
+          unlink(destfile, force = TRUE)
+          return(FALSE)
+        }
+        return(TRUE)
+      }
+
+      # Download failed
+      if (attempt < max_attempts) {
+        msg <- if (!is.null(last_error)) last_error$message else "unknown error"
+        message("  Download attempt ", attempt, " failed for ",
+                basename(destfile), ": ", msg)
+        next
+      }
+
+      if (!is.null(last_error)) {
+        warning("Download failed for ", basename(destfile), ": ", last_error$message,
+                call. = FALSE)
+      }
     }
     return(FALSE)
   }

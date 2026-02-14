@@ -371,6 +371,26 @@ hysplit_dispersion <- function(lat = 49.263,
     met <- met[!met %in% c(0)]
   }
 
+  # Validate all required met files exist and are non-empty
+  if (exists("met") && length(met) > 0) {
+    met_paths <- file.path(met_dir, met)
+    missing_met <- met[!file.exists(met_paths)]
+    zero_met <- met[file.exists(met_paths) &
+                     file.info(met_paths)$size == 0]
+    if (length(missing_met) > 0) {
+      stop("Required met file(s) missing after download: ",
+           paste(missing_met, collapse = ", "), ".\n",
+           "Run get_data(data='metfiles', ...) with the correct date range ",
+           "to download them.", call. = FALSE)
+    }
+    if (length(zero_met) > 0) {
+      warning("Met file(s) are zero-size (possibly corrupt): ",
+              paste(zero_met, collapse = ", "), ".\n",
+              "Consider deleting them and re-running get_data(data='metfiles').",
+              call. = FALSE)
+    }
+  }
+
   # Are the met files available in the
   # selected path?
   met_file_df <- stats::setNames(data.frame(mat.or.vec(nr = length(met),

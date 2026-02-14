@@ -14,97 +14,136 @@ download_file <- function(url, file, dir) {
   # Set a longer timeout for large downloads (CRAN recommendation)
   old_timeout <- getOption("timeout")
   on.exit(options(timeout = old_timeout), add = TRUE)
-  options(timeout = max(300, old_timeout))  # At least 5 minutes
+  options(timeout = max(600, old_timeout))  # At least 10 minutes
 
-  # Capture warnings but continue execution
-  download_warnings <- NULL
-  result <- tryCatch(
-    withCallingHandlers({
-      download_methods <- "auto"
-      if (.Platform$OS.type == "windows") {
-        download_methods <- character(0)
-        if (capabilities("libcurl")) {
-          download_methods <- c(download_methods, "libcurl")
-        }
-        download_methods <- c(download_methods, "wininet", "auto")
-        download_methods <- unique(download_methods)
-      }
+  max_attempts <- 3L
 
-      download_status <- NULL
-      last_error <- NULL
-      for (method in download_methods) {
-        status <- tryCatch(
-          utils::download.file(
-            url = url,
-            destfile = file,
-            mode = "wb",
-            method = method
-          ),
-          error = function(e) e
-        )
-        if (inherits(status, "error")) {
-          last_error <- status
-          next
-        }
-        if (is.numeric(status) && status == 0) {
-          download_status <- status
-          break
-        }
-        last_error <- status
-      }
-
-      if (is.null(download_status)) {
-        if (inherits(last_error, "error")) {
-          stop("download.file() failed: ", last_error$message)
-        }
-        stop("download.file() returned non-zero exit status: ", last_error)
-      }
-    },
-    warning = function(w) {
-      download_warnings <<- c(download_warnings, conditionMessage(w))
-      invokeRestart("muffleWarning")
-    }),
-    error = function(cond) {
-      if (file.exists(file)) {
-        unlink(file, force = TRUE)
-      }
-      stop("Failed to download '", basename(file), "' from ", url, ".\n",
-           "Error: ", cond$message, "\n",
-           "Please check your network connection and try again.",
-           call. = FALSE)
+  for (attempt in seq_len(max_attempts)) {
+    # Clean up any partial file from a previous failed attempt
+    if (attempt > 1L && file.exists(file)) {
+      unlink(file, force = TRUE)
     }
-  )
-  
-  # Report warnings if any occurred
-  if (length(download_warnings) > 0) {
-    warning("Download warnings: ", paste(download_warnings, collapse = "; "),
-            call. = FALSE)
-  }
-  
-  # Post-download validation (always runs, even after warnings)
-  if (!file.exists(file)) {
-    stop("Download completed but file '", file, "' does not exist.\n",
-         "URL: ", url,
-         call. = FALSE)
-  }
-  if (file.info(file)$size == 0) {
-    unlink(file, force = TRUE)
-    stop("Downloaded file '", file, "' is empty (0 bytes).\n",
-         "URL: ", url,
-         call. = FALSE)
-  }
-  
-  # Log checksum for reproducibility
-  checksum <- tools::md5sum(file)
-  message("  Downloaded: ", basename(file),
-          " (", file.info(file)$size, " bytes, MD5: ", checksum, ")")
+    if (attempt > 1L) {
+      wait <- 2^(attempt - 1L)
+      message("  Retry ", attempt, "/", max_attempts, " after ", wait, "s...")
+      Sys.sleep(wait)
+    }
 
-  # Unzip if applicable
-  if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
-    utils::unzip(file, exdir = dir)
-  }
+    # Capture warnings but continue execution
+    download_warnings <- NULL
+    dl_ok <- tryCatch(
+      withCallingHandlers({
+        download_methods <- "auto"
+        if (.Platform$OS.type == "windows") {
+          download_methods <- character(0)
+          if (capabilities("libcurl")) {
+            download_methods <- c(download_methods, "libcurl")
+          }
+          download_methods <- c(download_methods, "wininet", "auto")
+          download_methods <- unique(download_methods)
+        }
 
-  return(invisible(TRUE))
+        download_status <- NULL
+        last_error <- NULL
+        for (method in download_methods) {
+          status <- tryCatch(
+            utils::download.file(
+              url = url,
+              destfile = file,
+              mode = "wb",
+              method = method
+            ),
+            error = function(e) e
+          )
+          if (inherits(status, "error")) {
+            last_error <- status
+            next
+          }
+          if (is.numeric(status) && status == 0) {
+            download_status <- status
+            break
+          }
+          last_error <- status
+        }
+
+        if (is.null(download_status)) {
+          if (inherits(last_error, "error")) {
+            stop("download.file() failed: ", last_error$message)
+          }
+          stop("download.file() returned non-zero exit status: ", last_error)
+        }
+        TRUE
+      },
+      warning = function(w) {
+        download_warnings <<- c(download_warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }),
+      error = function(cond) {
+        if (file.exists(file)) {
+          unlink(file, force = TRUE)
+        }
+        if (attempt < max_attempts) {
+          message("  Download attempt ", attempt, " failed: ", cond$message)
+          return(FALSE)
+        }
+        stop("Failed to download '", basename(file), "' from ", url, ".\n",
+             "Error: ", cond$message, "\n",
+             "Please check your network connection and try again.",
+             call. = FALSE)
+      }
+    )
+
+    if (!isTRUE(dl_ok)) next
+
+    # Report warnings if any occurred
+    if (length(download_warnings) > 0) {
+      warning("Download warnings: ", paste(download_warnings, collapse = "; "),
+              call. = FALSE)
+    }
+
+    # Post-download validation
+    if (!file.exists(file) || file.info(file)$size == 0) {
+      if (file.exists(file)) unlink(file, force = TRUE)
+      if (attempt < max_attempts) {
+        message("  Download attempt ", attempt, " produced empty/missing file, retrying...")
+        next
+      }
+      stop("Downloaded file '", file, "' is missing or empty after ",
+           max_attempts, " attempts.\nURL: ", url, call. = FALSE)
+    }
+
+    # Success — log checksum and unzip if needed
+    checksum <- tools::md5sum(file)
+    message("  Downloaded: ", basename(file),
+            " (", file.info(file)$size, " bytes, MD5: ", checksum, ")")
+
+    if (substr(file, nchar(file) - 3 + 1, nchar(file)) == "zip") {
+      utils::unzip(file, exdir = dir)
+    }
+
+    return(invisible(TRUE))
+  }
+}
+
+#' Expand a date range by +/- 1 month for met file padding
+#'
+#' HYSPLIT needs met files for the month before and after the simulation
+#' period. This helper expands a start/end date range by one month in each
+#' direction so that \code{get_data()} downloads the required padding files
+#' up front (instead of HYSPLIT silently fetching them during runs).
+#'
+#' @param start_date Date or character coercible to Date.
+#' @param end_date   Date or character coercible to Date.
+#' @return A named list with \code{start} and \code{end} as Date objects.
+#' @keywords internal
+.pad_met_dates <- function(start_date, end_date) {
+  start_date <- as.Date(start_date)
+  end_date   <- as.Date(end_date)
+  # Subtract one month from the start
+  padded_start <- seq(start_date, length = 2, by = "-1 month")[2]
+  # Add one month to the end
+  padded_end   <- seq(end_date,   length = 2, by = "1 month")[2]
+  list(start = padded_start, end = padded_end)
 }
 
 #' Download and prepare data for disperseR analysis
@@ -303,13 +342,23 @@ get_data <- function(data,
       stop("Please specify start.year, start.month, end.year, and end.month for metfiles.",
            call. = FALSE)
     }
-    
+
     inputdates <- c(
       paste(startyear, startmonth, "01", sep = "/"),
       paste(endyear, endmonth, "01", sep = "/")
     )
     start <- as.Date(inputdates[1])
     end <- as.Date(inputdates[2])
+
+    # Pad by +/- 1 month: HYSPLIT needs prev/current/next month met files
+    padded <- .pad_met_dates(start, end)
+    message("  HYSPLIT requires met files for prev/current/next months.",
+            "\n  Expanding requested range ",
+            format(start, "%Y-%m"), " .. ", format(end, "%Y-%m"),
+            " to ", format(padded$start, "%Y-%m"), " .. ",
+            format(padded$end, "%Y-%m"), ".")
+    start <- padded$start
+    end   <- padded$end
 
     vectorfiles <- NULL
     i <- 1
@@ -324,7 +373,7 @@ get_data <- function(data,
     if (length(metfiles) > 0) {
       message("  Downloading: ", paste(metfiles, collapse = ", "))
       get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
-      
+
       # Validate downloads completed
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
       if (length(still_missing) > 0) {
@@ -389,7 +438,7 @@ get_data <- function(data,
 
   # --- Meteorological files ---
   if (data == "metfiles") {
-    if (is.null(startyear) || is.null(startmonth) || 
+    if (is.null(startyear) || is.null(startmonth) ||
         is.null(endyear) || is.null(endmonth)) {
       stop("Please specify start.year, start.month, end.year, and end.month.")
     }
@@ -399,6 +448,16 @@ get_data <- function(data,
     )
     start <- as.Date(inputdates[1])
     end <- as.Date(inputdates[2])
+
+    # Pad by +/- 1 month: HYSPLIT needs prev/current/next month met files
+    padded <- .pad_met_dates(start, end)
+    message("HYSPLIT requires met files for prev/current/next months.",
+            "\n  Expanding requested range ",
+            format(start, "%Y-%m"), " .. ", format(end, "%Y-%m"),
+            " to ", format(padded$start, "%Y-%m"), " .. ",
+            format(padded$end, "%Y-%m"), ".")
+    start <- padded$start
+    end   <- padded$end
 
     vectorfiles <- NULL
     i <- 1
@@ -413,7 +472,7 @@ get_data <- function(data,
     if (length(metfiles) > 0) {
       message("Downloading: ", paste(metfiles, collapse = ", "))
       get_met_reanalysis(files = metfiles, path_met_files = meteo_dir)
-      
+
       # Validate downloads completed
       still_missing <- metfiles[!metfiles %in% list.files(meteo_dir)]
       if (length(still_missing) > 0) {
