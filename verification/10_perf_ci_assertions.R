@@ -111,6 +111,14 @@ verify_step("assert_crossplatform_perf_contract", {
     "DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT",
     default_speed_floor("userflow_non_extract", os_name, profile_name)
   )
+  min_userflow_expected_fast_rows <- as.integer(
+    read_threshold("DISPERSER_MIN_ROWS_EXPECTED_FAST", 50000)
+  )
+  if (!is.finite(min_userflow_expected_fast_rows) ||
+      is.na(min_userflow_expected_fast_rows) ||
+      min_userflow_expected_fast_rows < 1) {
+    min_userflow_expected_fast_rows <- 50000L
+  }
   min_heavy <- read_threshold("DISPERSER_MIN_SPEEDUP_HEAVY", default_speed_floor("heavy", os_name, profile_name))
   min_median <- read_threshold("DISPERSER_MIN_SPEEDUP_MEDIAN", default_speed_floor("median", os_name, profile_name))
 
@@ -131,7 +139,11 @@ verify_step("assert_crossplatform_perf_contract", {
     sprintf("- %s: min speedup %.3fx (floor %.2fx)", label, min_seen, floor_value)
   }
 
-  check_userflow_floor <- function(source_pattern, floor_all, floor_expected_fast, floor_non_extract) {
+  check_userflow_floor <- function(source_pattern,
+                                   floor_all,
+                                   floor_expected_fast,
+                                   floor_non_extract,
+                                   expected_fast_min_rows) {
     sub <- summary_dt[grepl(source_pattern, source_file, fixed = TRUE)]
     if (nrow(sub) == 0) {
       return("- User-flow benchmark: no rows (skipped)")
@@ -151,8 +163,16 @@ verify_step("assert_crossplatform_perf_contract", {
     }
 
     sub[, expected_fast_extract := as.logical(expected_fast_extract)]
-    expected_dt <- sub[!is.na(expected_fast_extract) & expected_fast_extract]
-    fallback_dt <- sub[is.na(expected_fast_extract) | !expected_fast_extract]
+    has_rows <- "rows_per_file" %in% names(sub)
+    if (has_rows) {
+      sub[, rows_per_file := suppressWarnings(as.numeric(rows_per_file))]
+      sub[, expected_fast_rows_ok := is.finite(rows_per_file) & rows_per_file >= expected_fast_min_rows]
+      expected_dt <- sub[!is.na(expected_fast_extract) & expected_fast_extract & expected_fast_rows_ok]
+      fallback_dt <- sub[is.na(expected_fast_extract) | !expected_fast_extract | !expected_fast_rows_ok]
+    } else {
+      expected_dt <- sub[!is.na(expected_fast_extract) & expected_fast_extract]
+      fallback_dt <- sub[is.na(expected_fast_extract) | !expected_fast_extract]
+    }
     lines <- character(0)
 
     if (nrow(expected_dt) > 0) {
@@ -160,7 +180,9 @@ verify_step("assert_crossplatform_perf_contract", {
       verify_expect(
         is.finite(min_expected) && min_expected >= floor_expected_fast,
         paste0(
-          "User-flow benchmark (expected fast-extract scenarios) minimum speedup below floor. ",
+          "User-flow benchmark (expected fast-extract scenarios",
+          if (has_rows) paste0(", rows_per_file >= ", expected_fast_min_rows) else "",
+          ") minimum speedup below floor. ",
           "Required >= ", sprintf("%.3f", floor_expected_fast),
           ", observed ", sprintf("%.3f", min_expected), "."
         )
@@ -168,7 +190,8 @@ verify_step("assert_crossplatform_perf_contract", {
       lines <- c(
         lines,
         sprintf(
-          "- User-flow (expected fast-extract): min speedup %.3fx (floor %.2fx)",
+          "- User-flow (expected fast-extract%s): min speedup %.3fx (floor %.2fx)",
+          if (has_rows) paste0(", rows_per_file >= ", expected_fast_min_rows) else "",
           min_expected,
           floor_expected_fast
         )
@@ -208,7 +231,8 @@ verify_step("assert_crossplatform_perf_contract", {
       "userflow_link_all_units_",
       floor_all = min_userflow,
       floor_expected_fast = min_userflow_expected_fast,
-      floor_non_extract = min_userflow_non_extract
+      floor_non_extract = min_userflow_non_extract,
+      expected_fast_min_rows = min_userflow_expected_fast_rows
     ),
     check_source_floor("heavy_user_flow_link_all_units.csv", "Heavy benchmark", min_heavy)
   )
