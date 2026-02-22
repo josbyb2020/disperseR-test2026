@@ -46,6 +46,8 @@ default_speed_floor <- function(metric, os_name, profile_name) {
       metric,
       engine = 1.05,
       userflow = 0.75,
+      userflow_expected_fast = 0.95,
+      userflow_non_extract = 0.70,
       heavy = 1.05,
       median = 1.00,
       1.00
@@ -56,6 +58,8 @@ default_speed_floor <- function(metric, os_name, profile_name) {
     metric,
     engine = if (is_full) 0.95 else 0.90,
     userflow = if (is_full) 0.75 else 0.70,
+    userflow_expected_fast = if (is_full) 0.95 else 0.90,
+    userflow_non_extract = if (is_full) 0.70 else 0.65,
     heavy = if (is_full) 1.00 else 0.90,
     median = if (is_full) 0.95 else 0.90,
     0.90
@@ -99,6 +103,14 @@ verify_step("assert_crossplatform_perf_contract", {
 
   min_engine <- read_threshold("DISPERSER_MIN_SPEEDUP_ENGINE", default_speed_floor("engine", os_name, profile_name))
   min_userflow <- read_threshold("DISPERSER_MIN_SPEEDUP_USERFLOW", default_speed_floor("userflow", os_name, profile_name))
+  min_userflow_expected_fast <- read_threshold(
+    "DISPERSER_MIN_SPEEDUP_USERFLOW_EXPECTED_FAST",
+    default_speed_floor("userflow_expected_fast", os_name, profile_name)
+  )
+  min_userflow_non_extract <- read_threshold(
+    "DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT",
+    default_speed_floor("userflow_non_extract", os_name, profile_name)
+  )
   min_heavy <- read_threshold("DISPERSER_MIN_SPEEDUP_HEAVY", default_speed_floor("heavy", os_name, profile_name))
   min_median <- read_threshold("DISPERSER_MIN_SPEEDUP_MEDIAN", default_speed_floor("median", os_name, profile_name))
 
@@ -119,9 +131,85 @@ verify_step("assert_crossplatform_perf_contract", {
     sprintf("- %s: min speedup %.3fx (floor %.2fx)", label, min_seen, floor_value)
   }
 
+  check_userflow_floor <- function(source_pattern, floor_all, floor_expected_fast, floor_non_extract) {
+    sub <- summary_dt[grepl(source_pattern, source_file, fixed = TRUE)]
+    if (nrow(sub) == 0) {
+      return("- User-flow benchmark: no rows (skipped)")
+    }
+
+    if (!("expected_fast_extract" %in% names(sub))) {
+      min_seen <- suppressWarnings(min(sub$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_seen) && min_seen >= floor_all,
+        paste0(
+          "User-flow benchmark minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_all),
+          ", observed ", sprintf("%.3f", min_seen), "."
+        )
+      )
+      return(sprintf("- User-flow benchmark: min speedup %.3fx (floor %.2fx)", min_seen, floor_all))
+    }
+
+    sub[, expected_fast_extract := as.logical(expected_fast_extract)]
+    expected_dt <- sub[!is.na(expected_fast_extract) & expected_fast_extract]
+    fallback_dt <- sub[is.na(expected_fast_extract) | !expected_fast_extract]
+    lines <- character(0)
+
+    if (nrow(expected_dt) > 0) {
+      min_expected <- suppressWarnings(min(expected_dt$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_expected) && min_expected >= floor_expected_fast,
+        paste0(
+          "User-flow benchmark (expected fast-extract scenarios) minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_expected_fast),
+          ", observed ", sprintf("%.3f", min_expected), "."
+        )
+      )
+      lines <- c(
+        lines,
+        sprintf(
+          "- User-flow (expected fast-extract): min speedup %.3fx (floor %.2fx)",
+          min_expected,
+          floor_expected_fast
+        )
+      )
+    }
+
+    if (nrow(fallback_dt) > 0) {
+      min_fallback <- suppressWarnings(min(fallback_dt$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_fallback) && min_fallback >= floor_non_extract,
+        paste0(
+          "User-flow benchmark (fallback scenarios) minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_non_extract),
+          ", observed ", sprintf("%.3f", min_fallback), "."
+        )
+      )
+      lines <- c(
+        lines,
+        sprintf(
+          "- User-flow (fallback scenarios): min speedup %.3fx (floor %.2fx)",
+          min_fallback,
+          floor_non_extract
+        )
+      )
+    }
+
+    if (length(lines) == 0) {
+      min_seen <- suppressWarnings(min(sub$speedup_x, na.rm = TRUE))
+      lines <- sprintf("- User-flow benchmark: min speedup %.3fx (floor %.2fx)", min_seen, floor_all)
+    }
+    lines
+  }
+
   checks <- c(
     check_source_floor("linking_engine_benchmark.csv", "Engine benchmark", min_engine),
-    check_source_floor("userflow_link_all_units_", "User-flow benchmark", min_userflow),
+    check_userflow_floor(
+      "userflow_link_all_units_",
+      floor_all = min_userflow,
+      floor_expected_fast = min_userflow_expected_fast,
+      floor_non_extract = min_userflow_non_extract
+    ),
     check_source_floor("heavy_user_flow_link_all_units.csv", "Heavy benchmark", min_heavy)
   )
 

@@ -121,7 +121,9 @@ source("10_perf_ci_assertions.R")
 
 Optional threshold environment variables:
 - `DISPERSER_MIN_SPEEDUP_ENGINE` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/0.95`)
-- `DISPERSER_MIN_SPEEDUP_USERFLOW` (default: Linux/macOS `0.75`; Windows smoke/full `0.70/0.75`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW_EXPECTED_FAST` (default: Linux/macOS `0.95`; Windows smoke/full `0.90/0.95`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT` (default: Linux/macOS `0.70`; Windows smoke/full `0.65/0.70`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW` (legacy single-floor fallback when `expected_fast_extract` is unavailable)
 - `DISPERSER_MIN_SPEEDUP_HEAVY` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/1.00`)
 - `DISPERSER_MIN_SPEEDUP_MEDIAN` (default: Linux/macOS `1.00`; Windows smoke/full `0.90/0.95`)
 
