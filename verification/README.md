@@ -124,6 +124,8 @@ Optional threshold environment variables:
 - `DISPERSER_MIN_ROWS_EXPECTED_FAST` (default: `50000`; only user-flow rows at or above this count are held to the expected-fast floor)
 - `DISPERSER_MIN_SPEEDUP_USERFLOW_EXPECTED_FAST` (default: Linux/macOS `0.95`; Windows smoke/full `0.90/0.95`)
 - `DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT` (default: Linux/macOS `0.70`; Windows smoke/full `0.65/0.70`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT_NON_STRICT` (default: Linux/macOS `0.65`; Windows smoke/full `0.60/0.65`)
+- `DISPERSER_MIN_USERFLOW_LEGACY_SEC_STRICT` (default: `1`; when a fallback user-flow scenario runs faster than this in legacy, the non-strict floor is used)
 - `DISPERSER_MIN_SPEEDUP_USERFLOW` (legacy single-floor fallback when `expected_fast_extract` is unavailable)
 - `DISPERSER_MIN_SPEEDUP_HEAVY` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/1.00`)
 - `DISPERSER_MIN_SPEEDUP_HEAVY_NON_STRICT` (default: Linux/macOS `0.95`; Windows smoke/full `0.85/0.90`)

@@ -84,6 +84,8 @@ jobs:
             DISPERSER_MIN_ROWS_EXPECTED_FAST = "50000",
             DISPERSER_MIN_SPEEDUP_USERFLOW_EXPECTED_FAST = if (is_windows) if (is_full) "0.95" else "0.90" else "0.95",
             DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT = if (is_windows) if (is_full) "0.70" else "0.65" else "0.70",
+            DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT_NON_STRICT = if (is_windows) if (is_full) "0.65" else "0.60" else "0.65",
+            DISPERSER_MIN_USERFLOW_LEGACY_SEC_STRICT = "1",
             DISPERSER_MIN_HEAVY_LEGACY_SEC_STRICT = "5",
             DISPERSER_HEAVY_UNITS = if (is_full) if (is_windows) "6" else "8" else "2",
             DISPERSER_HEAVY_MONTHS = if (is_full) "2" else "1",

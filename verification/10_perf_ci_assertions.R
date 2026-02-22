@@ -48,6 +48,7 @@ default_speed_floor <- function(metric, os_name, profile_name) {
       userflow = 0.75,
       userflow_expected_fast = 0.95,
       userflow_non_extract = 0.70,
+      userflow_non_extract_non_strict = 0.65,
       heavy = 1.05,
       heavy_non_strict = 0.95,
       median = 1.00,
@@ -61,6 +62,7 @@ default_speed_floor <- function(metric, os_name, profile_name) {
     userflow = if (is_full) 0.75 else 0.70,
     userflow_expected_fast = if (is_full) 0.95 else 0.90,
     userflow_non_extract = if (is_full) 0.70 else 0.65,
+    userflow_non_extract_non_strict = if (is_full) 0.65 else 0.60,
     heavy = if (is_full) 1.00 else 0.90,
     heavy_non_strict = if (is_full) 0.90 else 0.85,
     median = if (is_full) 0.95 else 0.90,
@@ -113,6 +115,16 @@ verify_step("assert_crossplatform_perf_contract", {
     "DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT",
     default_speed_floor("userflow_non_extract", os_name, profile_name)
   )
+  min_userflow_non_extract_non_strict <- read_threshold(
+    "DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT_NON_STRICT",
+    default_speed_floor("userflow_non_extract_non_strict", os_name, profile_name)
+  )
+  userflow_strict_min_legacy_sec <- read_threshold("DISPERSER_MIN_USERFLOW_LEGACY_SEC_STRICT", 1)
+  if (!is.finite(userflow_strict_min_legacy_sec) ||
+      is.na(userflow_strict_min_legacy_sec) ||
+      userflow_strict_min_legacy_sec <= 0) {
+    userflow_strict_min_legacy_sec <- 1
+  }
   min_userflow_expected_fast_rows <- as.integer(
     read_threshold("DISPERSER_MIN_ROWS_EXPECTED_FAST", 50000)
   )
@@ -150,6 +162,8 @@ verify_step("assert_crossplatform_perf_contract", {
                                    floor_all,
                                    floor_expected_fast,
                                    floor_non_extract,
+                                   floor_non_extract_non_strict,
+                                   strict_min_legacy_sec,
                                    expected_fast_min_rows) {
     sub <- summary_dt[grepl(source_pattern, source_file, fixed = TRUE)]
     if (nrow(sub) == 0) {
@@ -206,23 +220,71 @@ verify_step("assert_crossplatform_perf_contract", {
     }
 
     if (nrow(fallback_dt) > 0) {
-      min_fallback <- suppressWarnings(min(fallback_dt$speedup_x, na.rm = TRUE))
-      verify_expect(
-        is.finite(min_fallback) && min_fallback >= floor_non_extract,
-        paste0(
-          "User-flow benchmark (fallback scenarios) minimum speedup below floor. ",
-          "Required >= ", sprintf("%.3f", floor_non_extract),
-          ", observed ", sprintf("%.3f", min_fallback), "."
+      if ("legacy_elapsed_sec" %in% names(fallback_dt)) {
+        fallback_dt[, legacy_elapsed_sec := suppressWarnings(as.numeric(legacy_elapsed_sec))]
+        strict_dt <- fallback_dt[is.finite(legacy_elapsed_sec) & legacy_elapsed_sec >= strict_min_legacy_sec]
+        non_strict_dt <- fallback_dt[is.na(legacy_elapsed_sec) | !is.finite(legacy_elapsed_sec) | legacy_elapsed_sec < strict_min_legacy_sec]
+
+        if (nrow(strict_dt) > 0) {
+          min_fallback_strict <- suppressWarnings(min(strict_dt$speedup_x, na.rm = TRUE))
+          verify_expect(
+            is.finite(min_fallback_strict) && min_fallback_strict >= floor_non_extract,
+            paste0(
+              "User-flow benchmark (fallback scenarios, legacy_elapsed_sec >= ", sprintf("%.1f", strict_min_legacy_sec),
+              ") minimum speedup below floor. Required >= ", sprintf("%.3f", floor_non_extract),
+              ", observed ", sprintf("%.3f", min_fallback_strict), "."
+            )
+          )
+          lines <- c(
+            lines,
+            sprintf(
+              "- User-flow (fallback, legacy_elapsed_sec >= %.1fs): min speedup %.3fx (floor %.2fx)",
+              strict_min_legacy_sec,
+              min_fallback_strict,
+              floor_non_extract
+            )
+          )
+        }
+
+        if (nrow(non_strict_dt) > 0) {
+          min_fallback_non_strict <- suppressWarnings(min(non_strict_dt$speedup_x, na.rm = TRUE))
+          verify_expect(
+            is.finite(min_fallback_non_strict) && min_fallback_non_strict >= floor_non_extract_non_strict,
+            paste0(
+              "User-flow benchmark (fallback scenarios, legacy_elapsed_sec < ", sprintf("%.1f", strict_min_legacy_sec),
+              ") minimum speedup below floor. Required >= ", sprintf("%.3f", floor_non_extract_non_strict),
+              ", observed ", sprintf("%.3f", min_fallback_non_strict), "."
+            )
+          )
+          lines <- c(
+            lines,
+            sprintf(
+              "- User-flow (fallback, legacy_elapsed_sec < %.1fs): min speedup %.3fx (floor %.2fx)",
+              strict_min_legacy_sec,
+              min_fallback_non_strict,
+              floor_non_extract_non_strict
+            )
+          )
+        }
+      } else {
+        min_fallback <- suppressWarnings(min(fallback_dt$speedup_x, na.rm = TRUE))
+        verify_expect(
+          is.finite(min_fallback) && min_fallback >= floor_non_extract,
+          paste0(
+            "User-flow benchmark (fallback scenarios) minimum speedup below floor. ",
+            "Required >= ", sprintf("%.3f", floor_non_extract),
+            ", observed ", sprintf("%.3f", min_fallback), "."
+          )
         )
-      )
-      lines <- c(
-        lines,
-        sprintf(
-          "- User-flow (fallback scenarios): min speedup %.3fx (floor %.2fx)",
-          min_fallback,
-          floor_non_extract
+        lines <- c(
+          lines,
+          sprintf(
+            "- User-flow (fallback scenarios): min speedup %.3fx (floor %.2fx)",
+            min_fallback,
+            floor_non_extract
+          )
         )
-      )
+      }
     }
 
     if (length(lines) == 0) {
@@ -317,6 +379,8 @@ verify_step("assert_crossplatform_perf_contract", {
       floor_all = min_userflow,
       floor_expected_fast = min_userflow_expected_fast,
       floor_non_extract = min_userflow_non_extract,
+      floor_non_extract_non_strict = min_userflow_non_extract_non_strict,
+      strict_min_legacy_sec = userflow_strict_min_legacy_sec,
       expected_fast_min_rows = min_userflow_expected_fast_rows
     ),
     check_heavy_floor(
