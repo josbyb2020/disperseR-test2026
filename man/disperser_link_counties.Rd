@@ -9,13 +9,15 @@ disperser_link_counties(
   start.date = NULL,
   end.date = NULL,
   counties,
+  counties.vect = NULL,
   unit,
   duration.run.hours = 240,
   pbl.height = NULL,
   res.link. = 12000,
   overwrite = FALSE,
   pbl. = TRUE,
-  return.linked.data. = TRUE
+  return.linked.data. = TRUE,
+  engine = c("legacy", "fast")
 )
 }
 \arguments{
@@ -26,6 +28,9 @@ disperser_link_counties(
 \item{end.date}{End date}
 
 \item{counties}{County sf object}
+
+\item{counties.vect}{Optional pre-projected county `SpatVector` or provider
+function returning one.}
 
 \item{unit}{Unit data.table}
 
@@ -40,6 +45,8 @@ disperser_link_counties(
 \item{pbl.}{Apply PBL normalization}
 
 \item{return.linked.data.}{Return linked data}
+
+\item{engine}{Linking engine: `"legacy"` or `"fast"`.}
 }
 \value{
 data.table with county links

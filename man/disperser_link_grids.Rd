@@ -15,7 +15,8 @@ disperser_link_grids(
   overwrite = FALSE,
   pbl. = TRUE,
   crop.usa = FALSE,
-  return.linked.data. = TRUE
+  return.linked.data. = TRUE,
+  engine = c("legacy", "fast")
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ disperser_link_grids(
 \item{crop.usa}{Crop to USA}
 
 \item{return.linked.data.}{Return linked data}
+
+\item{engine}{Linking engine: `"legacy"` or `"fast"`.}
 }
 \value{
 data.table with grid links

@@ -11,6 +11,17 @@
 #' @importFrom data.table data.table setnames setDT copy rbindlist
 NULL
 
+.normalize_code5 <- function(x) {
+  x_chr <- trimws(as.character(x))
+  x_chr[x_chr == ""] <- NA_character_
+  out <- x_chr
+  is_num <- !is.na(x_chr) & grepl("^[0-9]+$", x_chr)
+  if (any(is_num)) {
+    out[is_num] <- sprintf("%05d", as.integer(x_chr[is_num]))
+  }
+  out
+}
+
 
 #' Link parcel locations to spatial units
 #'
@@ -21,12 +32,17 @@ NULL
 #' @param link.to One of 'zips', 'counties', or 'grids'
 #' @param p4string Projection string for output
 #' @param zc ZCTA sf object (required for 'zips')
+#' @param zc.vect Optional pre-projected ZCTA `SpatVector` or provider function
+#'   returning one (used by fast ZIP extraction path).
 #' @param cw Crosswalk data.table (required for 'zips')
 #' @param county.sf County sf object (required for 'counties')
+#' @param county.vect Optional pre-projected county `SpatVector` or provider
+#'   function returning one (used by fast county extraction path).
 #' @param rasterin PBL height raster
 #' @param res.link. Grid resolution in meters
 #' @param pbl. Apply PBL normalization
 #' @param crop.usa Crop to continental USA
+#' @param engine Linking engine: `"legacy"` or `"fast"`.
 #'
 #' @return data.table with linked concentrations
 #' @keywords internal
@@ -34,19 +50,85 @@ link_to <- function(d,
                     link.to = 'zips',
                     p4string,
                     zc = NULL,
+                    zc.vect = NULL,
                     cw = NULL,
                     county.sf = NULL,
+                    county.vect = NULL,
                     rasterin = NULL,
                     res.link. = 12000,
                     pbl. = TRUE,
-                    crop.usa = FALSE) {
+                    crop.usa = FALSE,
+                    engine = c("legacy", "fast")) {
+  engine <- match.arg(engine)
 
-  # Convert to sf points
-  pts_sf <- sf::st_as_sf(d, coords = c("lon", "lat"), crs = 4326)
-  pts_proj <- sf::st_transform(pts_sf, crs = p4string)
+  # Project point coordinates efficiently (sf_project fast path, st_transform fallback)
+  lon <- as.numeric(d[["lon"]])
+  lat <- as.numeric(d[["lat"]])
+  xy_wgs84 <- cbind(lon, lat)
+  fast_project_min_rows <- getOption("disperseR.fast.project.min_rows", 50000L)
+  if (!is.numeric(fast_project_min_rows) ||
+      length(fast_project_min_rows) != 1 ||
+      !is.finite(fast_project_min_rows) ||
+      fast_project_min_rows < 1) {
+    fast_project_min_rows <- 50000L
+  }
+  use_sf_project <- identical(engine, "fast") &&
+    nrow(d) >= as.integer(fast_project_min_rows)
+  target_crs <- sf::st_crs(p4string)
+  target_proj <- if (!is.na(target_crs)) target_crs$wkt else p4string
+  project_with_st <- function() {
+    pts_sf <- sf::st_as_sf(
+      data.frame(
+        lon = lon,
+        lat = lat
+      ),
+      coords = c("lon", "lat"),
+      crs = 4326
+    )
+    sf::st_coordinates(sf::st_transform(pts_sf, crs = p4string))
+  }
+  if (use_sf_project) {
+    pts_coords <- tryCatch(
+      sf::sf_project(
+        from = sf::st_crs(4326)$wkt,
+        to = target_proj,
+        pts = xy_wgs84
+      ),
+      error = function(e) project_with_st()
+    )
+  } else {
+    pts_coords <- project_with_st()
+  }
+  if (!is.matrix(pts_coords) || ncol(pts_coords) < 2) {
+    stop("Failed to project parcel coordinates for linking.", call. = FALSE)
+  }
+  pts_finite <- is.finite(pts_coords[, 1]) & is.finite(pts_coords[, 2])
+  if (!any(pts_finite)) {
+    warning("No valid projected parcel coordinates found for linking. Returning empty result.")
+    if (link.to == "grids") {
+      return(data.table::data.table(x = numeric(0), y = numeric(0), N = numeric(0)))
+    }
+    if (link.to == "counties") {
+      return(data.table::data.table(
+        statefp = character(0),
+        countyfp = character(0),
+        state_name = character(0),
+        name = character(0),
+        geoid = character(0),
+        N = numeric(0)
+      ))
+    }
+    return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+  }
+  pts_coords_valid <- pts_coords[pts_finite, , drop = FALSE]
   
   # Get bounding box and create grid raster
-  bbox <- sf::st_bbox(pts_proj)
+  bbox <- c(
+    xmin = min(pts_coords_valid[, 1]),
+    ymin = min(pts_coords_valid[, 2]),
+    xmax = max(pts_coords_valid[, 1]),
+    ymax = max(pts_coords_valid[, 2])
+  )
   xmin <- floor(bbox["xmin"] / res.link.) * res.link.
   ymin <- floor(bbox["ymin"] / res.link.) * res.link.
   xmax <- ceiling(bbox["xmax"] / res.link.) * res.link.
@@ -61,24 +143,79 @@ link_to <- function(d,
   )
   terra::values(r) <- NA
   
-  # Extract projected coordinates for raster cell assignment
-  pts_coords <- sf::st_coordinates(pts_proj)
-  
   # Count particles per cell
-  cells <- terra::cellFromXY(r, pts_coords)
-  tab <- table(cells)
+  cells <- terra::cellFromXY(r, pts_coords_valid)
+  cells <- as.integer(cells[!is.na(cells)])
+  if (length(cells) > 0) {
+    if (engine == "fast") {
+      fast_count_max_nbins <- getOption("disperseR.fast.count.max_nbins", 5e7)
+      if (!is.numeric(fast_count_max_nbins) ||
+          length(fast_count_max_nbins) != 1 ||
+          !is.finite(fast_count_max_nbins) ||
+          fast_count_max_nbins < 1) {
+        fast_count_max_nbins <- 5e7
+      }
+      nbins <- as.numeric(terra::ncell(r))
+      if (is.finite(nbins) && nbins <= fast_count_max_nbins) {
+        cell_counts <- tabulate(cells, nbins = as.integer(nbins))
+        tab_cells <- which(cell_counts > 0L)
+        tab_counts <- as.numeric(cell_counts[tab_cells])
+      } else {
+        cell_dt <- data.table::data.table(cell_idx = cells)
+        tab_dt <- cell_dt[, .(count = .N), by = "cell_idx"]
+        data.table::setorder(tab_dt, cell_idx)
+        tab_cells <- tab_dt$cell_idx
+        tab_counts <- as.numeric(tab_dt$count)
+      }
+    } else {
+      tab <- table(cells)
+      tab_cells <- as.numeric(names(tab))
+      tab_counts <- as.numeric(tab)
+    }
+  } else {
+    tab_cells <- integer(0)
+    tab_counts <- numeric(0)
+  }
   
   # Apply PBL normalization if requested
-  if (pbl. && !is.null(rasterin)) {
+  if (length(tab_cells) > 0 && pbl. && !is.null(rasterin)) {
     pbl_layer <- subset_nc_date(hpbl_brick = rasterin, vardate = d$Pdate[1])
     pbl_layer_proj <- terra::project(pbl_layer, r)
-    pbls <- pbl_layer_proj[as.numeric(names(tab))]
+    pbls <- pbl_layer_proj[tab_cells]
     denom <- suppressWarnings(as.numeric(pbls[, 1]))
     denom[!is.finite(denom) | denom <= 0] <- NA_real_
-    r[as.numeric(names(tab))] <- as.numeric(tab) / denom
+    r[tab_cells] <- tab_counts / denom
+  } else if (length(tab_cells) > 0) {
+    r[tab_cells] <- tab_counts
   } else {
-    r[as.numeric(names(tab))] <- as.numeric(tab)
+    # leave all cells as NA when no valid mappings were found
+    r <- r
   }
+
+  fast_extract_min_cells <- getOption("disperseR.fast.extract.min.cells", 5000L)
+  if (!is.numeric(fast_extract_min_cells) ||
+      length(fast_extract_min_cells) != 1 ||
+      !is.finite(fast_extract_min_cells) ||
+      fast_extract_min_cells < 0) {
+    fast_extract_min_cells <- 5000L
+  }
+  fast_extract_min_ratio <- getOption("disperseR.fast.extract.min.cell_poly_ratio", 2)
+  if (!is.numeric(fast_extract_min_ratio) ||
+      length(fast_extract_min_ratio) != 1 ||
+      !is.finite(fast_extract_min_ratio) ||
+      fast_extract_min_ratio <= 0) {
+    fast_extract_min_ratio <- 2
+  }
+  fast_crop_min_cover <- getOption("disperseR.fast.crop.min.cover_ratio", 0.98)
+  if (!is.numeric(fast_crop_min_cover) ||
+      length(fast_crop_min_cover) != 1 ||
+      !is.finite(fast_crop_min_cover) ||
+      fast_crop_min_cover < 0 ||
+      fast_crop_min_cover > 1) {
+    fast_crop_min_cover <- 0.98
+  }
+  use_fast_extract_base <- identical(engine, "fast") &&
+    length(tab_cells) >= as.integer(fast_extract_min_cells)
   
   # Trim to data extent (only if there's actual data)
   if (all(is.na(terra::values(r)))) {
@@ -112,6 +249,13 @@ link_to <- function(d,
       r
     }
   )
+
+  # Lon/lat CRS can produce subtle boundary-intersection differences between
+  # sf::st_intersects (legacy) and terra::extract (fast). Keep legacy path to
+  # preserve output parity when working directly in geographic coordinates.
+  if (use_fast_extract_base && terra::is.lonlat(r2)) {
+    use_fast_extract_base <- FALSE
+  }
   
   # Crop to USA if requested
   if (crop.usa) {
@@ -125,6 +269,30 @@ link_to <- function(d,
       r2 <- terra::crop(r2, terra::ext(usa_proj))
     }
   }
+
+  maybe_crop_vect <- function(vect_in) {
+    if (!inherits(vect_in, "SpatVector") || nrow(vect_in) == 0) {
+      return(vect_in)
+    }
+    ext_vect <- terra::ext(vect_in)
+    ext_r <- terra::ext(r2)
+    vect_w <- ext_vect[2] - ext_vect[1]
+    vect_h <- ext_vect[4] - ext_vect[3]
+    if (is.finite(vect_w) && vect_w > 0 && is.finite(vect_h) && vect_h > 0) {
+      cover_w <- min(ext_vect[2], ext_r[2]) - max(ext_vect[1], ext_r[1])
+      cover_h <- min(ext_vect[4], ext_r[4]) - max(ext_vect[3], ext_r[3])
+      cover_w <- max(cover_w, 0)
+      cover_h <- max(cover_h, 0)
+      cover_ratio <- (cover_w * cover_h) / (vect_w * vect_h)
+      if (is.finite(cover_ratio) && cover_ratio >= fast_crop_min_cover) {
+        return(vect_in)
+      }
+    }
+    tryCatch(
+      terra::crop(vect_in, ext_r),
+      error = function(e) vect_in
+    )
+  }
   
   # Return grid data as data.table
   if (link.to == 'grids') {
@@ -134,29 +302,151 @@ link_to <- function(d,
     return(xyz)
   }
   
-  # Convert raster to polygons for overlay operations
-  r_poly <- terra::as.polygons(r2, dissolve = FALSE, na.rm = TRUE)
-  r_sf <- sf::st_as_sf(r_poly)
-  names(r_sf)[1] <- "N"
+  get_r_sf <- local({
+    r_sf_cache <- NULL
+    function() {
+      if (is.null(r_sf_cache)) {
+        r_poly <- terra::as.polygons(r2, dissolve = FALSE, na.rm = TRUE)
+        r_sf_cache <<- sf::st_as_sf(r_poly)
+        names(r_sf_cache)[1] <<- "N"
+      }
+      r_sf_cache
+    }
+  })
   
   # Link to counties
   if (link.to == 'counties') {
     message("Linking to counties...")
     
-    # Ensure county.sf is properly projected
+    county_vect_base <- NULL
+    county_vect_provider <- NULL
+    county_proj <- NULL
+    if (!is.null(county.vect) && is.function(county.vect)) {
+      county_vect_provider <- county.vect
+    } else if (!is.null(county.vect) && inherits(county.vect, "SpatVector")) {
+      county_vect_base <- county.vect
+    }
     if (!is.null(county.sf)) {
-      county_proj <- sf::st_transform(county.sf, crs = p4string)
-    } else {
-      stop("county.sf must be provided for county linking")
+      target_crs <- sf::st_crs(p4string)
+      county_crs <- sf::st_crs(county.sf)
+      if (!is.na(county_crs) && county_crs == target_crs) {
+        county_proj <- county.sf
+      } else {
+        county_proj <- sf::st_transform(county.sf, crs = p4string)
+      }
+    }
+    if (is.null(county_vect_base) && is.null(county_proj)) {
+      stop("county.sf or county.vect must be provided for county linking")
     }
     
     # Spatial join: aggregate raster values to counties
-    county_join <- sf::st_join(county_proj, r_sf, join = sf::st_intersects)
-    
+    use_fast_extract <- use_fast_extract_base
+    county_dt <- NULL
+
+    if (use_fast_extract) {
+      if (is.null(county_vect_base) && !is.null(county_vect_provider) && is.null(county_proj)) {
+        county_vect_base <- county_vect_provider()
+        if (!inherits(county_vect_base, "SpatVector")) {
+          stop("county.vect provider must return a SpatVector")
+        }
+      }
+      poly_count_est <- if (!is.null(county_vect_base)) {
+        max(nrow(county_vect_base), 1L)
+      } else {
+        max(nrow(county_proj), 1L)
+      }
+      cell_poly_ratio <- length(tab_cells) / poly_count_est
+      if (is.finite(cell_poly_ratio) && cell_poly_ratio >= fast_extract_min_ratio) {
+        if (is.null(county_vect_base) && !is.null(county_vect_provider)) {
+          county_vect_base <- county_vect_provider()
+          if (!inherits(county_vect_base, "SpatVector")) {
+            stop("county.vect provider must return a SpatVector")
+          }
+        }
+        county_vect <- if (!is.null(county_vect_base)) county_vect_base else terra::vect(county_proj)
+        county_vect <- maybe_crop_vect(county_vect)
+        county_attr <- data.table::as.data.table(county_vect)
+        if (nrow(county_attr) == 0) {
+          return(data.table::data.table(
+            statefp = character(0),
+            countyfp = character(0),
+            state_name = character(0),
+            name = character(0),
+            geoid = character(0),
+            N = numeric(0)
+          ))
+        }
+        county_vals <- data.table::as.data.table(
+          terra::extract(r2, county_vect, cells = TRUE, touches = TRUE)
+        )
+        if (nrow(county_vals) == 0 || ncol(county_vals) < 3) {
+          return(data.table::data.table(
+            statefp = character(0),
+            countyfp = character(0),
+            state_name = character(0),
+            name = character(0),
+            geoid = character(0),
+            N = numeric(0)
+          ))
+        }
+        val_col <- setdiff(names(county_vals), c("ID", "cell"))[1]
+        if (is.na(val_col)) {
+          return(data.table::data.table(
+            statefp = character(0),
+            countyfp = character(0),
+            state_name = character(0),
+            name = character(0),
+            geoid = character(0),
+            N = numeric(0)
+          ))
+        }
+        data.table::setnames(county_vals, val_col, "N")
+        county_vals <- county_vals[is.finite(N), .(ID, N)]
+        if (nrow(county_vals) == 0) {
+          return(data.table::data.table(
+            statefp = character(0),
+            countyfp = character(0),
+            state_name = character(0),
+            name = character(0),
+            geoid = character(0),
+            N = numeric(0)
+          ))
+        }
+        county_attr[, ID := .I]
+        county_dt <- merge(
+          county_vals,
+          county_attr[, .(ID, statefp, countyfp, state_name, name, geoid)],
+          by = "ID",
+          all.x = TRUE,
+          sort = FALSE
+        )
+      } else {
+        use_fast_extract <- FALSE
+      }
+    }
+
+    if (!use_fast_extract) {
+      if (is.null(county_proj)) {
+        county_proj <- sf::st_as_sf(county_vect_base)
+      }
+      county_join <- sf::st_join(county_proj, get_r_sf(), join = sf::st_intersects)
+      county_dt <- data.table::setDT(sf::st_drop_geometry(county_join))
+    }
+
     # Aggregate by county (mean of overlapping cells)
-    county_dt <- data.table::setDT(sf::st_drop_geometry(county_join))
-    county_agg <- county_dt[, .(N = mean(N, na.rm = TRUE)), 
+    if (!"N" %in% names(county_dt)) {
+      return(data.table::data.table(
+        statefp = character(0),
+        countyfp = character(0),
+        state_name = character(0),
+        name = character(0),
+        geoid = character(0),
+        N = numeric(0)
+      ))
+    }
+    county_agg <- county_dt[, .(N = mean(N, na.rm = TRUE)),
                             by = .(statefp, countyfp, state_name, name, geoid)]
+    county_agg <- county_agg[is.finite(N)]
     
     return(county_agg)
   }
@@ -164,42 +454,162 @@ link_to <- function(d,
   # Link to ZIP codes
   if (link.to == 'zips') {
     
-    # Ensure ZCTA is properly projected
-    zc_proj <- sf::st_transform(zc, crs = p4string)
-    
-    # Crop ZCTAs to raster extent for efficiency
-    zc_crop <- tryCatch({
-      sf::st_crop(zc_proj, sf::st_bbox(r_sf))
-    }, error = function(e) {
-      zc_proj
-    })
-    
-    # Spatial join: aggregate raster values to ZCTAs
-    zc_join <- sf::st_join(zc_crop, r_sf, join = sf::st_intersects)
-    
-    # Aggregate by ZCTA (mean of overlapping cells)
-    zc_dt <- data.table::setDT(sf::st_drop_geometry(zc_join))
-    
-    # Handle column name variations
-    zcta_col <- intersect(c("ZCTA5CE10", "ZCTA"), names(zc_dt))[1]
-    if (is.na(zcta_col)) {
-      stop("Cannot find ZCTA column in shapefile")
+    zc_vect_base <- NULL
+    zc_vect_provider <- NULL
+    zc_proj <- NULL
+    if (!is.null(zc.vect) && is.function(zc.vect)) {
+      zc_vect_provider <- zc.vect
+    } else if (!is.null(zc.vect) && inherits(zc.vect, "SpatVector")) {
+      zc_vect_base <- zc.vect
     }
-    data.table::setnames(zc_dt, zcta_col, "ZCTA", skip_absent = TRUE)
+    if (!is.null(zc)) {
+      # Ensure ZCTA is properly projected
+      target_crs <- sf::st_crs(p4string)
+      zc_crs <- sf::st_crs(zc)
+      if (!is.na(zc_crs) && zc_crs == target_crs) {
+        zc_proj <- zc
+      } else {
+        zc_proj <- sf::st_transform(zc, crs = p4string)
+      }
+    }
+    if (is.null(zc_vect_base) && is.null(zc_proj)) {
+      stop("zc or zc.vect must be provided for ZIP linking")
+    }
     
-    zc_agg <- zc_dt[, .(N = mean(N, na.rm = TRUE)), by = ZCTA]
+    use_fast_extract <- use_fast_extract_base
+    zc_agg <- NULL
+
+    if (use_fast_extract) {
+      if (is.null(zc_vect_base) && !is.null(zc_vect_provider) && is.null(zc_proj)) {
+        zc_vect_base <- zc_vect_provider()
+        if (!inherits(zc_vect_base, "SpatVector")) {
+          stop("zc.vect provider must return a SpatVector")
+        }
+      }
+      poly_count_est <- if (!is.null(zc_vect_base)) {
+        max(nrow(zc_vect_base), 1L)
+      } else {
+        max(nrow(zc_proj), 1L)
+      }
+      cell_poly_ratio <- length(tab_cells) / poly_count_est
+      if (is.finite(cell_poly_ratio) && cell_poly_ratio >= fast_extract_min_ratio) {
+        if (is.null(zc_vect_base) && !is.null(zc_vect_provider)) {
+          zc_vect_base <- zc_vect_provider()
+          if (!inherits(zc_vect_base, "SpatVector")) {
+            stop("zc.vect provider must return a SpatVector")
+          }
+        }
+        zc_vect <- if (!is.null(zc_vect_base)) zc_vect_base else terra::vect(zc_proj)
+        zc_vect <- maybe_crop_vect(zc_vect)
+        zc_attr <- data.table::as.data.table(zc_vect)
+        if (nrow(zc_attr) == 0) {
+          if (is.null(cw)) {
+            return(data.table::data.table(ZCTA = character(0), N = numeric(0)))
+          }
+          return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+        }
+        zcta_col <- intersect(c("ZCTA5CE10", "ZCTA"), names(zc_attr))[1]
+        if (is.na(zcta_col)) {
+          stop("Cannot find ZCTA column in shapefile")
+        }
+        data.table::setnames(zc_attr, zcta_col, "ZCTA", skip_absent = TRUE)
+
+        zc_vals <- data.table::as.data.table(
+          terra::extract(r2, zc_vect, cells = TRUE, touches = TRUE)
+        )
+        if (nrow(zc_vals) == 0 || ncol(zc_vals) < 3) {
+          if (is.null(cw)) {
+            return(data.table::data.table(ZCTA = character(0), N = numeric(0)))
+          }
+          return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+        }
+        val_col <- setdiff(names(zc_vals), c("ID", "cell"))[1]
+        if (is.na(val_col)) {
+          if (is.null(cw)) {
+            return(data.table::data.table(ZCTA = character(0), N = numeric(0)))
+          }
+          return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+        }
+        data.table::setnames(zc_vals, val_col, "N")
+        zc_vals <- zc_vals[is.finite(N), .(ID, N)]
+        if (nrow(zc_vals) == 0) {
+          if (is.null(cw)) {
+            return(data.table::data.table(ZCTA = character(0), N = numeric(0)))
+          }
+          return(data.table::data.table(ZIP = character(0), N = numeric(0)))
+        }
+        zc_attr[, ID := .I]
+        zc_dt <- merge(
+          zc_vals,
+          zc_attr[, .(ID, ZCTA)],
+          by = "ID",
+          all.x = TRUE,
+          sort = FALSE
+        )
+        # Preserve legacy semantics by averaging all intersecting cell values
+        # across duplicated ZCTA rows.
+        zc_agg <- zc_dt[, .(N = mean(N, na.rm = TRUE)), by = ZCTA]
+      } else {
+        use_fast_extract <- FALSE
+      }
+    }
+
+    if (!use_fast_extract) {
+      if (is.null(zc_proj)) {
+        zc_proj <- sf::st_as_sf(zc_vect_base)
+      }
+      # Crop ZCTAs to raster extent for efficiency
+      zc_crop <- tryCatch({
+        rast_bbox <- sf::st_bbox(c(
+          xmin = terra::xmin(r2),
+          ymin = terra::ymin(r2),
+          xmax = terra::xmax(r2),
+          ymax = terra::ymax(r2)
+        ), crs = sf::st_crs(p4string))
+        suppressWarnings(sf::st_crop(zc_proj, rast_bbox))
+      }, error = function(e) {
+        zc_proj
+      })
+
+      # Spatial join: aggregate raster values to ZCTAs
+      zc_join <- sf::st_join(zc_crop, get_r_sf(), join = sf::st_intersects)
+      zc_dt <- data.table::setDT(sf::st_drop_geometry(zc_join))
+
+      # Handle column name variations
+      zcta_col <- intersect(c("ZCTA5CE10", "ZCTA"), names(zc_dt))[1]
+      if (is.na(zcta_col)) {
+        stop("Cannot find ZCTA column in shapefile")
+      }
+      data.table::setnames(zc_dt, zcta_col, "ZCTA", skip_absent = TRUE)
+      zc_agg <- zc_dt[, .(N = mean(N, na.rm = TRUE)), by = ZCTA]
+    }
+
     zc_agg <- zc_agg[!is.na(N)]
     
     # Merge with crosswalk
     if (!is.null(cw)) {
-      cw_copy <- data.table::copy(cw)
-      cw_copy$ZCTA <- formatC(cw_copy$ZCTA, width = 5, format = "d", flag = "0")
-      zc_agg$ZCTA <- formatC(zc_agg$ZCTA, width = 5, format = "d", flag = "0")
-      
-      M <- merge(zc_agg, cw_copy, by = "ZCTA", all = FALSE, allow.cartesian = TRUE)
-      M[, ZIP := formatC(ZIP, width = 5, format = "d", flag = "0")]
-      M$ZIP <- as.character(M$ZIP)
-      M <- stats::na.omit(M)
+      cw_dt <- if (isTRUE(attr(cw, "disperseR_norm5"))) {
+        data.table::as.data.table(cw)
+      } else {
+        tmp_cw <- data.table::copy(data.table::as.data.table(cw))
+        tmp_cw[, ZCTA := .normalize_code5(ZCTA)]
+        tmp_cw[, ZIP := .normalize_code5(ZIP)]
+        tmp_cw
+      }
+      if (!(data.table::haskey(cw_dt) && identical(data.table::key(cw_dt), "ZCTA"))) {
+        cw_dt <- data.table::copy(cw_dt)
+        data.table::setkey(cw_dt, ZCTA)
+      }
+      zc_agg[, ZCTA := .normalize_code5(ZCTA)]
+
+      M <- cw_dt[zc_agg, on = "ZCTA", nomatch = 0L, allow.cartesian = TRUE]
+      if ("i.N" %in% names(M)) {
+        data.table::setnames(M, "i.N", "N")
+      }
+      # Keep rows based on required merge/value columns only.
+      # Crosswalk metadata columns may legitimately contain NA and should not
+      # silently drop matched ZIP rows.
+      M <- M[!is.na(ZIP) & is.finite(N)]
       return(M)
     }
     
@@ -291,6 +701,59 @@ trim_pbl <- function(Min, rasterin) {
   return(Min[M_dt$ref, .(lon, lat, height, Pdate, hour)])
 }
 
+# Read HYSPLIT link input files and filter to the requested time window during load.
+.read_hysp_files_for_window <- function(files.read, vec_dates) {
+  if (length(files.read) == 0) {
+    return(data.table::data.table())
+  }
+
+  required_cols <- c("lon", "lat", "height", "Pdate", "hour")
+  vec_dates_chr <- unique(as.character(vec_dates))
+  vec_dates_date <- suppressWarnings(as.Date(vec_dates_chr))
+  use_date_match <- !all(is.na(vec_dates_date))
+  vec_dates_int <- if (use_date_match) {
+    unique(as.integer(vec_dates_date[!is.na(vec_dates_date)]))
+  } else {
+    integer(0)
+  }
+
+  read_one <- function(path) {
+    dt <- tryCatch(
+      fst::read.fst(path, as.data.table = TRUE, columns = required_cols),
+      error = function(e) fst::read.fst(path, as.data.table = TRUE)
+    )
+    missing <- setdiff(required_cols, names(dt))
+    if (length(missing) > 0) {
+      stop("HYSPLIT link input file is missing required columns: ",
+           paste(missing, collapse = ", "), " in file ", path, call. = FALSE)
+    }
+    dt[, required_cols, with = FALSE]
+  }
+
+  keep_window <- function(dt) {
+    if (nrow(dt) == 0) {
+      return(NULL)
+    }
+    keep_date <- if (inherits(dt$Pdate, "Date") && use_date_match) {
+      as.integer(dt$Pdate) %in% vec_dates_int
+    } else {
+      as.character(dt$Pdate) %in% vec_dates_chr
+    }
+    out <- dt[keep_date & hour > 1L, ]
+    if (nrow(out) == 0) {
+      return(NULL)
+    }
+    out
+  }
+
+  chunks <- lapply(files.read, function(path) keep_window(read_one(path)))
+  chunks <- Filter(Negate(is.null), chunks)
+  if (length(chunks) == 0) {
+    return(data.table::data.table())
+  }
+  data.table::rbindlist(chunks, use.names = TRUE, fill = FALSE)
+}
+
 
 #' Link dispersion to grids
 #'
@@ -305,6 +768,7 @@ trim_pbl <- function(Min, rasterin) {
 #' @param pbl. Apply PBL normalization
 #' @param crop.usa Crop to USA
 #' @param return.linked.data. Return linked data
+#' @param engine Linking engine: `"legacy"` or `"fast"`.
 #' @return data.table with grid links
 #' @keywords internal
 #' @importFrom fst read.fst write.fst
@@ -319,7 +783,9 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
                                   overwrite = FALSE,
                                   pbl. = TRUE,
                                   crop.usa = FALSE,
-                                  return.linked.data. = TRUE) {
+                                  return.linked.data. = TRUE,
+                                  engine = c("legacy", "fast")) {
+  engine <- match.arg(engine)
   
   if (nrow(unit) > 1)
     stop("Please supply a single unit")
@@ -403,8 +869,10 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       return(out)
     }
     
-    l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l, fill = TRUE)
+    d <- .read_hysp_files_for_window(
+      files.read = files.read,
+      vec_dates = vec_dates
+    )
     
     if (nrow(d) == 0) {
       out <- data.table::data.table(x = numeric(), y = numeric(), N = numeric())
@@ -414,8 +882,6 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
     }
     
     message(Sys.time(), " Files read and combined")
-    
-    d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
     if (pbl. && is.null(pbl.height)) {
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
@@ -437,7 +903,8 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
       rasterin = pbl.height,
       res.link. = res.link.,
       pbl. = pbl.,
-      crop.usa = crop.usa
+      crop.usa = crop.usa,
+      engine = engine
     )
 
     message(Sys.time(), " Grids linked")
@@ -470,19 +937,25 @@ disperser_link_grids <- function(month_YYYYMM = NULL,
 #'
 #' @inheritParams disperser_link_grids
 #' @param counties County sf object
+#' @param counties.vect Optional pre-projected county `SpatVector` or provider
+#'   function returning one.
+#' @param engine Linking engine: `"legacy"` or `"fast"`.
 #' @return data.table with county links
 #' @keywords internal
 disperser_link_counties <- function(month_YYYYMM = NULL,
                                      start.date = NULL,
                                      end.date = NULL,
                                      counties,
+                                     counties.vect = NULL,
                                      unit,
                                      duration.run.hours = 240,
                                      pbl.height = NULL,
                                      res.link. = 12000,
                                      overwrite = FALSE,
                                      pbl. = TRUE,
-                                     return.linked.data. = TRUE) {
+                                     return.linked.data. = TRUE,
+                                     engine = c("legacy", "fast")) {
+  engine <- match.arg(engine)
   
   if (nrow(unit) > 1)
     stop("Please supply a single unit")
@@ -574,8 +1047,10 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       return(out)
     }
     
-    l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l, fill = TRUE)
+    d <- .read_hysp_files_for_window(
+      files.read = files.read,
+      vec_dates = vec_dates
+    )
     
     if (nrow(d) == 0) {
       out <- data.table::data.table(
@@ -592,8 +1067,6 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
     }
     
     message(Sys.time(), " Files read and combined")
-    
-    d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
     if (pbl. && is.null(pbl.height)) {
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
@@ -612,10 +1085,12 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
       d = d_trim,
       link.to = 'counties',
       county.sf = counties,
+      county.vect = counties.vect,
       p4string = p4s,
       rasterin = pbl.height,
       res.link. = res.link.,
-      pbl. = pbl.
+      pbl. = pbl.,
+      engine = engine
     )
 
     message(Sys.time(), " Counties linked")
@@ -656,6 +1131,10 @@ disperser_link_counties <- function(month_YYYYMM = NULL,
 #'
 #' @inheritParams disperser_link_grids
 #' @param crosswalk. Crosswalk data.table
+#' @param zcta Optional ZCTA sf object.
+#' @param zcta.vect Optional pre-projected ZCTA `SpatVector` or provider
+#'   function returning one.
+#' @param engine Linking engine: `"legacy"` or `"fast"`.
 #' @return data.table with ZIP code links
 #' @keywords internal
 disperser_link_zips <- function(month_YYYYMM = NULL,
@@ -665,10 +1144,14 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
                                  duration.run.hours = 240,
                                  pbl.height = NULL,
                                  crosswalk. = NULL,
+                                 zcta = NULL,
+                                 zcta.vect = NULL,
                                  res.link. = 12000,
                                  overwrite = FALSE,
                                  pbl. = TRUE,
-                                 return.linked.data. = TRUE) {
+                                 return.linked.data. = TRUE,
+                                 engine = c("legacy", "fast")) {
+  engine <- match.arg(engine)
   
   if (nrow(unit) > 1)
     stop("Please supply a single unit")
@@ -697,9 +1180,11 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
     stop("hysp_dir does not exist: ", hysp_dir, call. = FALSE)
   }
 
-  zcta <- .disperseR_cache_get("zcta")
-  if (is.null(zcta)) {
-    stop("zcta is not set. Run get_data(data = \"zctashapefile\") first.", call. = FALSE)
+  if (is.null(zcta) && is.null(zcta.vect)) {
+    zcta <- .disperseR_cache_get("zcta")
+    if (is.null(zcta)) {
+      stop("zcta is not set. Run get_data(data = \"zctashapefile\") first.", call. = FALSE)
+    }
   }
   
   if ((is.null(start.date) | is.null(end.date)) & is.null(month_YYYYMM))
@@ -760,8 +1245,10 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       return(out[, .(ZIP, N, month, ID)])
     }
     
-    l <- lapply(files.read, fst::read.fst, as.data.table = TRUE)
-    d <- data.table::rbindlist(l, fill = TRUE)
+    d <- .read_hysp_files_for_window(
+      files.read = files.read,
+      vec_dates = vec_dates
+    )
     
     if (nrow(d) == 0) {
       out <- data.table::data.table(ZIP = character(), N = numeric())
@@ -771,8 +1258,6 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
     }
     
     message(Sys.time(), " Files read and combined")
-    
-    d <- d[as.character(Pdate) %in% vec_dates & hour > 1, ]
     
     if (pbl. && is.null(pbl.height)) {
       stop("pbl.height must be provided when pbl. = TRUE.", call. = FALSE)
@@ -791,17 +1276,19 @@ disperser_link_zips <- function(month_YYYYMM = NULL,
       d = d_trim,
       link.to = 'zips',
       zc = zcta,
+      zc.vect = zcta.vect,
       cw = crosswalk.,
       p4string = p4s,
       rasterin = pbl.height,
       res.link. = res.link.,
-      pbl. = pbl.
+      pbl. = pbl.,
+      engine = engine
     )
 
     message(Sys.time(), " ZIPs linked")
     
     out <- disp_df_link[, .(ZIP, N)]
-    out$ZIP <- formatC(out$ZIP, width = 5, format = "d", flag = "0")
+    out[, ZIP := .normalize_code5(ZIP)]
     out$month <- as.character(month_YYYYMM)
     out$ID <- unitID
     

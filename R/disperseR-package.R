@@ -26,6 +26,7 @@ utils::globalVariables(c(
   "V1", "Pdate", "Pmonth", "Pyear", "mo", "yr", "Exposure", "seq_len", "pollutant",
   "STATE", "CITY", "TOTALESTIMATE",
   "particle_no", "pbl", "rastercell", "ref", "zcta", "h_zero",
+  "cell_idx",
   ".", "..year",
   
   # Used in formula/subset contexts

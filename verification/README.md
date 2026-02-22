@@ -13,6 +13,8 @@ from GitHub and want a guided, reproducible verification path.
 source("run_all.R")
 ```
 
+`run_all.R` is strict: it now exits with an error if any verification step fails.
+
 ## What Gets Tested
 - Core utils: `create_dirs()`, `get_os()`, `get_yearmon()`
 - CSV parsing: `dispersion_read()`
@@ -38,8 +40,90 @@ with a clear message.
 All artifacts are written under `VERIFY_BASE_DIR`. Delete that folder
 when you are done, or set `VERIFY_KEEP_ARTIFACTS = TRUE`.
 
+## Performance Benchmark (Fast Linking Engine)
+Run a targeted benchmark that compares `engine="legacy"` vs `engine="fast"`
+for ZIP linking on synthetic data:
+
+```r
+source("06_perf_linking_engine.R")
+```
+
+Optional environment variables for benchmark scale:
+- `DISPERSER_BENCH_PARTICLES` (default `200000`)
+- `DISPERSER_BENCH_GRID_X` (default `40`)
+- `DISPERSER_BENCH_GRID_Y` (default `20`)
+
+Outputs are saved to `VERIFY_BASE_DIR/perf/linking_engine_benchmark.csv`.
+Runtime tuning option for adaptive fast linking:
+- `options(disperseR.fast.extract.min.cells = 5000L)`
+- `options(disperseR.fast.extract.min.cell_poly_ratio = 2)`
+- `options(disperseR.fast.project.min_rows = 50000L)`
+- `options(disperseR.fast.crop.min.cover_ratio = 0.98)`
+- `options(disperseR.parallel.dt.threads = 1L)`
+
+## User-Flow Benchmark (End-to-End Linking)
+Run end-user style benchmarks through the public `link_all_units()` API
+for both `zips` and `counties`, with parity checks:
+
+```r
+source("07_perf_user_flow_linking.R")
+```
+
+Optional profile selector:
+- `DISPERSER_USERFLOW_PROFILE=smoke` (default, quick matrix)
+- `DISPERSER_USERFLOW_PROFILE=full` (adds dense ZIP polygon scenarios)
+
+Outputs are saved to:
+- `VERIFY_BASE_DIR/perf/userflow_link_all_units_smoke.csv`
+- `VERIFY_BASE_DIR/perf/userflow_link_all_units_full.csv`
+
+## Heavy User-Flow Benchmark (Large Workloads)
+Run a heavy-load benchmark that simulates user-scale workloads through the
+public `link_all_units()` API for both ZIPs and counties:
+
+```r
+source("08_perf_user_heavy_linking.R")
+```
+
+Optional environment variables:
+- `DISPERSER_HEAVY_UNITS` (default `8`)
+- `DISPERSER_HEAVY_MONTHS` (default `2`)
+- `DISPERSER_HEAVY_ROWS` (default `200000`)
+- `DISPERSER_HEAVY_GRID_X` (default `120`)
+- `DISPERSER_HEAVY_GRID_Y` (default `100`)
+- `DISPERSER_HEAVY_CORES` (default `4`)
+
+Output is saved to:
+- `VERIFY_BASE_DIR/perf/heavy_user_flow_link_all_units.csv`
+
+## Cross-Platform CI Benchmark Runner
+Run all three benchmark suites (engine, user-flow, heavy) and emit a combined
+CSV summary that is suitable for Linux/Windows CI artifacts:
+
+```r
+source("09_perf_crossplatform_ci.R")
+```
+
+Combined output is saved to:
+- `VERIFY_BASE_DIR/perf/crossplatform_ci_summary.csv`
+
+## CI Performance Assertions
+Enforce parity and minimum speedup floors on the combined CI summary:
+
+```r
+source("10_perf_ci_assertions.R")
+```
+
+Optional threshold environment variables:
+- `DISPERSER_MIN_SPEEDUP_ENGINE` (default `1.05`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW` (default `0.75`)
+- `DISPERSER_MIN_SPEEDUP_HEAVY` (default `1.05`)
+- `DISPERSER_MIN_SPEEDUP_MEDIAN` (default `1.00`)
+
+For merge/branch-protection criteria, require the cross-platform test and
+performance workflows in your repository settings.
+
 ## Troubleshooting
 - If `pkgload` is missing, install it: `install.packages("pkgload")`
 - If HYSPLIT is missing, set `VERIFY_RUN_HYSPLIT = FALSE`
 - Network errors: set `VERIFY_DATA_DOWNLOAD = FALSE` and run offline tests
-

@@ -1,0 +1,117 @@
+name: Cross-Platform Performance Benchmarks
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "R/**"
+      - "tests/**"
+      - "verification/**"
+      - ".github/workflows/perf-crossplatform.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "R/**"
+      - "tests/**"
+      - "verification/**"
+      - ".github/workflows/perf-crossplatform.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Benchmark depth"
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+
+jobs:
+  benchmark:
+    name: ${{ matrix.os }} (R ${{ matrix.r-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        r-version: ['release']
+
+    env:
+      PERF_ARTIFACT_ROOT: ${{ github.workspace }}/verification/perf_artifacts/${{ matrix.os }}-r${{ matrix.r-version }}
+      DISPERSER_PARALLEL_DT_THREADS: "1"
+      DISPERSER_FAST_PROJECT_MIN_ROWS: "50000"
+      DISPERSER_PERF_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.profile || 'smoke' }}
+      DISPERSER_MIN_SPEEDUP_ENGINE: "1.05"
+      DISPERSER_MIN_SPEEDUP_USERFLOW: "0.75"
+      DISPERSER_MIN_SPEEDUP_HEAVY: "1.05"
+      DISPERSER_MIN_SPEEDUP_MEDIAN: "1.00"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up R ${{ matrix.r-version }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+          use-public-rspm: true
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: |
+            any::pkgload
+            any::devtools
+
+      - name: Write verification config
+        run: |
+          dir.create("verification", showWarnings = FALSE, recursive = TRUE)
+          dir.create(Sys.getenv("PERF_ARTIFACT_ROOT"), showWarnings = FALSE, recursive = TRUE)
+          writeLines(c(
+            sprintf("VERIFY_BASE_DIR <- %s", encodeString(Sys.getenv("PERF_ARTIFACT_ROOT"), quote = "\"")),
+            "VERIFY_KEEP_ARTIFACTS <- TRUE"
+          ), "verification/config.R")
+        shell: Rscript {0}
+
+      - name: Set benchmark env profile
+        run: |
+          profile <- tolower(Sys.getenv("DISPERSER_PERF_PROFILE", "smoke"))
+          if (!(profile %in% c("smoke", "full"))) profile <- "smoke"
+          is_full <- identical(profile, "full")
+          is_windows <- identical(tolower(Sys.info()[["sysname"]]), "windows")
+          values <- c(
+            DISPERSER_USERFLOW_PROFILE = if (is_full) "full" else "smoke",
+            DISPERSER_BENCH_PARTICLES = if (is_full) "200000" else "50000",
+            DISPERSER_BENCH_GRID_X = "40",
+            DISPERSER_BENCH_GRID_Y = "20",
+            DISPERSER_HEAVY_UNITS = if (is_full) if (is_windows) "6" else "8" else "2",
+            DISPERSER_HEAVY_MONTHS = if (is_full) "2" else "1",
+            DISPERSER_HEAVY_ROWS = if (is_full) if (is_windows) "120000" else "200000" else "50000",
+            DISPERSER_HEAVY_GRID_X = if (is_full) "120" else "80",
+            DISPERSER_HEAVY_GRID_Y = if (is_full) "100" else "60",
+            DISPERSER_HEAVY_CORES = if (is_full) if (is_windows) "2" else "4" else "2"
+          )
+          env_file <- Sys.getenv("GITHUB_ENV")
+          for (k in names(values)) {
+            cat(sprintf("%s=%s\n", k, values[[k]]), file = env_file, append = TRUE)
+          }
+          message("Configured profile: ", profile)
+        shell: Rscript {0}
+
+      - name: Run cross-platform benchmark suite
+        run: |
+          source("verification/09_perf_crossplatform_ci.R")
+        shell: Rscript {0}
+
+      - name: Assert perf parity and speed floors
+        run: |
+          source("verification/10_perf_ci_assertions.R")
+        shell: Rscript {0}
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-${{ matrix.os }}-r${{ matrix.r-version }}
+          path: ${{ env.PERF_ARTIFACT_ROOT }}
+          retention-days: 14

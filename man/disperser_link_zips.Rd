@@ -12,10 +12,13 @@ disperser_link_zips(
   duration.run.hours = 240,
   pbl.height = NULL,
   crosswalk. = NULL,
+  zcta = NULL,
+  zcta.vect = NULL,
   res.link. = 12000,
   overwrite = FALSE,
   pbl. = TRUE,
-  return.linked.data. = TRUE
+  return.linked.data. = TRUE,
+  engine = c("legacy", "fast")
 )
 }
 \arguments{
@@ -33,6 +36,11 @@ disperser_link_zips(
 
 \item{crosswalk.}{Crosswalk data.table}
 
+\item{zcta}{Optional ZCTA sf object.}
+
+\item{zcta.vect}{Optional pre-projected ZCTA `SpatVector` or provider
+function returning one.}
+
 \item{res.link.}{Grid resolution}
 
 \item{overwrite}{Overwrite existing files}
@@ -40,6 +48,8 @@ disperser_link_zips(
 \item{pbl.}{Apply PBL normalization}
 
 \item{return.linked.data.}{Return linked data}
+
+\item{engine}{Linking engine: `"legacy"` or `"fast"`.}
 }
 \value{
 data.table with ZIP code links

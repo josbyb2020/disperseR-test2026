@@ -112,6 +112,22 @@ plot_impact_unit <- function(data.linked = NULL,
   coordsf <- ggplot2::coord_sf(xlim = x.lim,
     ylim = y.lim)
 
+  zip_coords <- NULL
+  if (exists("zipcodecoordinate", inherits = TRUE)) {
+    zip_coords <- get("zipcodecoordinate", inherits = TRUE)
+  }
+  if (is.null(zip_coords)) {
+    utils::data("zipcodecoordinate", package = "disperseR", envir = environment())
+    if (exists("zipcodecoordinate", inherits = FALSE)) {
+      zip_coords <- get("zipcodecoordinate", inherits = FALSE)
+    }
+  }
+  if (is.null(zip_coords)) {
+    stop("Could not load zipcodecoordinate data required for plot_impact_unit().",
+      call. = FALSE)
+  }
+  zip_coords_dt <- data.table::as.data.table(zip_coords)
+
   plot2 <- ggplot2::ggplot() +
     ggplot2::theme_bw() +
     ggplot2::labs(title = plot.title) +
@@ -123,7 +139,7 @@ plot_impact_unit <- function(data.linked = NULL,
       linewidth = 0.25
     ) +
     ggplot2::geom_point(
-      data = data.table::as.data.table(zipcodecoordinate)[ZIP %in% zip.codes],
+      data = zip_coords_dt[ZIP %in% zip.codes],
       ggplot2::aes(x = Longitude, y = Latitude),
       shape = 7,
       colour = "blue",
@@ -161,4 +177,6 @@ plot_impact_unit <- function(data.linked = NULL,
     path <- file.path(graph.dir, "plot_impact_unit.pdf")
     ggplot2::ggsave(path, plot = gg, width = 20, height = 20, units = "cm")
   }
+
+  invisible(gg)
 }

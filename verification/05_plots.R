@@ -28,19 +28,19 @@ verify_step("Plots: smoke render", {
   verify_expect(is.list(plots_ranked), "plot_units_ranked() did not return list")
 
   data.linked <- data.table::data.table(
-    ZIP = c("19104", "19104"),
-    uID = c("u1", "u2"),
-    hyads = c(0.1, 0.2),
-    yearmonth = c("200501", "200501")
+    ZIP = c("19104", "19104", "19104", "19104"),
+    uID = c("u1", "u1", "u2", "u2"),
+    hyads = c(0.1, 0.15, 0.2, 0.22),
+    yearmonth = c("200501", "200502", "200501", "200502")
   )
   plots_unit <- disperseR::plot_impact_unit(
     data.linked = data.linked,
-    zip.codes = "19104",
-    link.to = "zips",
-    plot.type = "unit"
+    zip.codes = "19104"
   )
-  verify_expect(is.list(plots_unit), "plot_impact_unit() did not return list")
+  verify_expect(
+    inherits(plots_unit, "gtable") || is.list(plots_unit),
+    "plot_impact_unit() did not return a gtable/list object"
+  )
 
   invisible(TRUE)
 })
-

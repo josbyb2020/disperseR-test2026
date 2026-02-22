@@ -9,12 +9,15 @@ link_to(
   link.to = "zips",
   p4string,
   zc = NULL,
+  zc.vect = NULL,
   cw = NULL,
   county.sf = NULL,
+  county.vect = NULL,
   rasterin = NULL,
   res.link. = 12000,
   pbl. = TRUE,
-  crop.usa = FALSE
+  crop.usa = FALSE,
+  engine = c("legacy", "fast")
 )
 }
 \arguments{
@@ -26,9 +29,15 @@ link_to(
 
 \item{zc}{ZCTA sf object (required for 'zips')}
 
+\item{zc.vect}{Optional pre-projected ZCTA `SpatVector` or provider function
+returning one (used by fast ZIP extraction path).}
+
 \item{cw}{Crosswalk data.table (required for 'zips')}
 
 \item{county.sf}{County sf object (required for 'counties')}
+
+\item{county.vect}{Optional pre-projected county `SpatVector` or provider
+function returning one (used by fast county extraction path).}
 
 \item{rasterin}{PBL height raster}
 
@@ -37,6 +46,8 @@ link_to(
 \item{pbl.}{Apply PBL normalization}
 
 \item{crop.usa}{Crop to continental USA}
+
+\item{engine}{Linking engine: `"legacy"` or `"fast"`.}
 }
 \value{
 data.table with linked concentrations

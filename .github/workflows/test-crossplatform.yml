@@ -34,10 +34,29 @@ jobs:
           dependencies: '"hard"'
           extra-packages: |
             any::remotes
+            any::pkgload
+            any::testthat
 
       - name: Install disperseR from checkout
         run: |
           remotes::install_local(".", dependencies = FALSE, force = TRUE)
+        shell: Rscript {0}
+
+      - name: Run fast linking parity tests
+        run: |
+          pkgload::load_all(".", quiet = TRUE)
+          testthat::test_file("tests/testthat/test-linking-fast-engine.R")
+        shell: Rscript {0}
+
+      - name: Run full testthat suite
+        run: |
+          pkgload::load_all(".", quiet = TRUE)
+          testthat::test_dir("tests/testthat")
+        shell: Rscript {0}
+
+      - name: Run verification smoke suite
+        run: |
+          source("verification/run_all.R")
         shell: Rscript {0}
 
       - name: Test disperseR core functions

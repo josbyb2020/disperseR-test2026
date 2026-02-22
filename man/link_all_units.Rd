@@ -22,7 +22,8 @@ link_all_units(
   overwrite = FALSE,
   pbl.trim = NULL,
   crop.usa = FALSE,
-  return.linked.data = TRUE
+  return.linked.data = TRUE,
+  engine = c("legacy", "fast")
 )
 }
 \arguments{
@@ -67,6 +68,9 @@ create_dirs()).}
 \item{crop.usa}{Crop output to lower 48 states? (grids only)}
 
 \item{return.linked.data}{Return linked data? Default TRUE}
+
+\item{engine}{Linking engine: `"legacy"` (default, exact historical path)
+or `"fast"` (optimized internals with the same output contract).}
 }
 \value{
 data.table with linked spatial data
@@ -77,5 +81,7 @@ counties, or grids) by month for specified units. Reads HYSPLIT output files
 produced by run_disperser_parallel() and performs spatial aggregation.
 
 Automatically uses appropriate parallelization based on OS:
-mclapply on Unix/macOS, parLapply on Windows.
+mclapply on Unix/macOS, parLapplyLB on Windows.
+If some tasks fail, successful links are returned with a warning summary.
+If all tasks fail, the function errors with task-level diagnostics.
 }

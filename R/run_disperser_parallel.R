@@ -40,7 +40,7 @@
 #'
 #' @description Runs HYSPLIT dispersion simulations in parallel across multiple
 #' emission sources/times. Automatically uses appropriate parallelization method
-#' based on the operating system (mclapply on Unix/macOS, parLapply on Windows).
+#' based on the operating system (mclapply on Unix/macOS, parLapplyLB on Windows).
 #'
 #' @param input.refs A data.table with columns: ID (character), uID (character),
 #'   Latitude (numeric), Longitude (numeric), Height (numeric), start_day (Date),
@@ -65,7 +65,7 @@
 #'
 #' @return List of results from each dispersion run
 #' @export
-#' @importFrom parallel detectCores mclapply makeCluster stopCluster clusterExport parLapply
+#' @importFrom parallel detectCores mclapply makeCluster stopCluster clusterExport parLapplyLB
 run_disperser_parallel <- function(input.refs = NULL,
   pbl.height = NULL,
   species = 'so2',
@@ -233,18 +233,67 @@ run_disperser_parallel <- function(input.refs = NULL,
   }
 
   if (is_windows && mc.cores > 1 && inherits(pbl.height, "SpatRaster")) {
-    warning(
-      "Windows parallel runs with terra::SpatRaster are not supported; ",
-      "setting mc.cores = 1.",
-      call. = FALSE
+    packed_ok <- TRUE
+    pbl.height.packed <- tryCatch(
+      terra::wrap(pbl.height, proxy = TRUE),
+      error = function(e) {
+        packed_ok <<- FALSE
+        warning(
+          "Could not pack pbl.height for Windows parallel transfer (",
+          conditionMessage(e),
+          "). Falling back to mc.cores = 1.",
+          call. = FALSE
+        )
+        NULL
+      }
     )
-    mc.cores <- 1
+    if (packed_ok) {
+      pbl.height <- pbl.height.packed
+    } else {
+      mc.cores <- 1
+    }
   }
   
   message(sprintf("Processing %d dispersion runs across %d core(s)...",
                   length(run_sample), mc.cores))
+  use_parallel <- mc.cores > 1 && length(run_sample) > 1
+  parallel_dt_threads <- getOption("disperseR.parallel.dt.threads", 1L)
+  if (!is.numeric(parallel_dt_threads) ||
+      length(parallel_dt_threads) != 1 ||
+      !is.finite(parallel_dt_threads) ||
+      parallel_dt_threads < 1) {
+    parallel_dt_threads <- 1L
+  }
+  parallel_dt_threads <- as.integer(parallel_dt_threads)
+  if (use_parallel) {
+    old_dt_threads <- data.table::getDTthreads()
+    data.table::setDTthreads(parallel_dt_threads)
+    on.exit(data.table::setDTthreads(old_dt_threads), add = TRUE)
+  }
+  resolve_pbl_height <- local({
+    cached <- NULL
+    function() {
+      if (is.null(cached)) {
+        cached <<- if (inherits(pbl.height, "PackedSpatRaster")) {
+          tryCatch(
+            terra::unwrap(pbl.height),
+            error = function(e) {
+              stop(
+                "Failed to unpack pbl.height for dispersion runs: ",
+                conditionMessage(e),
+                call. = FALSE
+              )
+            }
+          )
+        } else {
+          pbl.height
+        }
+      }
+      cached
+    }
+  })
 
-  if (mc.cores == 1 || length(run_sample) == 1) {
+  if (!use_parallel) {
     # single-core path
     n_total <- length(run_sample)
     results <- lapply(
@@ -256,7 +305,7 @@ run_disperser_parallel <- function(input.refs = NULL,
         run_fac(
           x = i,
           input.refs = input.refs,
-          pbl.height = pbl.height,
+          pbl.height = resolve_pbl_height(),
           species = species,
           proc_dir = proc_dir,
           hysp_dir = hysp_dir,
@@ -281,7 +330,8 @@ run_disperser_parallel <- function(input.refs = NULL,
       "input.refs", "pbl.height", "species", "proc_dir",
       "hysp_dir", "meteo_dir",
       "overwrite", "npart", "keep.hysplit.files",
-      "binary_path", "parhplot_path", "run_fac"
+      "binary_path", "parhplot_path", "run_fac", "resolve_pbl_height",
+      "parallel_dt_threads"
     ), envir = environment())
     
     # load packages on each worker
@@ -289,16 +339,17 @@ run_disperser_parallel <- function(input.refs = NULL,
       library(disperseR)
       library(data.table)
       library(magrittr)
+      data.table::setDTthreads(parallel_dt_threads)
     })
     
-    results <- parallel::parLapply(
+    results <- parallel::parLapplyLB(
       cl = cl,
       X = run_sample,
       fun = function(x) {
         run_fac(
           x = x,
           input.refs = input.refs,
-          pbl.height = pbl.height,
+          pbl.height = resolve_pbl_height(),
           species = species,
           proc_dir = proc_dir,
           hysp_dir = hysp_dir,
@@ -317,7 +368,7 @@ run_disperser_parallel <- function(input.refs = NULL,
       X = run_sample,
       FUN = run_fac,
       input.refs = input.refs,
-      pbl.height = pbl.height,
+      pbl.height = resolve_pbl_height(),
       species = species,
       proc_dir = proc_dir,
       hysp_dir = hysp_dir,
@@ -327,7 +378,8 @@ run_disperser_parallel <- function(input.refs = NULL,
       keep.hysplit.files = keep.hysplit.files,
       binary_path = binary_path,
       parhplot_path = parhplot_path,
-      mc.cores = mc.cores
+      mc.cores = mc.cores,
+      mc.preschedule = FALSE
     )
   }
   

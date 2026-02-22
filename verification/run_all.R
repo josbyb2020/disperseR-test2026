@@ -24,3 +24,4 @@ for (s in scripts) {
 message("\nVerification Summary")
 print(verify_state$results)
 
+verify_stop_on_failures("verification run_all")

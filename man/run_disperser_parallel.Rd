@@ -58,5 +58,5 @@ List of results from each dispersion run
 \description{
 Runs HYSPLIT dispersion simulations in parallel across multiple
 emission sources/times. Automatically uses appropriate parallelization method
-based on the operating system (mclapply on Unix/macOS, parLapply on Windows).
+based on the operating system (mclapply on Unix/macOS, parLapplyLB on Windows).
 }

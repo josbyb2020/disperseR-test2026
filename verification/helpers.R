@@ -53,6 +53,26 @@ verify_expect <- function(cond, message) {
   TRUE
 }
 
+verify_stop_on_failures <- function(context = NULL) {
+  failures <- verify_state$results[verify_state$results$status == "FAIL", , drop = FALSE]
+  if (nrow(failures) == 0) {
+    return(invisible(TRUE))
+  }
+  if (is.null(context) || !nzchar(context)) {
+    context <- "verification"
+  }
+  detail <- paste0(
+    failures$step,
+    ": ",
+    ifelse(nzchar(failures$detail), failures$detail, "unknown error")
+  )
+  stop(
+    "One or more ", context, " step(s) failed:\n",
+    paste(" -", detail, collapse = "\n"),
+    call. = FALSE
+  )
+}
+
 verify_find_pkg_root <- function(start = getwd()) {
   if (file.exists(file.path(start, "DESCRIPTION"))) {
     return(normalizePath(start))
@@ -79,7 +99,7 @@ verify_read_config <- function() {
 
   config_path <- file.path(getwd(), "config.R")
   if (file.exists(config_path)) {
-    env <- new.env(parent = emptyenv())
+    env <- new.env(parent = baseenv())
     sys.source(config_path, envir = env)
     if (exists("VERIFY_BASE_DIR", envir = env, inherits = FALSE)) {
       cfg$base_dir <- env$VERIFY_BASE_DIR
@@ -137,4 +157,3 @@ verify_load_package <- function(pkg_root) {
   }
   stop("Install pkgload or devtools, or install disperseR, then retry.", call. = FALSE)
 }
-
