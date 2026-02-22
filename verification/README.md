@@ -57,6 +57,7 @@ Outputs are saved to `VERIFY_BASE_DIR/perf/linking_engine_benchmark.csv`.
 Runtime tuning option for adaptive fast linking:
 - `options(disperseR.fast.extract.min.cells = 5000L)`
 - `options(disperseR.fast.extract.min.cell_poly_ratio = 2)`
+- `options(disperseR.fast.project.enable = FALSE)` (parity-safe default)
 - `options(disperseR.fast.project.min_rows = 50000L)`
 - `options(disperseR.fast.crop.min.cover_ratio = 0.98)`
 - `options(disperseR.parallel.dt.threads = 1L)`
@@ -107,6 +108,10 @@ source("09_perf_crossplatform_ci.R")
 Combined output is saved to:
 - `VERIFY_BASE_DIR/perf/crossplatform_ci_summary.csv`
 
+Optional fast-projection environment controls for this runner:
+- `DISPERSER_FAST_PROJECT_ENABLE` (default `false`; set `true` to enable `sf_project` path)
+- `DISPERSER_FAST_PROJECT_MIN_ROWS` (default `50000`)
+
 ## CI Performance Assertions
 Enforce parity and minimum speedup floors on the combined CI summary:
 
@@ -115,10 +120,10 @@ source("10_perf_ci_assertions.R")
 ```
 
 Optional threshold environment variables:
-- `DISPERSER_MIN_SPEEDUP_ENGINE` (default `1.05`)
-- `DISPERSER_MIN_SPEEDUP_USERFLOW` (default `0.75`)
-- `DISPERSER_MIN_SPEEDUP_HEAVY` (default `1.05`)
-- `DISPERSER_MIN_SPEEDUP_MEDIAN` (default `1.00`)
+- `DISPERSER_MIN_SPEEDUP_ENGINE` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/0.95`)
+- `DISPERSER_MIN_SPEEDUP_USERFLOW` (default: Linux/macOS `0.75`; Windows smoke/full `0.70/0.75`)
+- `DISPERSER_MIN_SPEEDUP_HEAVY` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/1.00`)
+- `DISPERSER_MIN_SPEEDUP_MEDIAN` (default: Linux/macOS `1.00`; Windows smoke/full `0.90/0.95`)
 
 For merge/branch-protection criteria, require the cross-platform test and
 performance workflows in your repository settings.

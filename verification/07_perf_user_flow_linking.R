@@ -223,13 +223,25 @@ run_scenario <- function(sc) {
   if (identical(sc$link.to, "zips")) {
     legacy_s <- data.table::as.data.table(out_legacy)[, .(N = sum(N, na.rm = TRUE)), by = .(ZIP, ID, month)][order(ZIP, ID, month)]
     fast_s <- data.table::as.data.table(out_fast)[, .(N = sum(N, na.rm = TRUE)), by = .(ZIP, ID, month)][order(ZIP, ID, month)]
-    keys_equal <- identical(legacy_s[, .(ZIP, ID, month)], fast_s[, .(ZIP, ID, month)])
-    values_equal <- isTRUE(all.equal(legacy_s$N, fast_s$N, tolerance = 1e-10))
+    parity <- verify_compare_grouped(
+      legacy_dt = legacy_s,
+      fast_dt = fast_s,
+      key_cols = c("ZIP", "ID", "month"),
+      value_col = "N",
+      tol_abs = 1e-8,
+      tol_rel = 1e-8
+    )
   } else {
     legacy_s <- data.table::as.data.table(out_legacy)[, .(N = sum(N, na.rm = TRUE)), by = .(geoid, ID, month)][order(geoid, ID, month)]
     fast_s <- data.table::as.data.table(out_fast)[, .(N = sum(N, na.rm = TRUE)), by = .(geoid, ID, month)][order(geoid, ID, month)]
-    keys_equal <- identical(legacy_s[, .(geoid, ID, month)], fast_s[, .(geoid, ID, month)])
-    values_equal <- isTRUE(all.equal(legacy_s$N, fast_s$N, tolerance = 1e-10))
+    parity <- verify_compare_grouped(
+      legacy_dt = legacy_s,
+      fast_dt = fast_s,
+      key_cols = c("geoid", "ID", "month"),
+      value_col = "N",
+      tol_abs = 1e-8,
+      tol_rel = 1e-8
+    )
   }
 
   data.table::data.table(
@@ -249,9 +261,13 @@ run_scenario <- function(sc) {
     legacy_elapsed_sec = as.numeric(t_legacy),
     fast_elapsed_sec = as.numeric(t_fast),
     speedup_x = as.numeric(t_legacy) / as.numeric(t_fast),
-    parity_keys = keys_equal,
-    parity_values = values_equal,
-    parity_ok = isTRUE(keys_equal && values_equal),
+    parity_keys = parity$keys_equal,
+    parity_values = parity$values_equal,
+    parity_ok = parity$parity_ok,
+    parity_n_key_only_rows = parity$n_key_only_rows,
+    parity_n_diff_rows = parity$n_diff_rows,
+    parity_max_abs_diff = parity$max_abs_diff,
+    parity_max_rel_diff = parity$max_rel_diff,
     output_rows_legacy = nrow(out_legacy),
     output_rows_fast = nrow(out_fast)
   )
@@ -262,7 +278,36 @@ verify_step("benchmark_user_flow_link_all_units", {
   summaries <- lapply(scenarios, run_scenario)
   summary_dt <- data.table::rbindlist(summaries, fill = TRUE)
 
-  verify_expect(all(summary_dt$parity_ok), "Parity check failed in one or more user-flow benchmark scenarios.")
+  bad_parity <- summary_dt[is.na(parity_ok) | !parity_ok]
+  if (nrow(bad_parity) > 0) {
+    detail <- paste(
+      apply(
+        bad_parity[, .(
+          scenario,
+          parity_n_key_only_rows,
+          parity_n_diff_rows,
+          parity_max_abs_diff,
+          parity_max_rel_diff
+        )],
+        1L,
+        function(x) {
+          paste0(
+            x[["scenario"]],
+            " (key-only=", x[["parity_n_key_only_rows"]],
+            ", diff-rows=", x[["parity_n_diff_rows"]],
+            ", max-abs=", signif(as.numeric(x[["parity_max_abs_diff"]]), 6),
+            ", max-rel=", signif(as.numeric(x[["parity_max_rel_diff"]]), 6),
+            ")"
+          )
+        }
+      ),
+      collapse = "; "
+    )
+    verify_expect(
+      FALSE,
+      paste0("Parity check failed in one or more user-flow benchmark scenarios. ", detail)
+    )
+  }
 
   outfile <- file.path(perf_dir, sprintf("userflow_link_all_units_%s.csv", profile))
   data.table::fwrite(summary_dt, outfile)

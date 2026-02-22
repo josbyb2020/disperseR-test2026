@@ -62,6 +62,142 @@ test_that("link_to fast engine matches legacy for ZIP linking", {
   expect_equal(s_fast$N, s_legacy$N, tolerance = 1e-12)
 })
 
+test_that("link_to fast engine keeps sf_project opt-in by default", {
+  skip_if_not_installed("data.table")
+  skip_if_not_installed("sf")
+  skip_if_not_installed("terra")
+
+  d <- data.table::data.table(
+    lon = c(-75.9, -75.7, -75.2, -75.1),
+    lat = c(39.1, 39.4, 39.2, 39.5),
+    height = c(10, 12, 8, 9),
+    Pdate = as.Date("2005-01-01"),
+    hour = c(2, 3, 2, 4)
+  )
+
+  zcta_sf <- sf::st_sf(
+    ZCTA5CE10 = c("11111", "22222"),
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(rbind(
+        c(-76.0, 39.0), c(-75.5, 39.0), c(-75.5, 39.6), c(-76.0, 39.6), c(-76.0, 39.0)
+      ))),
+      sf::st_polygon(list(rbind(
+        c(-75.5, 39.0), c(-75.0, 39.0), c(-75.0, 39.6), c(-75.5, 39.6), c(-75.5, 39.0)
+      )))
+    ),
+    crs = 4326
+  )
+
+  cw <- data.table::data.table(
+    ZCTA = c("11111", "22222"),
+    ZIP = c("11111", "22222")
+  )
+
+  old_enable <- getOption("disperseR.fast.project.enable")
+  old_min_rows <- getOption("disperseR.fast.project.min_rows")
+  old_min_cells <- getOption("disperseR.fast.extract.min.cells")
+  on.exit({
+    options(disperseR.fast.project.enable = old_enable)
+    options(disperseR.fast.project.min_rows = old_min_rows)
+    options(disperseR.fast.extract.min.cells = old_min_cells)
+  }, add = TRUE)
+
+  options(disperseR.fast.project.enable = NULL)
+  options(disperseR.fast.project.min_rows = 1L)
+  options(disperseR.fast.extract.min.cells = .Machine$integer.max)
+
+  sf_project_called <- FALSE
+  testthat::local_mocked_bindings(
+    sf_project = function(from, to, pts) {
+      sf_project_called <<- TRUE
+      pts
+    },
+    .package = "sf"
+  )
+
+  out <- suppressWarnings(disperseR:::link_to(
+    d = d,
+    link.to = "zips",
+    p4string = "EPSG:4326",
+    zc = zcta_sf,
+    cw = cw,
+    pbl. = FALSE,
+    res.link. = 0.25,
+    engine = "fast"
+  ))
+
+  expect_false(sf_project_called)
+  expect_gt(nrow(out), 0L)
+})
+
+test_that("link_to fast engine can use sf_project when explicitly enabled", {
+  skip_if_not_installed("data.table")
+  skip_if_not_installed("sf")
+  skip_if_not_installed("terra")
+
+  d <- data.table::data.table(
+    lon = c(-75.9, -75.7, -75.2, -75.1),
+    lat = c(39.1, 39.4, 39.2, 39.5),
+    height = c(10, 12, 8, 9),
+    Pdate = as.Date("2005-01-01"),
+    hour = c(2, 3, 2, 4)
+  )
+
+  zcta_sf <- sf::st_sf(
+    ZCTA5CE10 = c("11111", "22222"),
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(rbind(
+        c(-76.0, 39.0), c(-75.5, 39.0), c(-75.5, 39.6), c(-76.0, 39.6), c(-76.0, 39.0)
+      ))),
+      sf::st_polygon(list(rbind(
+        c(-75.5, 39.0), c(-75.0, 39.0), c(-75.0, 39.6), c(-75.5, 39.6), c(-75.5, 39.0)
+      )))
+    ),
+    crs = 4326
+  )
+
+  cw <- data.table::data.table(
+    ZCTA = c("11111", "22222"),
+    ZIP = c("11111", "22222")
+  )
+
+  old_enable <- getOption("disperseR.fast.project.enable")
+  old_min_rows <- getOption("disperseR.fast.project.min_rows")
+  old_min_cells <- getOption("disperseR.fast.extract.min.cells")
+  on.exit({
+    options(disperseR.fast.project.enable = old_enable)
+    options(disperseR.fast.project.min_rows = old_min_rows)
+    options(disperseR.fast.extract.min.cells = old_min_cells)
+  }, add = TRUE)
+
+  options(disperseR.fast.project.enable = TRUE)
+  options(disperseR.fast.project.min_rows = 1L)
+  options(disperseR.fast.extract.min.cells = .Machine$integer.max)
+
+  sf_project_called <- FALSE
+  testthat::local_mocked_bindings(
+    sf_project = function(from, to, pts) {
+      sf_project_called <<- TRUE
+      pts
+    },
+    .package = "sf"
+  )
+
+  out <- suppressWarnings(disperseR:::link_to(
+    d = d,
+    link.to = "zips",
+    p4string = "EPSG:4326",
+    zc = zcta_sf,
+    cw = cw,
+    pbl. = FALSE,
+    res.link. = 0.25,
+    engine = "fast"
+  ))
+
+  expect_true(sf_project_called)
+  expect_gt(nrow(out), 0L)
+})
+
 test_that("link_to fast engine normalizes numeric crosswalk ZIP/ZCTA codes", {
   skip_if_not_installed("data.table")
   skip_if_not_installed("sf")

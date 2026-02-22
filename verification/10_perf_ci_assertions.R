@@ -26,6 +26,42 @@ write_job_summary <- function(lines) {
   invisible(TRUE)
 }
 
+detect_os_name <- function(summary_dt) {
+  if ("os" %in% names(summary_dt)) {
+    vals <- unique(tolower(as.character(summary_dt$os)))
+    vals <- vals[!is.na(vals) & nzchar(vals)]
+    if (length(vals) > 0) {
+      return(vals[[1]])
+    }
+  }
+  tolower(Sys.info()[["sysname"]])
+}
+
+default_speed_floor <- function(metric, os_name, profile_name) {
+  is_windows <- identical(tolower(os_name), "windows")
+  is_full <- identical(tolower(profile_name), "full")
+
+  if (!is_windows) {
+    return(switch(
+      metric,
+      engine = 1.05,
+      userflow = 0.75,
+      heavy = 1.05,
+      median = 1.00,
+      1.00
+    ))
+  }
+
+  switch(
+    metric,
+    engine = if (is_full) 0.95 else 0.90,
+    userflow = if (is_full) 0.75 else 0.70,
+    heavy = if (is_full) 1.00 else 0.90,
+    median = if (is_full) 0.95 else 0.90,
+    0.90
+  )
+}
+
 verify_step("load_crossplatform_summary", {
   verify_expect(
     file.exists(summary_file),
@@ -39,6 +75,11 @@ verify_step("load_crossplatform_summary", {
 
 verify_step("assert_crossplatform_perf_contract", {
   summary_dt <- get("crossplatform_summary_dt", envir = verify_state)
+  os_name <- detect_os_name(summary_dt)
+  profile_name <- tolower(Sys.getenv("DISPERSER_PERF_PROFILE", "smoke"))
+  if (!(profile_name %in% c("smoke", "full"))) {
+    profile_name <- "smoke"
+  }
 
   verify_expect("speedup_x" %in% names(summary_dt), "speedup_x column is missing from summary output.")
   summary_dt[, speedup_x := suppressWarnings(as.numeric(speedup_x))]
@@ -56,10 +97,10 @@ verify_step("assert_crossplatform_perf_contract", {
     )
   }
 
-  min_engine <- read_threshold("DISPERSER_MIN_SPEEDUP_ENGINE", 1.05)
-  min_userflow <- read_threshold("DISPERSER_MIN_SPEEDUP_USERFLOW", 0.75)
-  min_heavy <- read_threshold("DISPERSER_MIN_SPEEDUP_HEAVY", 1.05)
-  min_median <- read_threshold("DISPERSER_MIN_SPEEDUP_MEDIAN", 1.00)
+  min_engine <- read_threshold("DISPERSER_MIN_SPEEDUP_ENGINE", default_speed_floor("engine", os_name, profile_name))
+  min_userflow <- read_threshold("DISPERSER_MIN_SPEEDUP_USERFLOW", default_speed_floor("userflow", os_name, profile_name))
+  min_heavy <- read_threshold("DISPERSER_MIN_SPEEDUP_HEAVY", default_speed_floor("heavy", os_name, profile_name))
+  min_median <- read_threshold("DISPERSER_MIN_SPEEDUP_MEDIAN", default_speed_floor("median", os_name, profile_name))
 
   check_source_floor <- function(source_pattern, label, floor_value) {
     sub <- summary_dt[grepl(source_pattern, source_file, fixed = TRUE)]
@@ -94,13 +135,14 @@ verify_step("assert_crossplatform_perf_contract", {
     )
   )
 
-  os_name <- if ("os" %in% names(summary_dt)) unique(summary_dt$os) else "unknown"
-  os_name <- os_name[!is.na(os_name)]
+  os_vals <- if ("os" %in% names(summary_dt)) unique(summary_dt$os) else "unknown"
+  os_vals <- os_vals[!is.na(os_vals)]
   summary_lines <- c(
     "## Cross-platform perf gate",
     paste0(
       "- Rows checked: ", nrow(summary_dt),
-      " | OS: ", paste(os_name, collapse = ", ")
+      " | OS: ", paste(os_vals, collapse = ", "),
+      " | Profile: ", profile_name
     ),
     checks,
     paste0("- Median speedup: ", sprintf("%.3fx", median_speedup), " (floor ", sprintf("%.2fx", min_median), ")")

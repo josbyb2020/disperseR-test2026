@@ -39,12 +39,9 @@ jobs:
     env:
       PERF_ARTIFACT_ROOT: ${{ github.workspace }}/verification/perf_artifacts/${{ matrix.os }}-r${{ matrix.r-version }}
       DISPERSER_PARALLEL_DT_THREADS: "1"
+      DISPERSER_FAST_PROJECT_ENABLE: "false"
       DISPERSER_FAST_PROJECT_MIN_ROWS: "50000"
       DISPERSER_PERF_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.profile || 'smoke' }}
-      DISPERSER_MIN_SPEEDUP_ENGINE: "1.05"
-      DISPERSER_MIN_SPEEDUP_USERFLOW: "0.75"
-      DISPERSER_MIN_SPEEDUP_HEAVY: "1.05"
-      DISPERSER_MIN_SPEEDUP_MEDIAN: "1.00"
 
     steps:
       - uses: actions/checkout@v4

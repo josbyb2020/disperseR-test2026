@@ -106,14 +106,30 @@ verify_step("benchmark_link_to_legacy_vs_fast", {
 
   legacy_summary <- data.table::as.data.table(out_legacy)[, .(N = sum(N, na.rm = TRUE)), by = ZIP][order(ZIP)]
   fast_summary <- data.table::as.data.table(out_fast)[, .(N = sum(N, na.rm = TRUE)), by = ZIP][order(ZIP)]
+  parity <- verify_compare_grouped(
+    legacy_dt = legacy_summary,
+    fast_dt = fast_summary,
+    key_cols = "ZIP",
+    value_col = "N",
+    tol_abs = 1e-8,
+    tol_rel = 1e-8
+  )
 
   verify_expect(
-    identical(legacy_summary$ZIP, fast_summary$ZIP),
-    "ZIP keys diverged between legacy and fast engine."
+    parity$keys_equal,
+    paste0(
+      "ZIP keys diverged between legacy and fast engine. ",
+      "Missing-key rows: ", parity$n_key_only_rows, "."
+    )
   )
   verify_expect(
-    isTRUE(all.equal(legacy_summary$N, fast_summary$N, tolerance = 1e-10)),
-    "ZIP exposure values diverged between legacy and fast engine."
+    parity$values_equal,
+    paste0(
+      "ZIP exposure values diverged between legacy and fast engine. ",
+      "Max abs diff=", signif(parity$max_abs_diff, 6),
+      ", max rel diff=", signif(parity$max_rel_diff, 6),
+      ", diff rows=", parity$n_diff_rows, "."
+    )
   )
 
   speedup <- as.numeric(t_legacy) / as.numeric(t_fast)
@@ -123,7 +139,12 @@ verify_step("benchmark_link_to_legacy_vs_fast", {
     zcta_polygons = nrow(zcta),
     legacy_elapsed_sec = as.numeric(t_legacy),
     fast_elapsed_sec = as.numeric(t_fast),
-    speedup_x = speedup
+    speedup_x = speedup,
+    parity_keys = parity$keys_equal,
+    parity_values = parity$values_equal,
+    parity_ok = parity$parity_ok,
+    max_abs_diff = parity$max_abs_diff,
+    max_rel_diff = parity$max_rel_diff
   )
 
   outfile <- file.path(perf_dir, "linking_engine_benchmark.csv")

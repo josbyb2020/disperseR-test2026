@@ -45,7 +45,9 @@ run_platform_suite <- function() {
   if (!is.finite(project_threshold) || is.na(project_threshold) || project_threshold < 1) {
     project_threshold <- 50000L
   }
+  project_enable <- tolower(Sys.getenv("DISPERSER_FAST_PROJECT_ENABLE", "false")) %in% c("1", "true", "yes")
   options(disperseR.fast.project.min_rows = project_threshold)
+  options(disperseR.fast.project.enable = project_enable)
 
   if (!nzchar(Sys.getenv("DISPERSER_BENCH_PARTICLES"))) Sys.setenv(DISPERSER_BENCH_PARTICLES = "200000")
   if (!nzchar(Sys.getenv("DISPERSER_BENCH_GRID_X"))) Sys.setenv(DISPERSER_BENCH_GRID_X = "40")

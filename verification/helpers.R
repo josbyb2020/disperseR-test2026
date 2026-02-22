@@ -157,3 +157,67 @@ verify_load_package <- function(pkg_root) {
   }
   stop("Install pkgload or devtools, or install disperseR, then retry.", call. = FALSE)
 }
+
+verify_compare_grouped <- function(legacy_dt,
+                                   fast_dt,
+                                   key_cols,
+                                   value_col = "N",
+                                   tol_abs = 1e-8,
+                                   tol_rel = 1e-8) {
+  legacy <- data.table::as.data.table(legacy_dt)
+  fast <- data.table::as.data.table(fast_dt)
+
+  need_cols <- unique(c(key_cols, value_col))
+  if (!all(need_cols %in% names(legacy))) {
+    stop("legacy_dt is missing required columns: ",
+         paste(setdiff(need_cols, names(legacy)), collapse = ", "),
+         call. = FALSE)
+  }
+  if (!all(need_cols %in% names(fast))) {
+    stop("fast_dt is missing required columns: ",
+         paste(setdiff(need_cols, names(fast)), collapse = ", "),
+         call. = FALSE)
+  }
+
+  legacy <- legacy[, ..need_cols]
+  fast <- fast[, ..need_cols]
+  data.table::setnames(legacy, value_col, "N_legacy")
+  data.table::setnames(fast, value_col, "N_fast")
+  legacy[, in_legacy := TRUE]
+  fast[, in_fast := TRUE]
+
+  cmp <- merge(
+    legacy,
+    fast,
+    by = key_cols,
+    all = TRUE,
+    sort = TRUE
+  )
+
+  key_rows_missing <- is.na(cmp$in_legacy) | is.na(cmp$in_fast)
+  keys_equal <- !any(key_rows_missing)
+
+  cmp[is.na(N_legacy), N_legacy := 0]
+  cmp[is.na(N_fast), N_fast := 0]
+  cmp[, abs_diff := abs(N_legacy - N_fast)]
+  cmp[, rel_diff := abs_diff / pmax(abs(N_legacy), abs(N_fast), 1)]
+  cmp[, within_tol := abs_diff <= tol_abs | rel_diff <= tol_rel]
+
+  values_equal <- all(cmp$within_tol)
+  bad <- cmp[within_tol == FALSE]
+
+  max_abs <- if (nrow(cmp) == 0) 0 else max(cmp$abs_diff, na.rm = TRUE)
+  max_rel <- if (nrow(cmp) == 0) 0 else max(cmp$rel_diff, na.rm = TRUE)
+
+  list(
+    keys_equal = isTRUE(keys_equal),
+    values_equal = isTRUE(values_equal),
+    parity_ok = isTRUE(keys_equal && values_equal),
+    compared_rows = nrow(cmp),
+    n_key_only_rows = sum(key_rows_missing),
+    n_diff_rows = nrow(bad),
+    max_abs_diff = as.numeric(max_abs),
+    max_rel_diff = as.numeric(max_rel),
+    worst_diff = if (nrow(bad) > 0) bad[which.max(abs_diff)] else NULL
+  )
+}

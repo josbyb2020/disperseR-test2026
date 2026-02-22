@@ -65,6 +65,9 @@ link_to <- function(d,
   lon <- as.numeric(d[["lon"]])
   lat <- as.numeric(d[["lat"]])
   xy_wgs84 <- cbind(lon, lat)
+  # Keep sf_project opt-in because tiny projection differences near cell
+  # boundaries can cause engine parity drift on some PROJ/OS combinations.
+  fast_project_enable <- isTRUE(getOption("disperseR.fast.project.enable", FALSE))
   fast_project_min_rows <- getOption("disperseR.fast.project.min_rows", 50000L)
   if (!is.numeric(fast_project_min_rows) ||
       length(fast_project_min_rows) != 1 ||
@@ -73,6 +76,7 @@ link_to <- function(d,
     fast_project_min_rows <- 50000L
   }
   use_sf_project <- identical(engine, "fast") &&
+    fast_project_enable &&
     nrow(d) >= as.integer(fast_project_min_rows)
   target_crs <- sf::st_crs(p4string)
   target_proj <- if (!is.na(target_crs)) target_crs$wkt else p4string
