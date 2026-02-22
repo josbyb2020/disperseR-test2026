@@ -126,6 +126,8 @@ Optional threshold environment variables:
 - `DISPERSER_MIN_SPEEDUP_USERFLOW_NON_EXTRACT` (default: Linux/macOS `0.70`; Windows smoke/full `0.65/0.70`)
 - `DISPERSER_MIN_SPEEDUP_USERFLOW` (legacy single-floor fallback when `expected_fast_extract` is unavailable)
 - `DISPERSER_MIN_SPEEDUP_HEAVY` (default: Linux/macOS `1.05`; Windows smoke/full `0.90/1.00`)
+- `DISPERSER_MIN_SPEEDUP_HEAVY_NON_STRICT` (default: Linux/macOS `0.95`; Windows smoke/full `0.85/0.90`)
+- `DISPERSER_MIN_HEAVY_LEGACY_SEC_STRICT` (default: `5`; when a heavy case runs faster than this, the non-strict floor is used)
 - `DISPERSER_MIN_SPEEDUP_MEDIAN` (default: Linux/macOS `1.00`; Windows smoke/full `0.90/0.95`)
 
 For merge/branch-protection criteria, require the cross-platform test and

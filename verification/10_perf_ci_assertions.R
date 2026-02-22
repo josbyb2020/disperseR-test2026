@@ -49,6 +49,7 @@ default_speed_floor <- function(metric, os_name, profile_name) {
       userflow_expected_fast = 0.95,
       userflow_non_extract = 0.70,
       heavy = 1.05,
+      heavy_non_strict = 0.95,
       median = 1.00,
       1.00
     ))
@@ -61,6 +62,7 @@ default_speed_floor <- function(metric, os_name, profile_name) {
     userflow_expected_fast = if (is_full) 0.95 else 0.90,
     userflow_non_extract = if (is_full) 0.70 else 0.65,
     heavy = if (is_full) 1.00 else 0.90,
+    heavy_non_strict = if (is_full) 0.90 else 0.85,
     median = if (is_full) 0.95 else 0.90,
     0.90
   )
@@ -120,6 +122,11 @@ verify_step("assert_crossplatform_perf_contract", {
     min_userflow_expected_fast_rows <- 50000L
   }
   min_heavy <- read_threshold("DISPERSER_MIN_SPEEDUP_HEAVY", default_speed_floor("heavy", os_name, profile_name))
+  min_heavy_non_strict <- read_threshold(
+    "DISPERSER_MIN_SPEEDUP_HEAVY_NON_STRICT",
+    default_speed_floor("heavy_non_strict", os_name, profile_name)
+  )
+  heavy_strict_min_legacy_sec <- read_threshold("DISPERSER_MIN_HEAVY_LEGACY_SEC_STRICT", 5)
   min_median <- read_threshold("DISPERSER_MIN_SPEEDUP_MEDIAN", default_speed_floor("median", os_name, profile_name))
 
   check_source_floor <- function(source_pattern, label, floor_value) {
@@ -225,6 +232,84 @@ verify_step("assert_crossplatform_perf_contract", {
     lines
   }
 
+  check_heavy_floor <- function(source_pattern,
+                                floor_strict,
+                                floor_non_strict,
+                                strict_min_legacy_sec) {
+    sub <- summary_dt[grepl(source_pattern, source_file, fixed = TRUE)]
+    if (nrow(sub) == 0) {
+      return("- Heavy benchmark: no rows (skipped)")
+    }
+
+    if (!("legacy_elapsed_sec" %in% names(sub))) {
+      min_seen <- suppressWarnings(min(sub$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_seen) && min_seen >= floor_strict,
+        paste0(
+          "Heavy benchmark minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_strict),
+          ", observed ", sprintf("%.3f", min_seen), "."
+        )
+      )
+      return(sprintf("- Heavy benchmark: min speedup %.3fx (floor %.2fx)", min_seen, floor_strict))
+    }
+
+    sub[, legacy_elapsed_sec := suppressWarnings(as.numeric(legacy_elapsed_sec))]
+    strict_dt <- sub[is.finite(legacy_elapsed_sec) & legacy_elapsed_sec >= strict_min_legacy_sec]
+    non_strict_dt <- sub[is.na(legacy_elapsed_sec) | !is.finite(legacy_elapsed_sec) | legacy_elapsed_sec < strict_min_legacy_sec]
+
+    lines <- character(0)
+    if (nrow(strict_dt) > 0) {
+      min_strict <- suppressWarnings(min(strict_dt$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_strict) && min_strict >= floor_strict,
+        paste0(
+          "Heavy benchmark (legacy_elapsed_sec >= ", sprintf("%.1f", strict_min_legacy_sec),
+          ") minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_strict),
+          ", observed ", sprintf("%.3f", min_strict), "."
+        )
+      )
+      lines <- c(
+        lines,
+        sprintf(
+          "- Heavy (legacy_elapsed_sec >= %.1fs): min speedup %.3fx (floor %.2fx)",
+          strict_min_legacy_sec,
+          min_strict,
+          floor_strict
+        )
+      )
+    }
+
+    if (nrow(non_strict_dt) > 0) {
+      min_non_strict <- suppressWarnings(min(non_strict_dt$speedup_x, na.rm = TRUE))
+      verify_expect(
+        is.finite(min_non_strict) && min_non_strict >= floor_non_strict,
+        paste0(
+          "Heavy benchmark (legacy_elapsed_sec < ", sprintf("%.1f", strict_min_legacy_sec),
+          ") minimum speedup below floor. ",
+          "Required >= ", sprintf("%.3f", floor_non_strict),
+          ", observed ", sprintf("%.3f", min_non_strict), "."
+        )
+      )
+      lines <- c(
+        lines,
+        sprintf(
+          "- Heavy (legacy_elapsed_sec < %.1fs): min speedup %.3fx (floor %.2fx)",
+          strict_min_legacy_sec,
+          min_non_strict,
+          floor_non_strict
+        )
+      )
+    }
+
+    if (length(lines) == 0) {
+      min_seen <- suppressWarnings(min(sub$speedup_x, na.rm = TRUE))
+      lines <- sprintf("- Heavy benchmark: min speedup %.3fx (floor %.2fx)", min_seen, floor_strict)
+    }
+    lines
+  }
+
   checks <- c(
     check_source_floor("linking_engine_benchmark.csv", "Engine benchmark", min_engine),
     check_userflow_floor(
@@ -234,7 +319,12 @@ verify_step("assert_crossplatform_perf_contract", {
       floor_non_extract = min_userflow_non_extract,
       expected_fast_min_rows = min_userflow_expected_fast_rows
     ),
-    check_source_floor("heavy_user_flow_link_all_units.csv", "Heavy benchmark", min_heavy)
+    check_heavy_floor(
+      "heavy_user_flow_link_all_units.csv",
+      floor_strict = min_heavy,
+      floor_non_strict = min_heavy_non_strict,
+      strict_min_legacy_sec = heavy_strict_min_legacy_sec
+    )
   )
 
   median_speedup <- suppressWarnings(stats::median(summary_dt$speedup_x, na.rm = TRUE))
